@@ -5,10 +5,10 @@ Metodología: Scrumban (Híbrido).
 # Organización del Repositorio y Tareas Técnicas
 Siguiendo las consignas de la actividad, se detalla la estructura y las responsabilidades para la configuración inicial:
 1. Colaboradores
-*Dante Battiato
-*Kevin Machaca
-*Juan Mendoza
-*Damian Orellana
+   * Dante Battiato
+   * Kevin Machaca
+   * Juan Mendoza
+   * Damian Orellana
 2. Estructura de Carpetas y Nomenclatura
 Para garantizar la modularización y escalabilidad, se utilizará la nomenclatura kebab-case para carpetas y archivos, facilitando la compatibilidad entre sistemas.
 /client: Contendrá todo el código fuente del frontend desarrollado en React.
