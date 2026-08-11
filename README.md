@@ -9,8 +9,10 @@ Siguiendo las consignas de la actividad, se detalla la estructura y las responsa
    * Kevin Machaca
    * Juan Mendoza
    * Damian Orellana
+
 2. Estructura de Carpetas y Nomenclatura
-Para garantizar la modularización y escalabilidad, se utilizará la nomenclatura kebab-case para carpetas y archivos, facilitando la compatibilidad entre sistemas.
+
+Para garantizar la modularización y escalabilidad, se utilizará la nomenclatura PascalCase para carpetas y archivos, facilitando la compatibilidad con React.
 /client: Contendrá todo el código fuente del frontend desarrollado en React.
 /server: Alojara la API RESTful construida con Node.js y Express.
 /docs: Carpeta para la documentación centralizada (bitácora, requerimientos, diagramas).
