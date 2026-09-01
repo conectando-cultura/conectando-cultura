@@ -13,6 +13,7 @@ export interface UsuarioPublico {
   nombre: string;
   apellido: string;
   correo: string;
+  rol: "usuario" | "admin";
 }
 
 export interface Categoria {

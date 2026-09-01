@@ -22,10 +22,21 @@ export default function Navbar() {
 
         {usuario ? (
           <>
+            {usuario.rol === "admin" && (
+              <Link
+                className={`nav-enlace ${ruta === "/admin" ? "activo" : ""}`}
+                to="/admin"
+              >
+                ⚙️ Admin
+              </Link>
+            )}
             <Link className="nav-enlace" to="/preferencias">
               ⚙️ Preferencias
             </Link>
-            <span className="nav-enlace" style={{ color: "var(--naranja)", cursor: "default" }}>
+            <span
+              className="nav-enlace"
+              style={{ color: "var(--naranja)", cursor: "default" }}
+            >
               {usuario.nombre}
             </span>
             <button
@@ -45,7 +56,11 @@ export default function Navbar() {
             >
               Iniciar sesión
             </Link>
-            <Link className="btn btn-primario" to="/registro" style={{ padding: "8px 18px", fontSize: "0.9rem" }}>
+            <Link
+              className="btn btn-primario"
+              to="/registro"
+              style={{ padding: "8px 18px", fontSize: "0.9rem" }}
+            >
               Crear cuenta
             </Link>
           </>

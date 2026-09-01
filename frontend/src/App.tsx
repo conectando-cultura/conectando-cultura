@@ -7,7 +7,8 @@ import Bienvenido from "./paginas/Bienvenido";
 import Mapa from "./paginas/Mapa";
 import Actividades from "./paginas/Actividades";
 import Preferencias from "./paginas/Preferencias";
-import Admin from "./paginas/Admin";
+import AdminActividades from "./paginas/AdminActividades";
+import ProtegidaAdmin from "./paginas/ProtegidaAdmin";
 import { AuthProvider } from "./contexto/AuthContext";
 import Protegida from "./paginas/Protegida";
 
@@ -62,8 +63,15 @@ export default function App() {
             }
           />
 
-          {/* Admin (placeholder — Sprint 4 implementa protección real) */}
-          <Route path="/admin" element={<Admin />} />
+          {/* Admin (requiere auth + rol admin) */}
+          <Route
+            path="/admin"
+            element={
+              <ProtegidaAdmin>
+                <AdminActividades />
+              </ProtegidaAdmin>
+            }
+          />
 
           {/* 404 */}
           <Route

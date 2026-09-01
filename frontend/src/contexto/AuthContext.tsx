@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const iniciarSesion = useCallback(async (correo: string, contrasena: string) => {
     try {
-      const datos = await api<{ token: string; usuario: UsuarioPublico; id: string }>("/auth/login", {
+      const datos = await api<{ token: string; usuario: UsuarioPublico }>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ correo, contrasena })
       });

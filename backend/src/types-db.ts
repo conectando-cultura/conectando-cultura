@@ -36,8 +36,9 @@ export interface DbActividad {
 }
 
 export interface DbActividadFull extends DbActividad {
-  categoria: DbCategoria;
-  vecind: DbVecind;
+  /** Relaciones anidadas retornadas por Supabase (select con paréntesis) */
+  categorias: Pick<DbCategoria, "nombre" | "slug" | "color" | "icono">;
+  barrios: Pick<DbVecind, "nombre" | "slug">;
 }
 
 export interface DbPreferenciasUsuario {

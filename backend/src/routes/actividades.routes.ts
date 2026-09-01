@@ -1,19 +1,19 @@
 import { Router } from "express";
 import { ActividadesService } from "../services/actividades.service.js";
-import { autenticacionRequerida } from "../middlewares/autenticacion.middleware.js";
+import { autenticacionRequerida, adminRequerido } from "../middlewares/autenticacion.middleware.js";
 import type { AuthService } from "../services/auth.service.js";
+import { ErrorAplicacion } from "../types.js";
 
 export function crearRutasActividades(auth: AuthService): Router {
   const router = Router();
   const servicio = new ActividadesService();
 
+  // ── Público ────────────────────────────────────────────────
+
   // GET /api/actividades?barrioSlug=&categoriaSlug=&limite=
   router.get("/", async (req, res) => {
     try {
-      const { barrioSlug, categoriaSlug, limite } = req.query as Record<
-        string,
-        string | undefined
-      >;
+      const { barrioSlug, categoriaSlug, limite } = req.query as Record<string, string | undefined>;
       const actividades = await servicio.listar({
         barrioSlug,
         categoriaSlug,
@@ -49,10 +49,7 @@ export function crearRutasActividades(auth: AuthService): Router {
   // GET /api/actividades/:slug/:barrioSlug
   router.get("/:slug/:barrioSlug", async (req, res) => {
     try {
-      const actividad = await servicio.obtenerPorSlug(
-        req.params.slug,
-        req.params.barrioSlug
-      );
+      const actividad = await servicio.obtenerPorSlug(req.params.slug, req.params.barrioSlug);
       if (!actividad) {
         res.status(404).json({ mensaje: "Actividad no encontrada." });
         return;
@@ -63,15 +60,60 @@ export function crearRutasActividades(auth: AuthService): Router {
     }
   });
 
-  // GET /api/actividades/favoritas (requiere auth)
-  router.get(
-    "/favoritas",
+  // ── Admin ─────────────────────────────────────────────────
+
+  // POST /api/actividades (crear)
+  router.post(
+    "/",
     autenticacionRequerida(auth),
+    (req, res, next) => {
+      (req as any).adminRequerido = true;
+      next();
+    },
+    adminRequerido,
     async (req, res) => {
-      // TODO: implementar favoritos en Sprint 5+
-      res.status(501).json({
-        mensaje: "Favoritas se implementa en Sprint 5."
-      });
+      try {
+        const datos = req.body;
+        if (!datos.nombre || !datos.descripcion || !datos.direccion) {
+          throw new ErrorAplicacion("Faltan campos obligatorios: nombre, descripcion, direccion.");
+        }
+        const actividad = await servicio.crear(datos, req.usuarioPublico!.id);
+        res.status(201).json({ actividad });
+      } catch (err) {
+        const status = err instanceof ErrorAplicacion ? err.status : 500;
+        res.status(status).json({ mensaje: err instanceof Error ? err.message : "Error al crear actividad." });
+      }
+    }
+  );
+
+  // PATCH /api/actividades/:id (editar)
+  router.patch(
+    "/:id",
+    autenticacionRequerida(auth),
+    adminRequerido,
+    async (req, res) => {
+      try {
+        const actividad = await servicio.actualizar(req.params.id, req.body, req.usuarioPublico!.id);
+        res.json({ actividad });
+      } catch (err) {
+        const status = err instanceof ErrorAplicacion ? err.status : 500;
+        res.status(status).json({ mensaje: err instanceof Error ? err.message : "Error al actualizar actividad." });
+      }
+    }
+  );
+
+  // DELETE /api/actividades/:id (eliminar lógico)
+  router.delete(
+    "/:id",
+    autenticacionRequerida(auth),
+    adminRequerido,
+    async (req, res) => {
+      try {
+        await servicio.eliminar(req.params.id);
+        res.status(204).send();
+      } catch (err) {
+        res.status(500).json({ mensaje: err instanceof Error ? err.message : "Error al eliminar actividad." });
+      }
     }
   );
 

@@ -15,6 +15,7 @@ export interface UsuarioPublico {
   nombre: string;
   apellido: string;
   correo: string;
+  rol: "usuario" | "admin";
 }
 
 export interface Sesion {
@@ -37,7 +38,7 @@ export interface DatosLogin {
 }
 
 export function aPublico(usuario: Usuario): UsuarioPublico {
-  return { id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, correo: usuario.correo };
+  return { id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, correo: usuario.correo, rol: (usuario as any).rol ?? "usuario" };
 }
 
 export class ErrorAplicacion extends Error {

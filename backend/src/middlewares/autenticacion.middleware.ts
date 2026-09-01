@@ -34,3 +34,30 @@ export function autenticacionRequerida(auth: AuthService) {
     next();
   };
 }
+
+/**
+ * Middleware de protección admin: exige que el usuario autenticado
+ * tenga rol "admin" en la base de datos de Supabase.
+ * Debe usarse DESPUÉS de autenticacionRequerida.
+ */
+export function adminRequerido(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const usuario = req.usuarioPublico;
+  if (!usuario) {
+    // No debería ocurrir si se encadenó correctamente, pero por seguridad
+    res.status(401).json({ mensaje: "Sesión no válida." });
+    return;
+  }
+
+  if (usuario.rol !== "admin") {
+    res.status(403).json({
+      mensaje: "Acceso denegado. Necesitás permisos de administrador."
+    });
+    return;
+  }
+
+  next();
+}
