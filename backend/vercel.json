@@ -1,0 +1,12 @@
+{
+  "framework": "express",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "devCommand": "npx tsx watch src/index.ts",
+  "env": {
+    "PORT": "3001",
+    "SUPABASE_URL": "https://your-project-id.supabase.co",
+    "SUPABASE_SERVICE_ROLE_KEY": "your-service-role-key"
+  }
+}
