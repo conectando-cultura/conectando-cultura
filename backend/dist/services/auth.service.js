@@ -75,4 +75,14 @@ export class AuthService {
     cerrarSesion(token) {
         this.sesiones.eliminar(token);
     }
+    listarUsuarios() {
+        return this.usuarios.listarTodos().map((u) => aPublico(u));
+    }
+    actualizarRol(id, rol) {
+        const actualizado = this.usuarios.actualizarRol(id, rol);
+        if (!actualizado) {
+            throw new ErrorAplicacion("Usuario no encontrado.", 404);
+        }
+        return aPublico(actualizado);
+    }
 }

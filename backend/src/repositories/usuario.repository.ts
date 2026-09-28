@@ -54,4 +54,17 @@ export class UsuarioRepository {
     this.escribir(usuarios);
     return usuario;
   }
+
+  listarTodos(): Usuario[] {
+    return this.leer();
+  }
+
+  actualizarRol(id: string, rol: "usuario" | "admin"): Usuario | null {
+    const usuarios = this.leer();
+    const idx = usuarios.findIndex((u) => u.id === id);
+    if (idx === -1) return null;
+    usuarios[idx].rol = rol;
+    this.escribir(usuarios);
+    return usuarios[idx];
+  }
 }

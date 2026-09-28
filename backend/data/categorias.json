@@ -1,0 +1,11 @@
+[
+  { "id": "c-ferias", "nombre": "Ferias y Mercados", "slug": "ferias", "color": "#F98017", "icono": "🏪" },
+  { "id": "c-cine-teatro", "nombre": "Cine y Teatro", "slug": "cine-teatro", "color": "#E53935", "icono": "🎬" },
+  { "id": "c-museos", "nombre": "Museos y Patrimonio", "slug": "museos", "color": "#8E24AA", "icono": "🏛️" },
+  { "id": "c-musica", "nombre": "Música y Peñas", "slug": "musica", "color": "#1E88E5", "icono": "🎵" },
+  { "id": "c-gastronomia", "nombre": "Bares Notables y Gastronomía", "slug": "gastronomia", "color": "#D81B60", "icono": "🍽️" },
+  { "id": "c-actividad-fisica", "nombre": "Clubes y Deportes", "slug": "actividad-fisica", "color": "#43A047", "icono": "⚽" },
+  { "id": "c-educacion", "nombre": "Bibliotecas y Educación", "slug": "educacion", "color": "#FB8C00", "icono": "📚" },
+  { "id": "c-comunitario", "nombre": "Centros Comunitarios", "slug": "comunitario", "color": "#00ACC1", "icono": "🤝" },
+  { "id": "c-naturaleza", "nombre": "Plazas y Espacios Verdes", "slug": "naturaleza", "color": "#2E7D32", "icono": "🌳" }
+]

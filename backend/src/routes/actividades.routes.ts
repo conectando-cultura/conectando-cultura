@@ -10,10 +10,17 @@ export function crearRutasActividades(auth: AuthService): Router {
 
   // ── Público ────────────────────────────────────────────────
 
-  // GET /api/actividades?barrioSlug=&categoriaSlug=&limite=
+  // GET /api/actividades?barrioSlug=&categoriaSlug=&limite=&admin=
   router.get("/", async (req, res) => {
     try {
-      const { barrioSlug, categoriaSlug, limite } = req.query as Record<string, string | undefined>;
+      const { barrioSlug, categoriaSlug, limite, admin } = req.query as Record<string, string | undefined>;
+      
+      if (admin === "true") {
+        const actividades = await servicio.listarTodasAdmin();
+        res.json({ actividades });
+        return;
+      }
+
       const actividades = await servicio.listar({
         barrioSlug,
         categoriaSlug,
@@ -66,10 +73,6 @@ export function crearRutasActividades(auth: AuthService): Router {
   router.post(
     "/",
     autenticacionRequerida(auth),
-    (req, res, next) => {
-      (req as any).adminRequerido = true;
-      next();
-    },
     adminRequerido,
     async (req, res) => {
       try {

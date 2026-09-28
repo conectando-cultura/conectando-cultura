@@ -1,0 +1,8 @@
+[
+  { "id": "b-mataderos", "nombre": "Mataderos", "slug": "mataderos" },
+  { "id": "b-liniers", "nombre": "Liniers", "slug": "liniers" },
+  { "id": "b-parque-avellaneda", "nombre": "Parque Avellaneda", "slug": "parque-avellaneda" },
+  { "id": "b-velez-sarsfield", "nombre": "Vélez Sarsfield", "slug": "velez-sarsfield" },
+  { "id": "b-villa-lugano", "nombre": "Villa Lugano", "slug": "villa-lugano" },
+  { "id": "b-villa-riachuelo", "nombre": "Villa Riachuelo", "slug": "villa-riachuelo" }
+]

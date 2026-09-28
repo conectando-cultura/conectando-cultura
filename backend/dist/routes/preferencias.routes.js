@@ -8,11 +8,11 @@ export function crearRutasPreferencias(auth) {
     router.get("/", autenticacionRequerida(auth), async (req, res) => {
         try {
             const usuario = req.usuarioPublico;
-            const prefs = await servicio.obtener(usuario.id);
-            if (!prefs) {
-                res.status(404).json({ mensaje: "Preferencias no encontradas." });
-                return;
-            }
+            const prefs = (await servicio.obtener(usuario.id)) ?? {
+                barrioId: null,
+                barrio: null,
+                categorias: []
+            };
             res.json({ preferencias: prefs });
         }
         catch (err) {

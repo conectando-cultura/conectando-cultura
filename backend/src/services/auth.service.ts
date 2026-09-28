@@ -91,4 +91,16 @@ export class AuthService {
   cerrarSesion(token: string): void {
     this.sesiones.eliminar(token);
   }
+
+  listarUsuarios(): UsuarioPublico[] {
+    return this.usuarios.listarTodos().map((u) => aPublico(u));
+  }
+
+  actualizarRol(id: string, rol: "usuario" | "admin"): UsuarioPublico {
+    const actualizado = this.usuarios.actualizarRol(id, rol);
+    if (!actualizado) {
+      throw new ErrorAplicacion("Usuario no encontrado.", 404);
+    }
+    return aPublico(actualizado);
+  }
 }

@@ -6,6 +6,7 @@ export interface Usuario {
   apellido: string;
   correo: string;
   contrasenaHash: string;
+  rol?: "usuario" | "admin";
   creadoEn: string;
 }
 
@@ -38,7 +39,13 @@ export interface DatosLogin {
 }
 
 export function aPublico(usuario: Usuario): UsuarioPublico {
-  return { id: usuario.id, nombre: usuario.nombre, apellido: usuario.apellido, correo: usuario.correo, rol: (usuario as any).rol ?? "usuario" };
+  return {
+    id: usuario.id,
+    nombre: usuario.nombre,
+    apellido: usuario.apellido,
+    correo: usuario.correo,
+    rol: usuario.rol ?? "usuario"
+  };
 }
 
 export class ErrorAplicacion extends Error {
