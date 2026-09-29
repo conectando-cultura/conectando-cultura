@@ -40,8 +40,11 @@ export default function AdminActividades() {
   const token = localStorage.getItem("cc_token") ?? "";
 
   useEffect(() => {
+    // El listado completo (incluye inactivas) es una ruta protegida:
+    // requiere token de admin. Barrios y categorías son públicos.
     Promise.all([
-      api<{ actividades: ActividadAdmin[] }>("/actividades?admin=true").catch(() => ({ actividades: [] })),
+      api<{ actividades: ActividadAdmin[] }>("/actividades/admin/todas", {}, token)
+        .catch(() => ({ actividades: [] })),
       api<{ barrios: Barrio[] }>("/actividades/barrios").catch(() => ({ barrios: [] })),
       api<{ categorias: Categoria[] }>("/actividades/categorias").catch(() => ({ categorias: [] }))
     ]).then(([a, b, c]) => {
@@ -49,7 +52,7 @@ export default function AdminActividades() {
       setBarrios(b.barrios ?? []);
       setCategorias(c.categorias ?? []);
     }).finally(() => setCargando(false));
-  }, []);
+  }, [token]);
 
   function abrirCrear() {
     setForm(FORM_VACIO());
@@ -111,7 +114,11 @@ export default function AdminActividades() {
         setMensaje({ tipo: "ok", texto: "Actividad actualizada." });
       }
       // Recargar lista
-      const { actividades: actActualizada } = await api<{ actividades: ActividadAdmin[] }>("/actividades?admin=true");
+      const { actividades: actActualizada } = await api<{ actividades: ActividadAdmin[] }>(
+        "/actividades/admin/todas",
+        {},
+        token
+      );
       setActividades(actActualizada);
       setTimeout(cerrarModal, 1200);
     } catch (err) {

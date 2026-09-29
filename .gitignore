@@ -1,12 +1,48 @@
-# Ignorar archivos del sistema operativo
+# ── Sistema operativo ─────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Ignorar directorio de dependencias y su contenido
+# ── Dependencias ─────────────────────────────────────────────
 node_modules/
+.pnpm-store/
 
-# Ignorar archivos de log con cualquier nombre
+# ── Build ────────────────────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
+
+# ── Entorno ──────────────────────────────────────────────────
+# Sólo se versiona .env.example
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Logs ─────────────────────────────────────────────────────
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Ignorar archivos de entorno específicos
-.env   
+# ── Herramientas de desarrollo / agentes ─────────────────────
+# No forman parte del proyecto: se regeneran solas.
+.hermes/
+.atl/
+.opencode/node_modules/
+.hermes/plans/
+*.gga
+hermes
+
+# ── Editores ─────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# ── Sistema / varios ─────────────────────────────────────────
+coverage/
+.vite/
+.cache/

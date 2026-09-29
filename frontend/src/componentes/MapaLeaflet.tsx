@@ -1,12 +1,12 @@
 import { LayersControl, MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
 import type { LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Actividad } from "../tipos";
 
-// Fix para el ícono de Leaflet en Vite
-import L from "leaflet";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+// Fix para el ícono de Leaflet en Vite.
+// Leaflet expone internamente `_getIconUrl` sin tipar, así que se
+// accede con un Record acotado en lugar de `any`.
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
@@ -15,6 +15,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png"
 });
+
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 
 interface Props {
   actividades: Actividad[];

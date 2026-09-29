@@ -1,48 +1,78 @@
 -- ============================================================
--- CONECTANDO CULTURA — Migración inicial
+-- CONECTANDO CULTURA — Migración 001: esquema inicial
 -- Supabase / PostgreSQL
 -- ============================================================
--- Esta migración crea:
---   1. Enum para barrios
---   2. Enum para categorías (rubros)
---   3. Enum para visibilidad
---   4. Tabla vecindes (barrios)
---   5. Tabla categorias
---   6. Tabla actividades
---   7. Tabla preferencias_usuario
---   8. Row Level Security (RLS)
---   9. Seed: 26 actividades reales de Mataderos + categorías
---   10. Seed: 1 admin + 3 usuarios de prueba
---   11. Trigger updated_at automático
+-- NOTA SOBRE AUTENTICACIÓN
+--   Este proyecto NO usa Supabase Auth. El login es propio
+--   (scrypt + token Bearer aleatorio, 7 días de vigencia) y la
+--   tabla `usuarios` la administra el backend. Por eso los `id`
+--   de usuario son TEXT (el generador actual produce `u<epoch>`),
+--   no UUID. Usar UUID rompería los inserts del backend.
+--
+-- NOTA SOBRE NOMBRES DE TABLA
+--   El backend consulta la tabla como `barrios` con columna
+--   `barrio_id` (ver backend/src/services/actividades.service.ts).
+--   Esta migración usa esos mismos nombres a propósito.
+--
+-- Contenido:
+--   1. Tabla barrios              (catálogo público)
+--   2. Tabla categorias           (catálogo público)
+--   3. Tabla usuarios             (auth propia)
+--   4. Tabla sesiones             (tokens Bearer)
+--   5. Tabla actividades          (contenido cultural)
+--   6. Tabla preferencias_usuario
+--   7. Índices
+--   8. Triggers updated_at
+--   9. Row Level Security
+--  10. Seed: barrios, categorías y 30 actividades de Mataderos
 -- ============================================================
 
 BEGIN;
 
--- ── 1. Enums ────────────────────────────────────────────────
+-- ── 1. Tabla barrios ────────────────────────────────────────
 
-CREATE TYPE visibilidad AS ENUM ('publica', 'privada', 'oculta');
-
--- ── 2. Tabla vecindes ───────────────────────────────────────
-
-CREATE TABLE vecindes (
+CREATE TABLE barrios (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre      TEXT NOT NULL UNIQUE,
   slug        TEXT NOT NULL UNIQUE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ── 3. Tabla categorias ────────────────────────────────────
+-- ── 2. Tabla categorias ─────────────────────────────────────
 
 CREATE TABLE categorias (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre      TEXT NOT NULL UNIQUE,
   slug        TEXT NOT NULL UNIQUE,
   color       CHAR(7) NOT NULL,           -- "#rrggbb"
-  icono       TEXT NOT NULL,              -- emoji o string
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  icono       TEXT NOT NULL,              -- emoji
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT categorias_color_hex CHECK (color ~ '^#[0-9A-Fa-f]{6}$')
 );
 
--- ── 4. Tabla actividades ───────────────────────────────────
+-- ── 3. Tabla usuarios (auth propia, no Supabase Auth) ───────
+
+CREATE TABLE usuarios (
+  id              TEXT PRIMARY KEY,
+  nombre          TEXT NOT NULL,
+  apellido        TEXT NOT NULL,
+  correo          TEXT NOT NULL UNIQUE,
+  contrasena_hash TEXT NOT NULL,          -- formato "sal:hash" (scrypt)
+  rol             TEXT NOT NULL DEFAULT 'usuario'
+                    CONSTRAINT usuarios_rol_valido CHECK (rol IN ('usuario', 'admin')),
+  creado_en       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ── 4. Tabla sesiones (tokens Bearer) ───────────────────────
+
+CREATE TABLE sesiones (
+  token       TEXT PRIMARY KEY,
+  usuario_id  TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  expira_en   TIMESTAMPTZ NOT NULL,
+  creado_en   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ── 5. Tabla actividades ────────────────────────────────────
 
 CREATE TABLE actividades (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,26 +86,45 @@ CREATE TABLE actividades (
   url           TEXT NOT NULL DEFAULT '',
   imagen_url    TEXT NOT NULL DEFAULT '',
   categoria_id  UUID NOT NULL REFERENCES categorias(id) ON DELETE RESTRICT,
-  vecind_id     UUID NOT NULL REFERENCES vecindes(id) ON DELETE RESTRICT,
-  visibilidad   visibilidad NOT NULL DEFAULT 'publica',
+  barrio_id     UUID NOT NULL REFERENCES barrios(id)     ON DELETE RESTRICT,
+  visibilidad   TEXT NOT NULL DEFAULT 'publica'
+                  CONSTRAINT actividades_visibilidad_valida
+                    CHECK (visibilidad IN ('publica', 'privada', 'oculta')),
   destacado     BOOLEAN NOT NULL DEFAULT FALSE,
+  activo        BOOLEAN NOT NULL DEFAULT TRUE,           -- borrado lógico
+  created_by    TEXT REFERENCES usuarios(id) ON DELETE SET NULL,
+  updated_by    TEXT REFERENCES usuarios(id) ON DELETE SET NULL,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(slug, vecind_id)
+  UNIQUE (slug, barrio_id),
+  CONSTRAINT actividades_slug_formato CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  CONSTRAINT actividades_lat_rango CHECK (lat BETWEEN  -90 AND  90),
+  CONSTRAINT actividades_lng_rango CHECK (lng BETWEEN -180 AND 180)
 );
 
--- ── 5. Tabla preferencias_usuario ──────────────────────────
---   Cada usuario registrado tiene UNA fila con sus preferencias.
+-- ── 6. Tabla preferencias_usuario ───────────────────────────
+--   Una fila por usuario. Las categorías se guardan como array
+--   de UUID; la expansión a objetos la hace el servicio.
 
 CREATE TABLE preferencias_usuario (
-  usuario_id    UUID NOT NULL PRIMARY KEY,
-  barrio_id     UUID REFERENCES vecindes(id) ON DELETE SET NULL,
+  usuario_id    TEXT PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+  barrio_id     UUID REFERENCES barrios(id) ON DELETE SET NULL,
   categoria_ids UUID[] NOT NULL DEFAULT '{}',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ── 6. trigger updated_at ──────────────────────────────────
+-- ── 7. Índices ──────────────────────────────────────────────
+
+CREATE INDEX idx_actividades_barrio_id   ON actividades(barrio_id);
+CREATE INDEX idx_actividades_categoria_id ON actividades(categoria_id);
+CREATE INDEX idx_actividades_activas     ON actividades(activo) WHERE activo;
+CREATE INDEX idx_actividades_slug        ON actividades(slug);
+CREATE INDEX idx_sesiones_usuario_id      ON sesiones(usuario_id);
+CREATE INDEX idx_sesiones_expira_en       ON sesiones(expira_en);
+CREATE INDEX idx_usuarios_rol            ON usuarios(rol);
+
+-- ── 8. Trigger updated_at ───────────────────────────────────
 
 CREATE OR REPLACE FUNCTION actualizar_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -93,95 +142,114 @@ CREATE TRIGGER tr_preferencias_updated_at
   BEFORE UPDATE ON preferencias_usuario
   FOR EACH ROW EXECUTE FUNCTION actualizar_updated_at();
 
--- ── 7. Row Level Security ───────────────────────────────────
+-- ── 9. Row Level Security ───────────────────────────────────
+-- El backend opera con la SERVICE ROLE KEY, que ignora RLS: el
+-- control de acceso real vive en el middleware (autenticacionRequerida
+-- + adminRequerido) y en las validaciones de los servicios.
+-- Estas políticas son defensa en profundidad para el caso de que
+-- alguien llegue a la base con la anon key.
 
-ALTER TABLE vecindes         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE categorias       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE actividades      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE barrios              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categorias           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE actividades          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sesiones             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE preferencias_usuario ENABLE ROW LEVEL SECURITY;
 
--- vecindes y categorias son lectura pública
-CREATE POLICY "Cualquiera lee vecindes"  ON vecindes  FOR SELECT USING (true);
-CREATE POLICY "Cualquiera lee categorias" ON categorias FOR SELECT USING (true);
+-- Catálogos: lectura pública
+CREATE POLICY "lectura publica de barrios"    ON barrios    FOR SELECT USING (true);
+CREATE POLICY "lectura publica de categorias" ON categorias FOR SELECT USING (true);
 
--- actividades: lectura pública para visibilidad pública
-CREATE POLICY "Cualquiera lee actividades publicas"
+-- Actividades: el público sólo ve las activas y públicas
+CREATE POLICY "lectura publica de actividades"
   ON actividades FOR SELECT
-  USING (visibilidad IN ('publica'));
+  USING (activo = true AND visibilidad = 'publica');
 
--- administradores ven todas las actividades
-CREATE POLICY "Admin lee todas las actividades"
-  ON actividades FOR SELECT
+-- Actividades: escritura sólo admins
+CREATE POLICY "escritura admin de actividades"
+  ON actividades FOR ALL
   USING (
-    EXISTS (
-      SELECT 1 FROM preferencias_usuario pu
-      WHERE pu.usuario_id = auth.uid()
-        AND pu.barrio_id IS NULL   -- marca de admin
-    )
+    EXISTS (SELECT 1 FROM usuarios u WHERE u.id = auth.uid()::text AND u.rol = 'admin')
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM usuarios u WHERE u.id = auth.uid()::text AND u.rol = 'admin')
   );
 
--- solo el dueño de preferencias las lee
-CREATE POLICY "Usuario lee sus propias preferencias"
-  ON preferencias_usuario FOR SELECT
-  USING (usuario_id = auth.uid());
+-- Preferencias: sólo su dueño
+CREATE POLICY "acceso propio a preferencias"
+  ON preferencias_usuario FOR ALL
+  USING      (usuario_id = auth.uid()::text)
+  WITH CHECK (usuario_id = auth.uid()::text);
 
--- solo el dueño actualiza sus preferencias
-CREATE POLICY "Usuario actualiza sus propias preferencias"
-  ON preferencias_usuario FOR UPDATE
-  USING (usuario_id = auth.uid());
+-- Usuarios: uno mismo, o cualquier admin
+CREATE POLICY "lectura de usuarios"
+  ON usuarios FOR SELECT
+  USING (
+    id = auth.uid()::text
+    OR EXISTS (SELECT 1 FROM usuarios u2 WHERE u2.id = auth.uid()::text AND u2.rol = 'admin')
+  );
 
--- ── 8. Seed: vecindes ──────────────────────────────────────
+-- Sesiones: sólo su dueño
+CREATE POLICY "acceso propio a sesiones"
+  ON sesiones FOR ALL
+  USING      (usuario_id = auth.uid()::text)
+  WITH CHECK (usuario_id = auth.uid()::text);
 
-INSERT INTO vecindes (nombre, slug) VALUES
-  ('Mataderos',        'mataderos'),
-  ('Liniers',         'liniers'),
-  ('Velez Sarsfield',  'velez-sarsfield'),
-  ('Parque Avellaneda','parque-avellaneda'),
-  ('Villa Lugano',    'villa-lugano'),
-  ('Villa Riachuelo', 'villa-riachuelo');
+-- ── 10. Seed ────────────────────────────────────────────────
 
--- ── 9. Seed: categorías ────────────────────────────────────
---  Colores inspirados en el DS 60-30-10 (naranja cálido #F98017)
+-- 10.1 Barrios de la Comuna 9 y aledaños
+INSERT INTO barrios (nombre, slug) VALUES
+  ('Mataderos',         'mataderos'),
+  ('Liniers',           'liniers'),
+  ('Vélez Sarsfield',   'velez-sarsfield'),
+  ('Parque Avellaneda', 'parque-avellaneda'),
+  ('Villa Lugano',      'villa-lugano'),
+  ('Villa Riachuelo',   'villa-riachuelo');
 
+-- 10.2 Categorías (color alineado al Design System 60-30-10)
 INSERT INTO categorias (nombre, slug, color, icono) VALUES
-  ('Ferias y Mercados',     'ferias',          '#F98017', '🏪'),
-  ('Cine y Teatro',         'cine-teatro',     '#E53935', '🎬'),
-  ('Museos y Cultura',      'museos',          '#8E24AA', '🏛️'),
-  ('Música y Espectáculos', 'musica',          '#1E88E5', '🎵'),
-  ('Gastronomía',           'gastronomia',     '#D81B60', '🍽️'),
+  ('Ferias y Mercados',     'ferias',           '#F98017', '🏪'),
+  ('Cine y Teatro',         'cine-teatro',      '#E53935', '🎬'),
+  ('Museos y Cultura',      'museos',           '#8E24AA', '🏛️'),
+  ('Música y Espectáculos', 'musica',           '#1E88E5', '🎵'),
+  ('Gastronomía',           'gastronomia',      '#D81B60', '🍽️'),
   ('Actividad Física',      'actividad-fisica', '#43A047', '⚽'),
   ('Educación y Talleres',  'educacion',        '#FB8C00', '📚'),
-  ('Eventos Comunitarios', 'comunitario',      '#00ACC1', '🤝'),
-  ('Naturaleza y Parques',  'naturaleza',      '#2E7D32', '🌳');
+  ('Eventos Comunitarios',  'comunitario',      '#00ACC1', '🤝'),
+  ('Naturaleza y Parques',  'naturaleza',       '#2E7D32', '🌳');
 
--- ── 10. Seed: actividades de Mataderos y alrededores ────────
---
---  Coordenadas tomadas de Google Maps / OpenStreetMap.
---  Slugs deliberadamente distintos para evitar colisiones con inserts futuros.
+-- 10.3 Actividades de Mataderos
+--     INSERT ... VALUES directo: cada tupla se castea al tipo de la
+--     columna destino (incluida la subconsulta de la FK). Es la
+--     forma más simple y la que evita los errores de alias del
+--     patrón "SELECT * FROM (VALUES ...) AS t(...)".
 
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado) WITH
-  cats AS (SELECT id, slug FROM categorias),
-  vec AS (SELECT id, slug FROM vecindes WHERE slug = 'mataderos')
-SELECT * FROM (
-  -- FERIAS Y MERCADOS
-  VALUES
+-- FERIAS Y MERCADOS
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
   ('Feria de Mataderos',
    'feria-de-mataderos',
-   'La feria más tradicional del barrio, con artesanías, gastronomía criolla, shows de tango y danzas folklóricas chaqueñas. Imperdible los domingos.',
+   'La feria más tradicional del barrio: artesanías, gastronomía criolla, shows de tango y danzas folklóricas. Imperdible los domingos.',
    'Domingos de 9:00 a 18:00',
    'Av. Juan B. Justo 5700, CABA',
    -34.6533, -58.5237,
-   'https://www.instagram.com/feriademy/',
-   (SELECT id FROM cats WHERE slug = 'ferias'), (SELECT id FROM vec), 'publica', true),
+   '',
+   (SELECT id FROM categorias WHERE slug = 'ferias'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', TRUE),
 
   ('Mercado de La Bodu',
    'mercado-la-bodu',
-   'Mercado gastronómico nórdico y criollo. Productos artesanales, cafetería y eventos culturales.',
+   'Mercado gastronómico con productos artesanales, cafetería y eventos culturales.',
    'Viernes a domingos de 10:00 a 20:00',
    'Av. Juan B. Justo 5850, CABA',
    -34.6515, -58.5218,
    'https://labodu.com.ar/',
-   (SELECT id FROM cats WHERE slug = 'gastronomia'), (SELECT id FROM vec), 'publica', false),
+   (SELECT id FROM categorias WHERE slug = 'gastronomia'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE),
 
   ('Feria Cultural del Barrio',
    'feria-cultural-barrio',
@@ -190,21 +258,25 @@ SELECT * FROM (
    'Plaza Fray José de la Quintana, CABA',
    -34.6550, -58.5250,
    '',
-   (SELECT id FROM cats WHERE slug = 'ferias'), (SELECT id FROM vec), 'publica', false)
-) AS t(nombre,slug,descripcion,horarios,direccion,lat,lng,url,categoria_id,vecind_id,visibilidad,destacado);
+   (SELECT id FROM categorias WHERE slug = 'ferias'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- CINE Y TEATRO
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
   ('Cine Teatro El Plata',
    'cine-teatro-el-plata',
-   'El cine ícono del barrio, hoy convertido en centro cultural con функции de películas independientes, teatro y ciclos de cine-debate.',
-   'Variable según programación. Consultar web.',
+   'El cine ícono del barrio, hoy convertido en centro cultural: películas independientes, teatro y ciclos de cine-debate.',
+   'Variable según programación. Consultar el sitio oficial.',
    'Av. Juan B. Justo 6098, CABA',
    -34.6490, -58.5200,
-   'https://www.facebook.com/cinelaplata/',
-   (SELECT id FROM cats WHERE slug = 'cine-teatro'), (SELECT id FROM vec), 'publica', true),
+   '',
+   (SELECT id FROM categorias WHERE slug = 'cine-teatro'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', TRUE),
 
   ('Teatro del Pueblo',
    'teatro-del-pueblo-mataderos',
@@ -213,194 +285,197 @@ SELECT * FROM (VALUES
    'Portela 1250, CABA',
    -34.6530, -58.5300,
    '',
-   (SELECT id FROM cats WHERE slug = 'cine-teatro'), (SELECT id FROM vec), 'publica', false)
-) AS t;
+   (SELECT id FROM categorias WHERE slug = 'cine-teatro'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- MUSEOS Y CULTURA
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
   ('Museo de la Impresión y la Cultura Popular',
    'museo-imprenta',
    'Museo comunitario que rescata la memoria de la industria gráfico-artística del barrio. Visitas guiadas y talleres.',
-   'Lunes a viernes 9:00 a 17:00',
+   'Lunes a viernes de 9:00 a 17:00',
    'Carhue 3450, CABA',
    -34.6520, -58.5280,
    'https://www.museoimprenta.com.ar/',
-   (SELECT id FROM cats WHERE slug = 'museos'), (SELECT id FROM vec), 'publica', false),
+   (SELECT id FROM categorias WHERE slug = 'museos'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE),
 
   ('Centro Cultural Casa de la Cultura',
    'centro-cultural-casa-de-la-cultura',
-   'Sedes de actividades culturales, expos y reuniones vecinales.',
-   'Lunes a domingos 9:00 a 20:00',
+   'Sede de actividades culturales, exposiciones y reuniones vecinales.',
+   'Lunes a domingos de 9:00 a 20:00',
    'Av. Directorio 4500, CABA',
    -34.6500, -58.5260,
    '',
-   (SELECT id FROM cats WHERE slug = 'museos'), (SELECT id FROM vec), 'publica', false)
-) AS t;
+   (SELECT id FROM categorias WHERE slug = 'museos'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- MÚSICA Y ESPECTÁCULOS
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
   ('Peña de los Borges',
    'pena-borges-mataderos',
-   'Peña folklórica con músicos en vivo, milongas y fogones. Tradition guarantee.',
-   'Sábados 21:00',
+   'Peña folklórica con músicos en vivo, milongas y fogones.',
+   'Sábados a las 21:00',
    'Chivilcoy 2100, CABA',
    -34.6560, -58.5290,
    '',
-   (SELECT id FROM cats WHERE slug = 'musica'), (SELECT id FROM vec), 'publica', false),
+   (SELECT id FROM categorias WHERE slug = 'musica'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE),
 
   ('Boliche La Tuerca',
    'boliche-la-tuerca',
    'Centro cultural y boliche con música en vivo, DJ sets y ciclos de tango electrónico.',
-   'Viernes y sábados 22:00 en adelante',
+   'Viernes y sábados desde las 22:00',
    'Av. Juan B. Justo 6300, CABA',
    -34.6470, -58.5180,
-   'https://www.instagram.com/latuercaba/',
-   (SELECT id FROM cats WHERE slug = 'musica'), (SELECT id FROM vec), 'publica', false)
-) AS t;
+   '',
+   (SELECT id FROM categorias WHERE slug = 'musica'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- GASTRONOMÍA
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
   ('Bar El Progreso',
    'bar-el-progreso-mataderos',
    'Bar histórico del barrio, punto de encuentro de vecinos, con facturas y café.',
-   'Lunes a domingos 6:00 a 20:00',
+   'Lunes a domingos de 6:00 a 20:00',
    'Av. Juan B. Justo 5750, CABA',
    -34.6525, -58.5230,
    '',
-   (SELECT id FROM cats WHERE slug = 'gastronomia'), (SELECT id FROM vec), 'publica', false),
+   (SELECT id FROM categorias WHERE slug = 'gastronomia'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE),
 
-  ('Pizzería Los nietos',
+  ('Pizzería Los Nietos',
    'pizzeria-los-nietos',
-   'Pizzería de barrio con masa madre y hornos de leña. Favorita de los vecinos.',
-   'Martes a domingos 19:00 a 00:00',
+   'Pizzería de barrio con masa madre y hornos de leña.',
+   'Martes a domingos de 19:00 a 00:00',
    'Carhue 2150, CABA',
    -34.6550, -58.5270,
    '',
-   (SELECT id FROM cats WHERE slug = 'gastronomia'), (SELECT id FROM vec), 'publica', false)
-) AS t;
+   (SELECT id FROM categorias WHERE slug = 'gastronomia'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- ACTIVIDAD FÍSICA
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
   ('Club Atlético Atlanta',
    'club-atletico-atlanta',
-   'El club del barrio, con fútbol, volleyball, paddle y una rica cantina. Alma y vida de Mataderos.',
-   'Lunes a domingos 7:00 a 22:00',
-   ' Humboldt 325, CABA',
+   'El club del barrio: fútbol, volleyball, pádel y cantina. Alma y vida de Mataderos.',
+   'Lunes a domingos de 7:00 a 22:00',
+   'Humboldt 325, CABA',
    -34.6013, -58.4494,
    'https://www.clubatleticoatlanta.com/',
-   (SELECT id FROM cats WHERE slug = 'actividad-fisica'), (SELECT id FROM vec), 'publica', true),
+   (SELECT id FROM categorias WHERE slug = 'actividad-fisica'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', TRUE),
 
   ('Complejo Deportivo Mataderos',
    'complejo-deportivo-mataderos',
-   'Canchas de fútbol 5, paddle y gimansio. Torneos barriales.',
-   'Lunes a domingos 8:00 a 23:00',
+   'Canchas de fútbol 5, pádel y gimnasio. Torneos barriales.',
+   'Lunes a domingos de 8:00 a 23:00',
    'Av. Escalada 2100, CABA',
    -34.6580, -58.5340,
    '',
-   (SELECT id FROM cats WHERE slug = 'actividad-fisica'), (SELECT id FROM vec), 'publica', false)
-) AS t;
+   (SELECT id FROM categorias WHERE slug = 'actividad-fisica'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- EDUCACIÓN Y TALLERES
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
-  ('Escuela Técnica N°20 DE 21 "Ing. César Ortiz"
-',
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
+  ('Escuela Técnica N°20 "Ing. César Ortiz"',
    'escuela-tecnica-20-mataderos',
    'Escuela técnica del barrio con orientación en informática, electrónica y mecánica. Centro de la comunidad.',
-   'Lunes a viernes 7:00 a 20:00',
+   'Lunes a viernes de 7:00 a 20:00',
    'Cura Brunel 3449, CABA',
    -34.6525, -58.5275,
-   'https://www.instagram.com/ets20oficial/',
-   (SELECT id FROM cats WHERE slug = 'educacion'), (SELECT id FROM vec), 'publica', true),
+   '',
+   (SELECT id FROM categorias WHERE slug = 'educacion'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', TRUE),
 
   ('Biblioteca Popular Juan José Saer',
    'biblioteca-juan-jose-saer',
-   'Biblioteca barrial con sala de lectura, computers, wifi gratuito y talleres de lectura.',
-   'Lunes a viernes 9:00 a 19:00, sábados 9:00 a 13:00',
+   'Biblioteca barrial con sala de lectura, computadoras, wifi gratuito y talleres de lectura.',
+   'Lunes a viernes de 9:00 a 19:00, sábados de 9:00 a 13:00',
    'Monte Russo 2147, CABA',
    -34.6570, -58.5280,
    '',
-   (SELECT id FROM cats WHERE slug = 'educacion'), (SELECT id FROM vec), 'publica', false),
+   (SELECT id FROM categorias WHERE slug = 'educacion'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE),
 
   ('Centro de Día El Alero',
    'centro-de-dia-el-alero',
    'Talleres productivos, huerta comunitaria y cocina para jóvenes y adultos del barrio.',
-   'Lunes a viernes 9:00 a 17:00',
+   'Lunes a viernes de 9:00 a 17:00',
    'Chivilcoy 850, CABA',
    -34.6540, -58.5310,
    '',
-   (SELECT id FROM cats WHERE slug = 'educacion'), (SELECT id FROM vec), 'publica', false)
-) AS t;
+   (SELECT id FROM categorias WHERE slug = 'educacion'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- EVENTOS COMUNITARIOS
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
   ('Centro de Jubilados Mataderos',
    'centro-jubilados-mataderos',
    'Centro comunitario para adultos mayores con almuerzo, actividades recreativas y turismo social.',
-   'Lunes a viernes 9:00 a 17:00',
+   'Lunes a viernes de 9:00 a 17:00',
    'Murguiondo 2148, CABA',
    -34.6585, -58.5320,
    '',
-   (SELECT id FROM cats WHERE slug = 'comunitario'), (SELECT id FROM vec), 'publica', false),
+   (SELECT id FROM categorias WHERE slug = 'comunitario'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE),
 
   ('Parroquia San Juan XXIII',
    'parroquia-san-juan-xxiii-mataderos',
-   'Parrroquia del barrio con misa semanal, grupos juveniles, servicio social y eventos solidarios.',
-   'Misas: domingos 9:00 y 19:00',
+   'Parroquia del barrio con misa semanal, grupos juveniles, servicio social y eventos solidarios.',
+   'Misas: domingos a las 9:00 y 19:00',
    'Cura Brunel 3049, CABA',
    -34.6535, -58.5265,
-   'https://www.facebook.com/sanjuan23mataderos/',
-   (SELECT id FROM cats WHERE slug = 'comunitario'), (SELECT id FROM vec), 'publica', false)
-) AS t;
+   '',
+   (SELECT id FROM categorias WHERE slug = 'comunitario'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 -- NATURALEZA Y PARQUES
-INSERT INTO actividades (nombre, slug, descripcion, horarios, direccion, lat, lng, url, categoria_id, vecind_id, visibilidad, destacado)
-WITH cats AS (SELECT id, slug FROM categorias), vec AS (SELECT id, slug FROM vecindes)
-SELECT * FROM (VALUES
-  ('Parque de lawdade Matader',
+INSERT INTO actividades
+  (nombre, slug, descripcion, horarios, direccion, lat, lng, url,
+   categoria_id, barrio_id, visibilidad, destacado)
+VALUES
+  ('Parque Lineal de Mataderos',
    'parque-lineal-mataderos',
    'Espacio verde lineal con sendas, bancos y juegos para niños. Ideal para caminar.',
    'Abierto las 24 horas',
    'Av. Juan B. Justo entre Portela y Murguiondo, CABA',
    -34.6545, -58.5255,
    '',
-   (SELECT id FROM cats WHERE slug = 'naturaleza'), (SELECT id FROM vec), 'publica', false)
-) AS t;
-
--- ── 11. Seed: preferencias de prueba ────────────────────────
---
---  NOTA: Los usuarios se crean vía Supabase Auth (dashboard o API).
---  Crear manualmente en Supabase Dashboard > Authentication > Users:
---    admin@conectandocultura.ar  (rol: admin)
---    marta.gonzalez@gmail.com    (rol: usuario)
---    juan.perez@gmail.com        (rol: usuario)
---
---  Las contraseñas se configuran desde el dashboard de Supabase.
---  Las filas de preferencias_usuario se crean automáticamente via trigger
---  (ver trigger abajo) la primera vez que cada usuario inicia sesión.
-
--- Trigger para crear preferencias automáticamente al primer login
-CREATE OR REPLACE FUNCTION crear_preferencias_al_registrar()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  INSERT INTO preferencias_usuario (usuario_id) VALUES (NEW.id);
-  RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER tr_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION crear_preferencias_al_registrar();
+   (SELECT id FROM categorias WHERE slug = 'naturaleza'),
+   (SELECT id FROM barrios    WHERE slug = 'mataderos'),
+   'publica', FALSE);
 
 COMMIT;

@@ -9,36 +9,44 @@ declare module "express-serve-static-core" {
 }
 
 /**
- * Middleware de protección de rutas ("Protección de Rutas" del backlog,
- * versión para usuarios): exige un token válido y adjunta el usuario
- * autenticado a la petición.
+ * Exige un token Bearer válido y adjunta el usuario a la petición.
+ * El servicio es asíncrono (Supabase), así que el middleware también.
  */
 export function autenticacionRequerida(auth: AuthService) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const cabecera = req.headers.authorization ?? "";
-    const token = cabecera.startsWith("Bearer ") ? cabecera.slice(7) : null;
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const cabecera = req.headers.authorization ?? "";
+      const token = cabecera.startsWith("Bearer ") ? cabecera.slice(7).trim() : null;
 
-    if (!token) {
-      res.status(401).json({ mensaje: "Sesión no válida. Iniciá sesión nuevamente." });
-      return;
+      if (!token) {
+        res.status(401).json({ mensaje: "Sesión no válida. Iniciá sesión nuevamente." });
+        return;
+      }
+
+      const usuario = await auth.obtenerUsuarioPorToken(token);
+      if (!usuario) {
+        res.status(401).json({ mensaje: "Sesión expirada o no válida. Iniciá sesión nuevamente." });
+        return;
+      }
+
+      req.usuarioPublico = usuario;
+      req.token = token;
+      next();
+    } catch (error) {
+      // Un fallo de base de datos no es "no autenticado": es un 500.
+      console.error(error);
+      res.status(500).json({ mensaje: "No se pudo verificar la sesión. Intentá nuevamente." });
     }
-
-    const usuario = auth.obtenerUsuarioPorToken(token);
-    if (!usuario) {
-      res.status(401).json({ mensaje: "Sesión expirada o no válida. Iniciá sesión nuevamente." });
-      return;
-    }
-
-    req.usuarioPublico = usuario;
-    req.token = token;
-    next();
   };
 }
 
 /**
- * Middleware de protección admin: exige que el usuario autenticado
- * tenga rol "admin" en la base de datos de Supabase.
- * Debe usarse DESPUÉS de autenticacionRequerida.
+ * Exige rol "admin" sobre el usuario ya autenticado.
+ * Usar SIEMPRE después de autenticacionRequerida.
  */
 export function adminRequerido(
   req: Request,
@@ -47,7 +55,7 @@ export function adminRequerido(
 ): void {
   const usuario = req.usuarioPublico;
   if (!usuario) {
-    // No debería ocurrir si se encadenó correctamente, pero por seguridad
+    // Sólo posible si se encadenó mal; se responde 401 por seguridad.
     res.status(401).json({ mensaje: "Sesión no válida." });
     return;
   }

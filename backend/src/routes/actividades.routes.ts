@@ -10,16 +10,11 @@ export function crearRutasActividades(auth: AuthService): Router {
 
   // ── Público ────────────────────────────────────────────────
 
-  // GET /api/actividades?barrioSlug=&categoriaSlug=&limite=&admin=
+  // GET /api/actividades?barrioSlug=&categoriaSlug=&limite=
+  // Catálogo público: sólo actividades activas.
   router.get("/", async (req, res) => {
     try {
-      const { barrioSlug, categoriaSlug, limite, admin } = req.query as Record<string, string | undefined>;
-      
-      if (admin === "true") {
-        const actividades = await servicio.listarTodasAdmin();
-        res.json({ actividades });
-        return;
-      }
+      const { barrioSlug, categoriaSlug, limite } = req.query as Record<string, string | undefined>;
 
       const actividades = await servicio.listar({
         barrioSlug,
@@ -32,6 +27,25 @@ export function crearRutasActividades(auth: AuthService): Router {
       res.status(500).json({ mensaje: "Error al obtener actividades." });
     }
   });
+
+  // GET /api/actividades/admin/todas
+  // Listado completo (incluye inactivas). Va en una ruta separada y
+  // protegida: si compartiera handler con la pública, el flag `admin=true`
+  // expondría las actividades dadas de baja a cualquier visitante.
+  router.get(
+    "/admin/todas",
+    autenticacionRequerida(auth),
+    adminRequerido,
+    async (_req, res) => {
+      try {
+        const actividades = await servicio.listarTodasAdmin();
+        res.json({ actividades });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ mensaje: "Error al obtener actividades." });
+      }
+    }
+  );
 
   // GET /api/actividades/barrios
   router.get("/barrios", async (_req, res) => {

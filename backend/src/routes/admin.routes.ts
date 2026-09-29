@@ -1,104 +1,110 @@
 import { Router } from "express";
 import { autenticacionRequerida, adminRequerido } from "../middlewares/autenticacion.middleware.js";
 import type { AuthService } from "../services/auth.service.js";
-import { supabaseAdmin, esSupabaseConfigurado } from "../lib/supabase.js";
-import { localDataRepo } from "../repositories/local-data.repository.js";
+import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
+import { ErrorAplicacion } from "../types.js";
+
+interface ErrorPostgrest {
+  code?: string;
+  message?: string;
+}
+
+function describirError(error: ErrorPostgrest | null): string {
+  if (!error) return "Error desconocido de Supabase.";
+  if (error.code === "PGRST116") return "Usuario no encontrado.";
+  if (error.code === "23505") return "Ese correo ya está registrado.";
+  return error.message || "Error de base de datos.";
+}
 
 export function crearRutasAdmin(auth: AuthService): Router {
   const router = Router();
 
-  // Todas las rutas admin requieren auth + rol admin
+  // Todo /api/admin exige sesión + rol admin
   router.use(autenticacionRequerida(auth), adminRequerido);
 
   // GET /api/admin/estadisticas
   router.get("/estadisticas", async (_req, res) => {
     try {
-      if (esSupabaseConfigurado()) {
-        try {
-          const [actividades, usuarios, prefs] = await Promise.all([
-            supabaseAdmin.from("actividades").select("id", { count: "exact", head: true }),
-            supabaseAdmin.from("usuarios").select("id", { count: "exact", head: true }),
-            supabaseAdmin.from("preferencias_usuario").select("id", { count: "exact", head: true })
-          ]);
+      exigirSupabase();
 
-          res.json({
-            totalActividades: actividades.count ?? 0,
-            totalUsuarios: usuarios.count ?? 0,
-            totalPreferencias: prefs.count ?? 0,
-            fecha: new Date().toISOString()
-          });
-          return;
-        } catch {
-          // Fallback a repositorio local
-        }
-      }
+      const [totalAct, activas, usuarios, preferencias] = await Promise.all([
+        supabaseAdmin.from("actividades").select("id", { count: "exact", head: true }),
+        supabaseAdmin.from("actividades").select("id", { count: "exact", head: true }).eq("activo", true),
+        supabaseAdmin.from("usuarios").select("id", { count: "exact", head: true }),
+        supabaseAdmin.from("preferencias_usuario").select("usuario_id", { count: "exact", head: true })
+      ]);
 
-      res.json(localDataRepo.obtenerEstadisticas());
+      const error = totalAct.error ?? activas.error ?? usuarios.error ?? preferencias.error;
+      if (error) throw new Error(describirError(error));
+
+      res.json({
+        totalActividades: totalAct.count ?? 0,
+        actividadesActivas: activas.count ?? 0,
+        totalUsuarios: usuarios.count ?? 0,
+        totalPreferencias: preferencias.count ?? 0,
+        fecha: new Date().toISOString()
+      });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ mensaje: "Error al obtener estadísticas." });
+      res.status(500).json({
+        mensaje: err instanceof Error ? err.message : "Error al obtener estadísticas."
+      });
     }
   });
 
   // GET /api/admin/usuarios
   router.get("/usuarios", async (_req, res) => {
     try {
-      if (esSupabaseConfigurado()) {
-        try {
-          const { data, error } = await supabaseAdmin
-            .from("usuarios")
-            .select("id, nombre, apellido, correo, rol, creado_en")
-            .order("creado_en", { ascending: false })
-            .limit(100);
+      exigirSupabase();
 
-          if (!error && data) {
-            res.json({ usuarios: data });
-            return;
-          }
-        } catch {
-          // Fallback
-        }
-      }
+      const { data, error } = await supabaseAdmin
+        .from("usuarios")
+        // nunca seleccionar contrasena_hash
+        .select("id, nombre, apellido, correo, rol, creado_en")
+        .order("creado_en", { ascending: false })
+        .limit(100);
 
-      res.json({ usuarios: auth.listarUsuarios() });
+      if (error) throw new Error(describirError(error));
+      res.json({ usuarios: data ?? [] });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ mensaje: "Error al obtener usuarios." });
+      res.status(500).json({
+        mensaje: err instanceof Error ? err.message : "Error al obtener usuarios."
+      });
     }
   });
 
   // PATCH /api/admin/usuarios/:id/rol
   router.patch("/usuarios/:id/rol", async (req, res) => {
     try {
-      const { rol } = req.body;
+      const { rol } = req.body as { rol?: unknown };
       if (rol !== "usuario" && rol !== "admin") {
         res.status(400).json({ mensaje: "Rol inválido. Debe ser 'usuario' o 'admin'." });
         return;
       }
 
-      if (esSupabaseConfigurado()) {
-        try {
-          const { data, error } = await supabaseAdmin
-            .from("usuarios")
-            .update({ rol })
-            .eq("id", req.params.id)
-            .select()
-            .single();
+      exigirSupabase();
 
-          if (!error && data) {
-            res.json({ usuario: data });
-            return;
-          }
-        } catch {
-          // Fallback
-        }
+      const { data, error } = await supabaseAdmin
+        .from("usuarios")
+        .update({ rol })
+        .eq("id", req.params.id)
+        .select("id, nombre, apellido, correo, rol, creado_en")
+        .maybeSingle();
+
+      if (error) throw new Error(describirError(error));
+      if (!data) {
+        res.status(404).json({ mensaje: "Usuario no encontrado." });
+        return;
       }
 
-      const usuario = auth.actualizarRol(req.params.id, rol);
-      res.json({ usuario });
-    } catch (err: any) {
+      res.json({ usuario: data });
+    } catch (err) {
       console.error(err);
-      res.status(err.status ?? 500).json({ mensaje: err.message ?? "Error al actualizar rol." });
+      const status = err instanceof ErrorAplicacion ? err.status : 500;
+      res.status(status).json({
+        mensaje: err instanceof Error ? err.message : "Error al actualizar rol."
+      });
     }
   });
 
