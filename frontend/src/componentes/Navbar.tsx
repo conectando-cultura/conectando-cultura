@@ -33,6 +33,9 @@ export default function Navbar() {
                 ⚙️ Admin
               </Link>
             )}
+            <Link className="nav-enlace" to="/favoritos">
+              ❤️ Favoritos
+            </Link>
             <Link className="nav-enlace" to="/preferencias">
               ⚙️ Preferencias
             </Link>

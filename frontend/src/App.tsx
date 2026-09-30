@@ -8,6 +8,7 @@ import Mapa from "./paginas/Mapa";
 import Actividades from "./paginas/Actividades";
 import ActividadDetalle from "./paginas/ActividadDetalle";
 import Contacto from "./paginas/Contacto";
+import Favoritos from "./paginas/Favoritos";
 import Preferencias from "./paginas/Preferencias";
 import AdminActividades from "./paginas/AdminActividades";
 import ProtegidaAdmin from "./paginas/ProtegidaAdmin";
@@ -61,6 +62,14 @@ export default function App() {
             element={
               <Protegida>
                 <Bienvenido />
+              </Protegida>
+            }
+          />
+          <Route
+            path="/favoritos"
+            element={
+              <Protegida>
+                <Favoritos />
               </Protegida>
             }
           />

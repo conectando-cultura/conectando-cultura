@@ -44,6 +44,22 @@ export interface Actividad {
   categoria: Categoria;
   barrio: Barrio;
   destacado: boolean;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
+  esRecurrente?: boolean;
+  diasSemana?: string;
+  promedioCalificacion?: number;
+  totalResenas?: number;
+  distanciaKm?: number;
+}
+
+export interface Resena {
+  id: string;
+  usuarioId: string;
+  usuarioNombre: string;
+  calificacion: number;
+  comentario: string;
+  creadoEn: string;
 }
 
 export interface Preferencias {

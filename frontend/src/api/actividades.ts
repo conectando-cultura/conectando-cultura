@@ -81,5 +81,54 @@ export async function guardarPreferencias(
   return datos.preferencias;
 }
 
+// ── Favoritos ──────────────────────────────────────────────────
+export async function obtenerFavoritos(token: string): Promise<Actividad[]> {
+  const datos = await api<{ actividades: Actividad[] }>("/favoritos", {}, token);
+  return datos.actividades;
+}
+
+export async function obtenerIdsFavoritos(token: string): Promise<string[]> {
+  const datos = await api<{ ids: string[] }>("/favoritos/ids", {}, token);
+  return datos.ids;
+}
+
+export async function agregarFavorito(token: string, actividadId: string): Promise<void> {
+  await api(`/favoritos/${actividadId}`, { method: "POST" }, token);
+}
+
+export async function eliminarFavorito(token: string, actividadId: string): Promise<void> {
+  await api(`/favoritos/${actividadId}`, { method: "DELETE" }, token);
+}
+
+// ── Reseñas ───────────────────────────────────────────────────
+export async function obtenerResenasActividad(actividadId: string): Promise<{
+  resenas: import("../tipos").Resena[];
+  promedio: number;
+  total: number;
+}> {
+  return api<{
+    resenas: import("../tipos").Resena[];
+    promedio: number;
+    total: number;
+  }>(`/resenas/${actividadId}`);
+}
+
+export async function publicarResena(
+  token: string,
+  actividadId: string,
+  calificacion: number,
+  comentario: string
+): Promise<{ resena: import("../tipos").Resena; mensaje: string }> {
+  return api<{ resena: import("../tipos").Resena; mensaje: string }>(
+    `/resenas/${actividadId}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ calificacion, comentario })
+    },
+    token
+  );
+}
+
 export { type ErrorApi };
+
 

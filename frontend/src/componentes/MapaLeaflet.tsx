@@ -101,6 +101,7 @@ function CreadorMarcador({ actividad }: { actividad: Actividad }) {
                 : actividad.descripcion}
             </p>
           )}
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px" }}>
             <a
               href={`/actividades/${actividad.id}`}
               style={{
