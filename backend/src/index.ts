@@ -7,6 +7,8 @@ import { crearRutasPreferencias } from "./routes/preferencias.routes.js";
 import { crearRutasActividades } from "./routes/actividades.routes.js";
 import { crearRutasAdmin } from "./routes/admin.routes.js";
 import { crearRutasContacto } from "./routes/contacto.routes.js";
+import { crearRutasFavoritos } from "./routes/favoritos.routes.js";
+import { crearRutasResenas } from "./routes/resenas.routes.js";
 import { exigirSupabase, esSupabaseConfigurado } from "./lib/supabase.js";
 
 const PUERTO = Number(process.env.PORT ?? 3001);
@@ -39,6 +41,12 @@ app.use("/api/preferencias", crearRutasPreferencias(servicioAuth));
 
 // ── Actividades (GET público; escritura = admin) ───────────────
 app.use("/api/actividades", crearRutasActividades(servicioAuth));
+
+// ── Favoritos (requiere sesión) ───────────────────────────────
+app.use("/api/favoritos", crearRutasFavoritos(servicioAuth));
+
+// ── Reseñas comunitarias (GET público; POST con sesión) ───────
+app.use("/api/resenas", crearRutasResenas(servicioAuth));
 
 // ── Contacto (POST público para soporte y sugerencias) ────────
 app.use("/api/contacto", crearRutasContacto());

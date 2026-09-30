@@ -21,7 +21,11 @@ function aPublica(fila: ActividadConRelaciones): ActividadPublica {
     imagenUrl: fila.imagen_url ?? "",
     categoria: { id: fila.categoria_id, ...fila.categorias },
     barrio: { id: fila.barrio_id, ...fila.barrios },
-    destacado: fila.destacado ?? false
+    destacado: fila.destacado ?? false,
+    fechaInicio: fila.fecha_inicio ?? null,
+    fechaFin: fila.fecha_fin ?? null,
+    esRecurrente: fila.es_recurrente !== false,
+    diasSemana: fila.dias_semana ?? ""
   };
 }
 
@@ -40,7 +44,7 @@ function describirError(error: { code?: string; message?: string; details?: stri
 
 const SELECCION = `
   id, nombre, slug, descripcion, horarios, direccion, lat, lng,
-  url, imagen_url, destacado, activo,
+  url, imagen_url, destacado, activo, fecha_inicio, fecha_fin, es_recurrente, dias_semana,
   categoria_id, categorias(nombre, slug, color, icono),
   barrio_id, barrios(nombre, slug)
 `;
@@ -161,6 +165,10 @@ export class ActividadesService {
         categoria_id: String(datos.categoriaId ?? ""),
         barrio_id: String(datos.barrioId ?? ""),
         destacado: Boolean(datos.destacado),
+        fecha_inicio: datos.fechaInicio ? String(datos.fechaInicio) : null,
+        fecha_fin: datos.fechaFin ? String(datos.fechaFin) : null,
+        es_recurrente: datos.esRecurrente !== undefined ? Boolean(datos.esRecurrente) : true,
+        dias_semana: String(datos.diasSemana ?? ""),
         created_by: usuarioId,
         updated_by: usuarioId,
         activo: true
@@ -207,6 +215,10 @@ export class ActividadesService {
     if (datos.barrioId !== undefined) updates.barrio_id = datos.barrioId;
     if (datos.destacado !== undefined) updates.destacado = datos.destacado;
     if (datos.activo !== undefined) updates.activo = datos.activo;
+    if (datos.fechaInicio !== undefined) updates.fecha_inicio = datos.fechaInicio || null;
+    if (datos.fechaFin !== undefined) updates.fecha_fin = datos.fechaFin || null;
+    if (datos.esRecurrente !== undefined) updates.es_recurrente = Boolean(datos.esRecurrente);
+    if (datos.diasSemana !== undefined) updates.dias_semana = String(datos.diasSemana);
 
     const { data, error } = await supabaseAdmin
       .from("actividades")

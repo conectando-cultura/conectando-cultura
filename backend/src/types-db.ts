@@ -41,6 +41,10 @@ export interface DbActividad {
   visibilidad: "publica" | "privada" | "oculta";
   destacado: boolean;
   activo: boolean;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
+  es_recurrente?: boolean;
+  dias_semana?: string;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -77,6 +81,12 @@ export interface ActividadPublica {
   categoria: { id: string; nombre: string; slug: string; color: string; icono: string };
   barrio: { id: string; nombre: string; slug: string };
   destacado: boolean;
+  fechaInicio?: string | null;
+  fechaFin?: string | null;
+  esRecurrente?: boolean;
+  diasSemana?: string;
+  promedioCalificacion?: number;
+  totalResenas?: number;
 }
 
 /** Preferencias del usuario logueado, con datos expandidos. */
@@ -109,4 +119,32 @@ export interface DbNotificacion {
   enviado_en: string | null;
   creado_en: string;
 }
+
+/** Fila de `favoritos_usuario`. */
+export interface DbFavorito {
+  id: string;
+  usuario_id: string;
+  actividad_id: string;
+  creado_en: string;
+}
+
+/** Fila de `resenas`. */
+export interface DbResena {
+  id: string;
+  usuario_id: string;
+  actividad_id: string;
+  calificacion: number;
+  comentario: string;
+  creado_en: string;
+}
+
+export interface DbResenaPublica {
+  id: string;
+  usuarioId: string;
+  usuarioNombre: string;
+  calificacion: number;
+  comentario: string;
+  creadoEn: string;
+}
+
 
