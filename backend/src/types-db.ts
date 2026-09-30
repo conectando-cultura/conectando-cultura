@@ -85,3 +85,28 @@ export interface PreferenciasUsuario {
   barrio: DbBarrio | null;
   categorias: DbCategoria[];
 }
+
+/** Fila de `mensajes_contacto` (Sprint 8: soporte y contacto). */
+export interface DbMensajeContacto {
+  id: string;
+  nombre: string;
+  correo: string;
+  mensaje: string;
+  leido: boolean;
+  creado_en: string;
+}
+
+/** Fila de `notificaciones` (Sprint 8: bitácora de alertas). */
+export interface DbNotificacion {
+  id: string;
+  usuario_id: string;
+  actividad_id: string | null;
+  categoria_id: string | null;
+  barrio_id: string | null;
+  canal: "email";
+  estado: "pendiente" | "enviado" | "fallido";
+  error: string | null;
+  enviado_en: string | null;
+  creado_en: string;
+}
+

@@ -6,6 +6,7 @@ import { crearRutasAuth } from "./routes/auth.routes.js";
 import { crearRutasPreferencias } from "./routes/preferencias.routes.js";
 import { crearRutasActividades } from "./routes/actividades.routes.js";
 import { crearRutasAdmin } from "./routes/admin.routes.js";
+import { crearRutasContacto } from "./routes/contacto.routes.js";
 import { exigirSupabase, esSupabaseConfigurado } from "./lib/supabase.js";
 
 const PUERTO = Number(process.env.PORT ?? 3001);
@@ -38,6 +39,9 @@ app.use("/api/preferencias", crearRutasPreferencias(servicioAuth));
 
 // ── Actividades (GET público; escritura = admin) ───────────────
 app.use("/api/actividades", crearRutasActividades(servicioAuth));
+
+// ── Contacto (POST público para soporte y sugerencias) ────────
+app.use("/api/contacto", crearRutasContacto());
 
 // ── Administración (requiere sesión + rol admin) ───────────────
 app.use("/api/admin", crearRutasAdmin(servicioAuth));

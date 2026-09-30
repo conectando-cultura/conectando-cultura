@@ -101,25 +101,39 @@ function CreadorMarcador({ actividad }: { actividad: Actividad }) {
                 : actividad.descripcion}
             </p>
           )}
-          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
             <a
-              href={urlGoogleMaps}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`/actividades/${actividad.id}`}
               style={{
                 display: "inline-block",
-                padding: "4px 10px",
+                padding: "4px 8px",
                 borderRadius: "6px",
                 background: "var(--naranja, #F98017)",
                 color: "#ffffff",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 textDecoration: "none",
-                textAlign: "center",
-                flex: 1
+                textAlign: "center"
               }}
             >
-              🚗 Cómo llegar
+              📄 Ficha
+            </a>
+            <a
+              href={urlGoogleMaps}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-block",
+                padding: "4px 8px",
+                borderRadius: "6px",
+                background: "#f1f5f9",
+                color: "#334155",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                textDecoration: "none",
+                textAlign: "center"
+              }}
+            >
+              🚗 Llegar
             </a>
             {actividad.url && (
               <a
@@ -128,7 +142,7 @@ function CreadorMarcador({ actividad }: { actividad: Actividad }) {
                 rel="noopener noreferrer"
                 style={{
                   display: "inline-block",
-                  padding: "4px 10px",
+                  padding: "4px 8px",
                   borderRadius: "6px",
                   background: "#f1f5f9",
                   color: "#334155",

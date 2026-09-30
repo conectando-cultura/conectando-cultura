@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./componentes/Navbar";
 import Inicio from "./paginas/Inicio";
 import Login from "./paginas/Login";
@@ -6,6 +6,8 @@ import Registro from "./paginas/Registro";
 import Bienvenido from "./paginas/Bienvenido";
 import Mapa from "./paginas/Mapa";
 import Actividades from "./paginas/Actividades";
+import ActividadDetalle from "./paginas/ActividadDetalle";
+import Contacto from "./paginas/Contacto";
 import Preferencias from "./paginas/Preferencias";
 import AdminActividades from "./paginas/AdminActividades";
 import ProtegidaAdmin from "./paginas/ProtegidaAdmin";
@@ -14,10 +16,16 @@ import Protegida from "./paginas/Protegida";
 
 function Footer() {
   return (
-    <footer className="footer">
-      <p>
-        © {new Date().getFullYear()} Conectando Cultura — Barrio Mataderos, CABA.
-        Hecho con ❤️ por la comunidad.
+    <footer className="footer" style={{ borderTop: "2px solid var(--borde)", padding: "28px 20px", marginTop: "auto", background: "var(--gris-claro)", textAlign: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap", marginBottom: "12px", fontSize: "0.95rem" }}>
+        <Link to="/" style={{ color: "var(--texto)" }}>Inicio</Link>
+        <Link to="/mapa" style={{ color: "var(--texto)" }}>Mapa</Link>
+        <Link to="/actividades" style={{ color: "var(--texto)" }}>Actividades</Link>
+        <Link to="/contacto" style={{ color: "var(--texto)" }}>Contacto y Soporte</Link>
+      </div>
+      <p style={{ fontSize: "0.85rem", color: "var(--gris)" }}>
+        © {new Date().getFullYear()} Conectando Cultura — Polo Educativo de Mataderos, CABA.
+        Hecho con ❤️ para la comunidad barrial.
       </p>
     </footer>
   );
@@ -44,6 +52,8 @@ export default function App() {
           <Route path="/registro" element={<Registro />} />
           <Route path="/mapa" element={<Mapa />} />
           <Route path="/actividades" element={<Actividades />} />
+          <Route path="/actividades/:id" element={<ActividadDetalle />} />
+          <Route path="/contacto" element={<Contacto />} />
 
           {/* Rutas protegidas */}
           <Route

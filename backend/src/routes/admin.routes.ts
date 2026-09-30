@@ -2,6 +2,7 @@ import { Router } from "express";
 import { autenticacionRequerida, adminRequerido } from "../middlewares/autenticacion.middleware.js";
 import type { AuthService } from "../services/auth.service.js";
 import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
+import { ContactoService } from "../services/contacto.service.js";
 import { ErrorAplicacion } from "../types.js";
 
 interface ErrorPostgrest {
@@ -18,6 +19,7 @@ function describirError(error: ErrorPostgrest | null): string {
 
 export function crearRutasAdmin(auth: AuthService): Router {
   const router = Router();
+  const servicioContacto = new ContactoService();
 
   // Todo /api/admin exige sesión + rol admin
   router.use(autenticacionRequerida(auth), adminRequerido);
@@ -104,6 +106,48 @@ export function crearRutasAdmin(auth: AuthService): Router {
       const status = err instanceof ErrorAplicacion ? err.status : 500;
       res.status(status).json({
         mensaje: err instanceof Error ? err.message : "Error al actualizar rol."
+      });
+    }
+  });
+
+  // ── Mensajes de contacto (Sprint 8) ──────────────────────────
+
+  // GET /api/admin/mensajes
+  router.get("/mensajes", async (_req, res) => {
+    try {
+      const mensajes = await servicioContacto.listarMensajes();
+      res.json({ mensajes });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        mensaje: err instanceof Error ? err.message : "Error al listar mensajes de contacto."
+      });
+    }
+  });
+
+  // PATCH /api/admin/mensajes/:id/leido
+  router.patch("/mensajes/:id/leido", async (req, res) => {
+    try {
+      const { leido } = req.body as { leido?: boolean };
+      const mensaje = await servicioContacto.marcarLeido(req.params.id, leido !== false);
+      res.json({ mensaje });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        mensaje: err instanceof Error ? err.message : "Error al actualizar estado del mensaje."
+      });
+    }
+  });
+
+  // DELETE /api/admin/mensajes/:id
+  router.delete("/mensajes/:id", async (req, res) => {
+    try {
+      await servicioContacto.eliminarMensaje(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        mensaje: err instanceof Error ? err.message : "Error al eliminar mensaje."
       });
     }
   });

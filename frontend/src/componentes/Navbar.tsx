@@ -19,6 +19,9 @@ export default function Navbar() {
         <Link className="nav-enlace" to="/actividades">
           📋 Actividades
         </Link>
+        <Link className="nav-enlace" to="/contacto">
+          ✉️ Contacto
+        </Link>
 
         {usuario ? (
           <>

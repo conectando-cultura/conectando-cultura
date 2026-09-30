@@ -81,6 +81,20 @@ export function crearRutasActividades(auth: AuthService): Router {
     }
   });
 
+  // GET /api/actividades/:id (Ficha técnica de actividad)
+  router.get("/:id", async (req, res) => {
+    try {
+      const actividad = await servicio.obtenerPorId(req.params.id);
+      if (!actividad) {
+        res.status(404).json({ mensaje: "Actividad no encontrada." });
+        return;
+      }
+      res.json({ actividad });
+    } catch {
+      res.status(500).json({ mensaje: "Error al obtener actividad." });
+    }
+  });
+
   // ── Admin ─────────────────────────────────────────────────
 
   // POST /api/actividades (crear)

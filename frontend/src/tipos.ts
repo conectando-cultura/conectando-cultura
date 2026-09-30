@@ -51,3 +51,13 @@ export interface Preferencias {
   barrio: Barrio | null;
   categorias: Categoria[];
 }
+
+export interface MensajeContacto {
+  id: string;
+  nombre: string;
+  correo: string;
+  mensaje: string;
+  leido: boolean;
+  creado_en: string;
+}
+

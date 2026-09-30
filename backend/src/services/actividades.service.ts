@@ -1,5 +1,8 @@
 import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
 import type { DbActividadFull, ActividadPublica } from "../types-db.js";
+import { NotificacionesService } from "./notificaciones.service.js";
+
+const servicioNotificaciones = new NotificacionesService();
 
 /** Fila de `actividades` con las relaciones anidadas del `select` de Supabase. */
 type ActividadConRelaciones = DbActividadFull & { activo?: boolean };
@@ -116,6 +119,22 @@ export class ActividadesService {
     return aPublica(fila);
   }
 
+  async obtenerPorId(id: string): Promise<ActividadPublica | null> {
+    exigirSupabase();
+
+    const { data, error } = await supabaseAdmin
+      .from("actividades")
+      .select(SELECCION)
+      .eq("id", id)
+      .eq("activo", true)
+      .maybeSingle();
+
+    if (error) throw new Error(describirError(error));
+    if (!data) return null;
+
+    return aPublica(data as unknown as ActividadConRelaciones);
+  }
+
   async crear(datos: Record<string, unknown>, usuarioId: string): Promise<ActividadPublica> {
     exigirSupabase();
 
@@ -150,6 +169,21 @@ export class ActividadesService {
       .single();
 
     if (error) throw new Error(describirError(error));
+
+    // Notificación asincrónica a usuarios interesados (Sprint 8)
+    const categoriaId = String(datos.categoriaId ?? "");
+    const barrioId = String(datos.barrioId ?? "");
+    if (categoriaId || barrioId) {
+      servicioNotificaciones
+        .notificarNuevaActividad({
+          id: data.id,
+          nombre,
+          categoriaId,
+          barrioId
+        })
+        .catch((err) => console.warn("Fallo al notificar nueva actividad:", err));
+    }
+
     return aPublica(data as unknown as ActividadConRelaciones);
   }
 

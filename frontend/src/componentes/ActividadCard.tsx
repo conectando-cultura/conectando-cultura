@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { Actividad } from "../tipos";
 
 interface Props {
@@ -35,23 +36,35 @@ export default function ActividadCard({ actividad }: Props) {
       <p style={{ marginBottom: "8px" }}>{actividad.descripcion}</p>
 
       <p style={{ fontSize: "0.88rem", color: "var(--gris)" }}>
-        <strong>📍 {actividad.direccion}</strong>
+        <strong>📍 {actividad.direccion}</strong> ({actividad.barrio.nombre})
       </p>
-      <p style={{ fontSize: "0.88rem", color: "var(--gris)" }}>
-        🕐 {actividad.horarios}
-      </p>
-
-      {actividad.url && (
-        <a
-          href={actividad.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-secundario"
-          style={{ marginTop: "12px", padding: "6px 14px", fontSize: "0.85rem" }}
-        >
-          Visitar sitio →
-        </a>
+      {actividad.horarios && (
+        <p style={{ fontSize: "0.88rem", color: "var(--gris)" }}>
+          🕐 {actividad.horarios}
+        </p>
       )}
+
+      <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
+        <Link
+          to={`/actividades/${actividad.id}`}
+          className="btn btn-primario"
+          style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+        >
+          Ver ficha técnica →
+        </Link>
+        {actividad.url && (
+          <a
+            href={actividad.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secundario"
+            style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+          >
+            Sitio web ↗
+          </a>
+        )}
+      </div>
     </article>
   );
 }
+

@@ -45,6 +45,22 @@ export async function obtenerActividad(
   return datos.actividad;
 }
 
+export async function obtenerActividadPorId(id: string): Promise<Actividad> {
+  const datos = await api<{ actividad: Actividad }>(`/actividades/${id}`);
+  return datos.actividad;
+}
+
+export async function enviarMensajeContacto(datos: {
+  nombre: string;
+  correo: string;
+  mensaje: string;
+}): Promise<{ ok: boolean; mensaje: string }> {
+  return api<{ ok: boolean; mensaje: string }>("/contacto", {
+    method: "POST",
+    body: JSON.stringify(datos)
+  });
+}
+
 export async function obtenerPreferencias(token: string): Promise<Preferencias> {
   const datos = await api<{ preferencias: Preferencias }>(
     "/preferencias",
@@ -66,3 +82,4 @@ export async function guardarPreferencias(
 }
 
 export { type ErrorApi };
+
