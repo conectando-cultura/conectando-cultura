@@ -1,117 +1,174 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexto/AuthContext";
-import { obtenerPreferencias, guardarPreferencias, obtenerBarrios, obtenerCategorias } from "../api/actividades";
+import {
+  obtenerPreferencias,
+  guardarPreferencias,
+  obtenerBarrios,
+  obtenerCategorias
+} from "../api/actividades";
 import type { Barrio, Categoria } from "../tipos";
+import CategoriaChip from "../componentes/CategoriaChip";
+import { Boton, Esqueleto, EstadoError } from "../componentes/base";
+import { Check } from "lucide-react";
 
-export default function Preferencias() {
-  const { usuario } = useAuth();
+export default function Preferencias(): React.JSX.Element {
+  const { usuario, token } = useAuth();
+  const navegar = useNavigate();
+  const ubicacion = useLocation();
+
   const [barrios, setBarrios] = useState<Barrio[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [barrioId, setBarrioId] = useState<string>("");
-  const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set());
-  const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
+  const [seleccionadas, setSeleccionadas] = useState<string[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const token = localStorage.getItem("cc_token") ?? "";
+  const esPrimeraVez = Boolean(
+    (ubicacion.state as { primeraVez?: boolean })?.primeraVez
+  );
 
   useEffect(() => {
-    Promise.all([obtenerBarrios(), obtenerCategorias()])
-      .then(([b, c]) => {
+    if (!token) return;
+
+    Promise.all([
+      obtenerBarrios(),
+      obtenerCategorias(),
+      obtenerPreferencias(token).catch(() => null)
+    ])
+      .then(([b, c, prefs]) => {
         setBarrios(b);
         setCategorias(c);
+        if (prefs) {
+          setBarrioId(prefs.barrioId ?? "");
+          if (prefs.categorias) {
+            setSeleccionadas(prefs.categorias.map((x) => x.id));
+          }
+        }
       })
-      .catch(() => {});
-
-    if (!token) {
-      setCargando(false);
-      return;
-    }
-
-    obtenerPreferencias(token)
-      .then((p) => {
-        setBarrioId(p.barrioId ?? "");
-        setSeleccionadas(new Set(p.categorias.map((c) => c.id)));
+      .catch((err) => {
+        console.error(err);
+        setError("No pudimos cargar tus preferencias.");
       })
-      .catch(() => {})
       .finally(() => setCargando(false));
   }, [token]);
 
-  function toggleCategoria(id: string) {
-    setSeleccionadas((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const alternarCategoria = (id: string) => {
+    setSeleccionadas((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const barrioElegido = useMemo(() => {
+    if (!barrioId) return "todos los barrios";
+    const b = barrios.find((x) => x.id === barrioId);
+    return b ? b.nombre : "todos los barrios";
+  }, [barrios, barrioId]);
+
+  const categoriasElegidasTexto = useMemo(() => {
+    if (seleccionadas.length === 0) return "todas las categorías";
+    const nombres = categorias
+      .filter((c) => seleccionadas.includes(c.id))
+      .map((c) => c.nombre);
+    return nombres.join(", ");
+  }, [categorias, seleccionadas]);
 
   async function handleGuardar(e: React.FormEvent) {
     e.preventDefault();
     if (!token) return;
+
     setGuardando(true);
-    setMensaje(null);
+    setError(null);
 
     try {
       await guardarPreferencias(token, {
         barrioId: barrioId || null,
-        categoriaIds: Array.from(seleccionadas)
+        categoriaIds: seleccionadas
       });
-      setMensaje({ tipo: "ok", texto: "¡Preferencias guardadas correctamente!" });
+
+      // Construir URL de redirección a Explorar con los filtros elegidos
+      const params = new URLSearchParams();
+      if (barrioId) {
+        const b = barrios.find((x) => x.id === barrioId);
+        if (b) params.set("barrio", b.slug);
+      }
+      if (seleccionadas.length > 0) {
+        const slugs = categorias
+          .filter((c) => seleccionadas.includes(c.id))
+          .map((c) => c.slug);
+        if (slugs.length > 0) params.set("categorias", slugs.join(","));
+      }
+
+      const qs = params.toString();
+      navegar(`/explorar${qs ? `?${qs}` : ""}`, { replace: true });
     } catch (err) {
-      setMensaje({
-        tipo: "error",
-        texto: err instanceof Error ? err.message : "No se pudieron guardar las preferencias."
-      });
+      setError(err instanceof Error ? err.message : "Error al guardar preferencias.");
     } finally {
       setGuardando(false);
     }
   }
 
-  if (!usuario) {
+  function omitir() {
+    navegar("/explorar", { replace: true });
+  }
+
+  if (cargando) {
     return (
-      <div className="main">
-        <div className="alerta">
-          Tenés que{" "}
-          <a href="/login">iniciar sesión</a> para ver tus preferencias.
-        </div>
+      <div style={{ maxWidth: "700px", margin: "0 auto", padding: "40px 20px" }}>
+        <Esqueleto alto={32} ancho="50%" style={{ marginBottom: "16px" }} />
+        <Esqueleto alto={18} ancho="70%" style={{ marginBottom: "32px" }} />
+        <Esqueleto alto={80} style={{ marginBottom: "24px" }} />
+        <Esqueleto alto={200} />
       </div>
     );
   }
 
-  if (cargando) {
-    return <p className="cargando">Cargando tus preferencias…</p>;
-  }
+  const titulo = esPrimeraVez && usuario?.nombre
+    ? `Te damos la bienvenida, ${usuario.nombre}`
+    : "Tus preferencias";
 
   return (
-    <div className="main">
-      <h1>⚙️ Mis Preferencias</h1>
-      <p style={{ color: "var(--gris)", marginTop: "8px", marginBottom: "28px" }}>
-        Elegí el barrio que más te interese y las categorías de actividades que querés
-        seguir. Te avisaremos cuando haya novedades.
+    <div style={{ maxWidth: "740px", margin: "0 auto", padding: "32px 20px 48px", width: "100%", boxSizing: "border-box" }}>
+      <h1
+        style={{
+          fontFamily: "var(--fuente-titulo)",
+          fontSize: "30px",
+          color: "var(--tinta)",
+          margin: "0 0 8px 0"
+        }}
+      >
+        {titulo}
+      </h1>
+      <p style={{ color: "var(--texto-suave)", fontSize: "16px", margin: "0 0 28px 0" }}>
+        Elegí qué actividades querés ver primero al explorar la plataforma.
       </p>
 
-      {mensaje && (
-        <div className={`alerta ${mensaje.tipo === "ok" ? "alerta-exito" : "alerta-error"}`}>
-          {mensaje.texto}
-        </div>
-      )}
+      {error && <EstadoError descripcion={error} />}
 
       <form onSubmit={handleGuardar}>
-        {/* Barrio */}
-        <div className="campo">
-          <label htmlFor="barrio">Barrio de interés</label>
+        {/* ── Barrio ──────────────────────────────────────────────── */}
+        <div style={{ marginBottom: "28px" }}>
+          <label
+            htmlFor="pref-barrio"
+            style={{ display: "block", fontWeight: 700, fontSize: "15px", marginBottom: "8px", color: "var(--tinta)" }}
+          >
+            Barrio de preferencia
+          </label>
           <select
-            id="barrio"
+            id="pref-barrio"
             value={barrioId}
             onChange={(e) => setBarrioId(e.target.value)}
             style={{
               width: "100%",
-              padding: "12px 14px",
-              border: "2px solid var(--borde)",
-              borderRadius: "10px",
-              fontFamily: "var(--tipografia-texto)",
-              fontSize: "1rem"
+              minHeight: "var(--alto-tactil)",
+              padding: "0 12px",
+              borderRadius: "var(--radio-control)",
+              border: "1.5px solid var(--borde-campo)",
+              backgroundColor: "var(--blanco)",
+              color: "var(--tinta)",
+              fontFamily: "var(--fuente-cuerpo)",
+              fontSize: "15px"
             }}
           >
             <option value="">Todos los barrios</option>
@@ -123,62 +180,72 @@ export default function Preferencias() {
           </select>
         </div>
 
-        {/* Categorías */}
-        <div className="campo">
-          <label>Categorías que te interesan</label>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "10px",
-              marginTop: "8px"
-            }}
-          >
-            {categorias.map((cat) => {
-              const activa = seleccionadas.has(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => toggleCategoria(cat.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "10px 14px",
-                    border: `2px solid ${activa ? cat.color : "var(--borde)"}`,
-                    borderRadius: "10px",
-                    background: activa ? `${cat.color}18` : "var(--blanco)",
-                    cursor: "pointer",
-                    fontFamily: "var(--tipografia-texto)",
-                    fontSize: "0.95rem",
-                    fontWeight: activa ? 600 : 400,
-                    color: activa ? cat.color : "var(--texto)",
-                    transition: "all 0.15s ease",
-                    textAlign: "left"
-                  }}
-                >
-                  <span>{cat.icono}</span>
-                  {cat.nombre}
-                </button>
-              );
-            })}
+        {/* ── Categorías ──────────────────────────────────────────── */}
+        <div style={{ marginBottom: "32px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
+            <span style={{ fontWeight: 700, fontSize: "15px", color: "var(--tinta)" }}>
+              Categorías de interés
+            </span>
+            <span style={{ fontSize: "13px", color: "var(--texto-suave)" }}>
+              {seleccionadas.length === 0
+                ? "Ninguna: te mostramos todo"
+                : `${seleccionadas.length} seleccionada${seleccionadas.length > 1 ? "s" : ""}`}
+            </span>
           </div>
-          <p style={{ fontSize: "0.85rem", color: "var(--gris)", marginTop: "6px" }}>
-            {seleccionadas.size === 0
-              ? "No hay categorías seleccionadas. Seleccioná al menos una."
-              : `${seleccionadas.size} categoría${seleccionadas.size > 1 ? "s" : ""} seleccionada${seleccionadas.size > 1 ? "s" : ""}.`}
-          </p>
+
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            {categorias.map((cat) => (
+              <CategoriaChip
+                key={cat.id}
+                categoria={cat}
+                seleccionada={seleccionadas.includes(cat.id)}
+                onAlternar={() => alternarCategoria(cat.id)}
+              />
+            ))}
+          </div>
         </div>
 
-        <button
-          type="submit"
-          className="btn btn-primario"
-          disabled={guardando || seleccionadas.size === 0}
-          style={{ marginTop: "8px" }}
+        {/* ── Resumen en vivo ─────────────────────────────────────── */}
+        <div
+          style={{
+            backgroundColor: "var(--papel)",
+            border: "1px solid var(--linea)",
+            borderRadius: "var(--radio-control)",
+            padding: "16px 20px",
+            marginBottom: "32px",
+            fontSize: "15px",
+            lineHeight: 1.5,
+            color: "var(--tinta)"
+          }}
         >
-          {guardando ? "Guardando…" : "Guardar preferencias"}
-        </button>
+          <strong style={{ display: "block", marginBottom: "4px" }}>
+            Vas a ver primero:
+          </strong>
+          Actividades en <em>{barrioElegido}</em> · <em>{categoriasElegidasTexto}</em>.
+        </div>
+
+        {/* ── Botones ─────────────────────────────────────────────── */}
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+          <Boton
+            type="submit"
+            variante="principal"
+            disabled={guardando}
+            icono={<Check size={18} />}
+          >
+            {guardando ? "Guardando..." : "Guardar y explorar"}
+          </Boton>
+
+          {esPrimeraVez && (
+            <Boton
+              type="button"
+              variante="secundario"
+              onClick={omitir}
+              disabled={guardando}
+            >
+              Omitir por ahora
+            </Boton>
+          )}
+        </div>
       </form>
     </div>
   );

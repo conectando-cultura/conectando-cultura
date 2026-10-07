@@ -8,16 +8,14 @@ export function crearRutasPreferencias(auth) {
     router.get("/", autenticacionRequerida(auth), async (req, res) => {
         try {
             const usuario = req.usuarioPublico;
-            const prefs = (await servicio.obtener(usuario.id)) ?? {
-                barrioId: null,
-                barrio: null,
-                categorias: []
-            };
-            res.json({ preferencias: prefs });
+            const preferencias = await servicio.obtener(usuario.id);
+            res.json({ preferencias });
         }
         catch (err) {
             console.error(err);
-            res.status(500).json({ mensaje: "Error al obtener preferencias." });
+            res.status(500).json({
+                mensaje: err instanceof Error ? err.message : "Error al obtener preferencias."
+            });
         }
     });
     // PUT /api/preferencias

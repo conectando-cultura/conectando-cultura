@@ -34,6 +34,10 @@ interface FilaUsuario {
 
 const CAMPOS = "id, nombre, apellido, correo, rol, creado_en";
 
+function esRolValido(rol?: string): rol is import("../types.js").Rol {
+  return rol === "admin" || rol === "gestor" || rol === "usuario";
+}
+
 function mapearUsuario(fila: FilaUsuario): Usuario {
   return {
     id: fila.id,
@@ -42,7 +46,7 @@ function mapearUsuario(fila: FilaUsuario): Usuario {
     correo: fila.correo,
     // El hash sólo viene en las lecturas que lo piden explícitamente.
     contrasenaHash: fila.contrasena_hash ?? "",
-    rol: fila.rol === "admin" ? "admin" : "usuario",
+    rol: esRolValido(fila.rol) ? fila.rol : "usuario",
     creadoEn: fila.creado_en
   };
 }
@@ -107,7 +111,7 @@ export class UsuarioRepository {
     return ((data ?? []) as FilaUsuario[]).map(mapearUsuario);
   }
 
-  async actualizarRol(id: string, rol: "usuario" | "admin"): Promise<Usuario | null> {
+  async actualizarRol(id: string, rol: import("../types.js").Rol): Promise<Usuario | null> {
     exigirSupabase();
 
     const { data, error } = await supabaseAdmin
@@ -182,6 +186,13 @@ export class SesionRepository {
     exigirSupabase();
     const { error } = await supabaseAdmin.from("sesiones").delete().eq("token", token);
     if (error) throw new Error(error.message || "Error al cerrar la sesión.");
+  }
+
+  /** Cierra todas las sesiones de un usuario (para el panel admin). */
+  async eliminarPorUsuario(usuarioId: string): Promise<void> {
+    exigirSupabase();
+    const { error } = await supabaseAdmin.from("sesiones").delete().eq("usuario_id", usuarioId);
+    if (error) throw new Error(error.message || "Error al cerrar las sesiones del usuario.");
   }
 
   /** Purga housekeeping: borra las sesiones vencidas. */

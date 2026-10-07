@@ -1,0 +1,16 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-2);
+  padding: 5px var(--esp-3);
+  border: 2px solid transparent;
+  border-radius: var(--radio-pildora);
+  background: var(--cat-fondo);
+  color: var(--cat-texto);
+  font: 400 14px var(--fuente-cuerpo);
+}
+.boton { cursor: pointer; }
+.seleccionada { border-color: var(--cat-solido); }
+@media (pointer: coarse) {
+  .boton { min-height: var(--alto-tactil); }
+}

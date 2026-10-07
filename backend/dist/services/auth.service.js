@@ -5,9 +5,11 @@ function normalizar(valor) {
     return typeof valor === "string" ? valor.trim() : "";
 }
 /**
- * Servicio de autenticación: contiene TODA la lógica de negocio del módulo
- * (alta cohesión). Las rutas y el middleware solo traducen HTTP, sin
- * repetir reglas de validación ni conocer el almacenamiento.
+ * Servicio de autenticación: toda la lógica de negocio del módulo.
+ * Las rutas y el middleware sólo traducen HTTP.
+ *
+ * Los repositorios son asíncronos (Supabase), por eso todos los métodos
+ * públicos devuelven promesas.
  */
 export class AuthService {
     usuarios;
@@ -16,12 +18,12 @@ export class AuthService {
         this.usuarios = usuarios;
         this.sesiones = sesiones;
     }
-    registrar(datos) {
+    async registrar(datos) {
         const nombre = normalizar(datos.nombre);
         const apellido = normalizar(datos.apellido);
-        const correo = normalizar(datos.correo);
-        const contrasena = datos.contrasena;
-        const confirmacion = datos.confirmacion;
+        const correo = normalizar(datos.correo).toLowerCase();
+        const contrasena = typeof datos.contrasena === "string" ? datos.contrasena : "";
+        const confirmacion = typeof datos.confirmacion === "string" ? datos.confirmacion : "";
         if (!nombre || !apellido) {
             throw new ErrorAplicacion("Debés completar tu nombre y apellido.");
         }
@@ -40,10 +42,11 @@ export class AuthService {
         if (contrasena !== confirmacion) {
             throw new ErrorAplicacion("Las contraseñas no coinciden.");
         }
-        if (this.usuarios.buscarPorCorreo(correo)) {
+        const existente = await this.usuarios.buscarPorCorreo(correo);
+        if (existente) {
             throw new ErrorAplicacion("Ya existe una cuenta con ese correo electrónico.", 409);
         }
-        const usuario = this.usuarios.crear({
+        const usuario = await this.usuarios.crear({
             nombre,
             apellido,
             correo,
@@ -51,38 +54,48 @@ export class AuthService {
         });
         return aPublico(usuario);
     }
-    iniciarSesion(datos) {
-        const correo = normalizar(datos.correo);
-        const contrasena = datos.contrasena;
+    async iniciarSesion(datos) {
+        const correo = normalizar(datos.correo).toLowerCase();
+        const contrasena = typeof datos.contrasena === "string" ? datos.contrasena : "";
         if (!correo || !contrasena) {
             throw new ErrorAplicacion("Completá tu correo y contraseña.");
         }
-        const usuario = this.usuarios.buscarPorCorreo(correo);
+        const usuario = await this.usuarios.buscarPorCorreo(correo);
+        // Mismo mensaje para usuario inexistente y contraseña incorrecta:
+        // no revela qué correos están registrados.
         if (!usuario || !verificarContrasena(contrasena, usuario.contrasenaHash)) {
             throw new ErrorAplicacion("Correo o contraseña incorrectos.", 401);
         }
-        const sesion = this.sesiones.crear(usuario.id);
+        const sesion = await this.sesiones.crear(usuario.id);
         return { token: sesion.token, usuario: aPublico(usuario) };
     }
-    obtenerUsuarioPorToken(token) {
-        const sesion = this.sesiones.buscarActiva(token);
-        if (!sesion) {
+    async obtenerUsuarioPorToken(token) {
+        const sesion = await this.sesiones.buscarActiva(token);
+        if (!sesion)
             return null;
-        }
-        const usuario = this.usuarios.buscarPorId(sesion.usuarioId);
+        const usuario = await this.usuarios.buscarPorId(sesion.usuarioId);
         return usuario ? aPublico(usuario) : null;
     }
-    cerrarSesion(token) {
-        this.sesiones.eliminar(token);
+    async cerrarSesion(token) {
+        await this.sesiones.eliminar(token);
     }
-    listarUsuarios() {
-        return this.usuarios.listarTodos().map((u) => aPublico(u));
+    async listarUsuarios() {
+        const usuarios = await this.usuarios.listarTodos();
+        return usuarios.map((u) => aPublico(u));
     }
-    actualizarRol(id, rol) {
-        const actualizado = this.usuarios.actualizarRol(id, rol);
+    async actualizarRol(id, rol) {
+        const actualizado = await this.usuarios.actualizarRol(id, rol);
         if (!actualizado) {
             throw new ErrorAplicacion("Usuario no encontrado.", 404);
         }
         return aPublico(actualizado);
+    }
+    async cerrarSesionesDeUsuario(usuarioId) {
+        await this.sesiones.eliminarPorUsuario(usuarioId);
+    }
+    /** Verifica que un usuario exista (usado por el bootstrap del admin). */
+    async existeUsuario(id) {
+        const usuario = await this.usuarios.buscarPorId(id);
+        return usuario !== null;
     }
 }

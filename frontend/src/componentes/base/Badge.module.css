@@ -1,0 +1,31 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-1);
+  padding: 3px var(--esp-2);
+  border-radius: var(--radio-pildora);
+  font-family: var(--fuente-cuerpo);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.activa {
+  background-color: var(--exito-fondo);
+  color: var(--exito);
+}
+
+.inactiva {
+  background-color: var(--papel);
+  color: var(--texto-suave);
+}
+
+.oculta {
+  background-color: var(--aviso-fondo);
+  color: var(--aviso);
+}
+
+.destacada {
+  background-color: var(--cartel);
+  color: #1B2A4A;
+}

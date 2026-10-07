@@ -1,0 +1,81 @@
+/* Conectando Cultura · tokens de diseño oficiales. Importar una vez en la raíz. */
+:root {
+  /* Modo claro por defecto con soporte explícito y fallback a light-dark */
+  color-scheme: light;
+
+  /* Neutrales (contraste según 04-sistema-visual.md):
+     --tinta: 14,2:1 sobre blanco; 12,9:1 sobre papel
+     --texto-suave: 6,8:1 sobre blanco
+     --chapa: 6,5:1 sobre blanco
+     --borde-campo: 3,3:1 sobre blanco
+  */
+  --papel: #F2F4F8;
+  --blanco: #FFFFFF;
+  --tinta: #1B2A4A;
+  --texto-suave: #4F5B73;
+  --linea: #D5DAE4;
+  --borde-campo: #7C869B;
+
+  /* Acentos */
+  --chapa: #2A55C9;
+  --cartel: #FFC933;
+  --boton-fondo: #1B2A4A;
+  --boton-texto: #FFFFFF;
+
+  /* Estados accesibles (todos >= 4,5:1) */
+  --peligro: #B42318;
+  --peligro-fondo: #FBE4E1;
+  --exito: #1B7A4B;
+  --exito-fondo: #E0F2E8;
+  --aviso: #7A4700;
+  --aviso-fondo: #FFF1D6;
+
+  /* Tipografía oficial */
+  --fuente-titulo: "Archivo", "Poppins", sans-serif;
+  --fuente-cuerpo: "Atkinson Hyperlegible", "Poppins", system-ui, sans-serif;
+
+  /* Forma y espacio */
+  --radio-control: 6px;
+  --radio-tarjeta: 12px;
+  --radio-pildora: 999px;
+  --esp-1: 4px;
+  --esp-2: 8px;
+  --esp-3: 12px;
+  --esp-4: 16px;
+  --esp-6: 24px;
+  --esp-8: 32px;
+  --esp-12: 48px;
+  --alto-tactil: 44px;
+  --foco: 3px solid var(--chapa);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --papel: #0F1626;
+  --blanco: #18223A;
+  --tinta: #E8ECF5;
+  --texto-suave: #A9B3C8;
+  --linea: #2C3857;
+  --borde-campo: #7C869B;
+  --chapa: #8FB0FF;
+  --boton-fondo: #E8ECF5;
+  --boton-texto: #1B2A4A;
+  --peligro: #FF9A92;
+  --peligro-fondo: #3A1B1D;
+  --exito: #6FD39B;
+  --exito-fondo: #14301F;
+  --aviso: #FFD27A;
+  --aviso-fondo: #33270E;
+}
+
+:focus-visible {
+  outline: var(--foco);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

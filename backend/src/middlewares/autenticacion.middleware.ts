@@ -1,11 +1,25 @@
 import type { NextFunction, Request, Response } from "express";
 import type { AuthService } from "../services/auth.service.js";
+import type { Permiso, Rol } from "../types.js";
 
 declare module "express-serve-static-core" {
   interface Request {
     usuarioPublico?: import("../types.js").UsuarioPublico;
     token?: string;
   }
+}
+
+/**
+ * Tabla de permisos única para el backend, alineada con codigo-de-referencia/permisos.js.
+ */
+export const PERMISOS: Record<Permiso, readonly Rol[]> = {
+  "panel:acceder": ["gestor", "admin"],
+  "actividades:escribir": ["gestor", "admin"],
+  "usuarios:gestionar": ["admin"]
+};
+
+export function tienePermiso(rol: Rol, permiso: Permiso): boolean {
+  return (PERMISOS[permiso] ?? []).includes(rol);
 }
 
 /**
@@ -45,27 +59,30 @@ export function autenticacionRequerida(auth: AuthService) {
 }
 
 /**
- * Exige rol "admin" sobre el usuario ya autenticado.
+ * Exige un permiso específico sobre el usuario ya autenticado.
  * Usar SIEMPRE después de autenticacionRequerida.
  */
-export function adminRequerido(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  const usuario = req.usuarioPublico;
-  if (!usuario) {
-    // Sólo posible si se encadenó mal; se responde 401 por seguridad.
-    res.status(401).json({ mensaje: "Sesión no válida." });
-    return;
-  }
+export function permisoRequerido(permiso: Permiso) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const usuario = req.usuarioPublico;
+    if (!usuario) {
+      res.status(401).json({ mensaje: "Sesión no válida." });
+      return;
+    }
 
-  if (usuario.rol !== "admin") {
-    res.status(403).json({
-      mensaje: "Acceso denegado. Necesitás permisos de administrador."
-    });
-    return;
-  }
+    if (!tienePermiso(usuario.rol, permiso)) {
+      res.status(403).json({
+        mensaje: "Acceso denegado. No tenés permisos suficientes para realizar esta acción."
+      });
+      return;
+    }
 
-  next();
+    next();
+  };
 }
+
+/**
+ * Exige rol "admin" (permiso "usuarios:gestionar").
+ * Mantenido por retrocompatibilidad con las rutas existentes.
+ */
+export const adminRequerido = permisoRequerido("usuarios:gestionar");

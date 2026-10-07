@@ -8,12 +8,14 @@ export interface DatosRegistro {
   confirmacion: string;
 }
 
+export type Rol = "usuario" | "gestor" | "admin";
+
 export interface UsuarioPublico {
   id: string;
   nombre: string;
   apellido: string;
   correo: string;
-  rol: "usuario" | "admin";
+  rol: Rol;
 }
 
 export interface Categoria {
@@ -44,22 +46,7 @@ export interface Actividad {
   categoria: Categoria;
   barrio: Barrio;
   destacado: boolean;
-  fechaInicio?: string | null;
-  fechaFin?: string | null;
-  esRecurrente?: boolean;
-  diasSemana?: string;
-  promedioCalificacion?: number;
-  totalResenas?: number;
-  distanciaKm?: number;
-}
-
-export interface Resena {
-  id: string;
-  usuarioId: string;
-  usuarioNombre: string;
-  calificacion: number;
-  comentario: string;
-  creadoEn: string;
+  visibilidad?: "publica" | "privada" | "oculta";
 }
 
 export interface Preferencias {
@@ -67,13 +54,3 @@ export interface Preferencias {
   barrio: Barrio | null;
   categorias: Categoria[];
 }
-
-export interface MensajeContacto {
-  id: string;
-  nombre: string;
-  correo: string;
-  mensaje: string;
-  leido: boolean;
-  creado_en: string;
-}
-

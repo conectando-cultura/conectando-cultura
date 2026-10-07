@@ -1,10 +1,8 @@
-# Conectando Cultura 🌿
+# Conectando Cultura
 
 Plataforma cultural comunitaria para los barrios de Mataderos y alrededores, Ciudad de Buenos Aires.
 
-Mapa interactivo y catálogo de actividades socioculturales — ferias, cines, teatros, museos,
-bibliotecas, bares notables, parques y más — con registro de vecinos, preferencias
-personalizadas y un panel de administración para mantener el catálogo al día.
+Mapa interactivo y catálogo de actividades socioculturales — ferias, cines, teatros, museos, bibliotecas, bares notables, parques y más — con registro de vecinos, preferencias personalizadas, roles diferenciados y panel de gestión/administración para mantener la oferta cultural al día.
 
 ---
 
@@ -12,11 +10,12 @@ personalizadas y un panel de administración para mantener el catálogo al día.
 
 | Capa | Tecnología |
 |---|---|
-| Frontend | React 18 · TypeScript 5.7 · Vite 5.4 · React Router 6 · Leaflet + OpenStreetMap |
+| Frontend | React 18 · TypeScript 5.7 · Vite 5.4 · React Router 6 · Lucide React · Leaflet + OpenStreetMap |
 | Backend | Node.js 18+ · Express 4 · TypeScript 5.7 |
-| Base de datos | Supabase (PostgreSQL) — única fuente de persistencia |
-| Geocodificación | Nominatim (OpenStreetMap) — sin API key |
-| Mapas | Leaflet con capas de Google Maps y OpenStreetMap |
+| Base de datos | Supabase (PostgreSQL) — única fuente de persistencia (sin fallback local) |
+| Geocodificación | Nominatim (OpenStreetMap) |
+| Mapas | Leaflet con marcadores temáticos vectoriales por categoría |
+| Diseño y Tokens | Tokens CSS de alto contraste (WCAG AA/AAA, paleta institucional CABA/Mataderos) |
 
 ---
 
@@ -33,15 +32,10 @@ cd ../frontend && npm install
 
 ```bash
 cp .env.example backend/.env
-# Editar SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY
+# Configurar SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY
 ```
 
-**Obligatorio.** El backend usa Supabase como única fuente de datos: sin esas dos
-variables se niega a arrancar y lo explica. La clave tiene que ser la **service role**
-(del panel: Settings → API → *service_role*, o `sb_secret_...` en el panel nuevo), no la
-publicable/anon — la publicable no salta RLS y el backend no podría leer ni escribir.
-
-El backend carga el `.env` por su cuenta, no hace falta `--env-file` ni `dotenv`.
+**Obligatorio.** El backend usa Supabase como única fuente de datos. Requiere la clave **service role** (`sb_secret_...` o `service_role` del dashboard de Supabase).
 
 ### 3. Levantar los servidores
 
@@ -55,18 +49,14 @@ cd frontend
 npm run dev
 ```
 
-Abrí <http://localhost:5173>. El frontend proxea `/api` al backend automáticamente.
+El frontend proxea automáticamente las peticiones `/api` al backend en el puerto 3001.
 
-### 4. Crear el schema
+### 4. Crear o actualizar el esquema de base de datos
 
-1. Creá un proyecto en [supabase.com](https://supabase.com).
-2. Ejecutá `supabase/migrations/001_initial_schema.sql` y luego
-   `supabase/migrations/002_contacto_notificaciones.sql` desde **SQL Editor**.
-3. Poné `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` en `backend/.env`.
-4. Reiniciá el backend.
-
-La migración 001 incluye el seed: 6 barrios, 9 categorías y 30 actividades de Mataderos,
-así que la API devuelve contenido apenas se levanta.
+Desde el **SQL Editor** de Supabase, ejecutar en orden:
+1. `supabase/migrations/001_initial_schema.sql` (esquema inicial, categorías, barrios, actividades seed).
+2. `supabase/migrations/002_contacto_notificaciones.sql` (notificaciones y mensajes).
+3. `supabase/migrations/003_roles_y_permisos.sql` (roles `usuario`, `gestor`, `admin` y permisos granulares).
 
 ---
 
@@ -74,12 +64,22 @@ así que la API devuelve contenido apenas se levanta.
 
 | Comando | Directorio | Descripción |
 |---|---|---|
-| `npm run dev` | `backend/` | API con recarga automática (tsx watch) |
+| `npm run dev` | `backend/` | API con recarga automática (`tsx watch`) |
 | `npm run build` | `backend/` | Compila TypeScript a `dist/` |
-| `npm run typecheck` | ambos | `tsc --noEmit` |
-| `npm run dev` | `frontend/` | Vite dev server en :5173 |
-| `npm run build` | `frontend/` | `tsc --noEmit && vite build` |
-| `npm run preview` | `frontend/` | Sirve el build de producción |
+| `npm run typecheck` | ambos | Verificación de tipos (`tsc --noEmit`) |
+| `npm run dev` | `frontend/` | Servidor de desarrollo Vite en `:5173` |
+| `npm run build` | `frontend/` | Compilación de producción (`tsc --noEmit && vite build`) |
+| `npm run sin-emojis` | `frontend/` | Linter que audita la ausencia de emojis en el código |
+| `npm run preview` | `frontend/` | Previsualiza el build de producción |
+
+---
+
+## Roles y Permisos
+
+El sistema contempla control de acceso basado en roles (RBAC):
+- **Usuario (`usuario`)**: Vecino registrado. Puede explorar, guardar preferencias y marcar actividades.
+- **Gestor (`gestor`)**: Gestor cultural o comunitario. Acceso al panel para crear y editar actividades culturales.
+- **Administrador (`admin`)**: Superadministrador. Gestión integral de usuarios, asignación de roles, métricas completas y actividades.
 
 ---
 
@@ -88,91 +88,50 @@ así que la API devuelve contenido apenas se levanta.
 Base: `/api` (en desarrollo, `http://localhost:3001/api`).
 
 ### Autenticación
-
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
 | POST | `/api/auth/registro` | No | Crear cuenta |
-| POST | `/api/auth/login` | No | Iniciar sesión (devuelve token Bearer) |
-| GET | `/api/auth/me` | Sí | Datos del usuario de la sesión |
-| POST | `/api/auth/logout` | Sí | Cerrar sesión |
+| POST | `/api/auth/login` | No | Iniciar sesión (token Bearer) |
+| GET | `/api/auth/me` | Sí | Perfil y rol del usuario actual |
+| POST | `/api/auth/logout` | Sí | Cerrar sesión activa |
 
-### Catálogo (lectura pública)
-
+### Catálogo y Actividades
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| GET | `/api/actividades` | No | Listar actividades. Filtros: `barrioSlug`, `categoriaSlug`, `limite` |
-| GET | `/api/actividades/barrios` | No | Listar barrios |
-| GET | `/api/actividades/categorias` | No | Listar categorías con color e ícono |
+| GET | `/api/actividades` | No | Listar actividades públicas (filtros: `barrioSlug`, `categoriaSlug`, `limite`) |
+| GET | `/api/actividades/barrios` | No | Listar barrios disponibles |
+| GET | `/api/actividades/categorias` | No | Listar categorías culturales |
 | GET | `/api/actividades/:slug/:barrioSlug` | No | Detalle de una actividad |
 | GET | `/api/estado` | No | Health check |
 
 ### Preferencias
-
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| GET | `/api/preferencias` | Sí | Preferencias del usuario actual |
-| PUT | `/api/preferencias` | Sí | Guardar barrio y categorías |
+| GET | `/api/preferencias` | Sí | Preferencias del vecino autenticado |
+| PUT | `/api/preferencias` | Sí | Actualizar barrio y categorías de interés |
 
-### Administración (requiere rol `admin`)
-
-| Método | Ruta | Auth | Descripción |
+### Gestión y Administración (requiere `gestor` o `admin`)
+| Método | Ruta | Rol mínimo | Descripción |
 |---|---|---|---|
-| GET | `/api/actividades?admin=true` | Sí | Listar también las inactivas |
-| POST | `/api/actividades` | Sí | Crear actividad |
-| PATCH | `/api/actividades/:id` | Sí | Editar actividad |
-| DELETE | `/api/actividades/:id` | Sí | Baja lógica (`activo = false`) |
-| GET | `/api/admin/estadisticas` | Sí | Métricas del sistema |
-| GET | `/api/admin/usuarios` | Sí | Listar usuarios |
-| PATCH | `/api/admin/usuarios/:id/rol` | Sí | Cambiar rol (`usuario` / `admin`) |
-
-Respuesta de error estándar: `{ "mensaje": "..." }` con código HTTP 400 / 401 / 403 / 404 / 500.
+| GET | `/api/actividades?admin=true` | `gestor` | Listado ampliado (incluye inactivas) |
+| POST | `/api/actividades` | `gestor` | Crear nueva actividad |
+| PATCH | `/api/actividades/:id` | `gestor` | Editar actividad existente |
+| DELETE | `/api/actividades/:id` | `admin` | Baja lógica de actividad |
+| GET | `/api/admin/estadisticas` | `gestor` | Métricas de actividades y catálogo |
+| GET | `/api/admin/usuarios` | `admin` | Listar usuarios del sistema |
+| PATCH | `/api/admin/usuarios/:id/rol` | `admin` | Cambiar rol de usuario (`usuario`, `gestor`, `admin`) |
 
 ---
 
-## Seguridad
+## Diseño y Accesibilidad
 
-- **Contraseñas:** scrypt con sal de 16 bytes y comparación con `timingSafeEqual`.
-  Nunca se devuelven los hashes: todo sale por `aPublico()`.
-- **Sesiones:** token Bearer de 64 caracteres hex, generado con `crypto.randomUUID()`,
-  con vigencia de 7 días.
-- **RBAC:** `autenticacionRequerida` adjunta el usuario a la petición; `adminRequerido`
-  responde 403 si el rol no es `admin`. El panel `/admin` además tiene guarda de ruta en
-  el frontend.
-- **RLS:** activo en todas las tablas. El backend usa la service role key (que ignora RLS),
-  por lo que el control efectivo está en el middleware; las políticas protegen frente a
-  un uso accidental de la anon key.
-- **Validación:** todas las entradas se validan en los servicios, no en las rutas.
-
----
-
-## Estructura
-
-```
-.
-├── backend/          API Express + TypeScript
-│   └── src/          routes / services / repositories / middlewares / lib
-├── frontend/         SPA React + Vite
-│   └── src/          paginas / componentes / contexto / api
-├── supabase/
-│   └── migrations/   Esquema, RLS y seed
-├── docs/README.md    Documentación técnica extendida
-└── AGENTS.md         Guía para agentes de desarrollo
-```
-
----
-
-## Estado del proyecto
-
-Sprint 1 (auth) a Sprint 4 (panel admin + geolocalización) completados y verificados.
-
-Pendiente, en el backlog del curso: alertas por correo electrónico (Resend), formulario
-de contacto, code splitting y auditoría Lighthouse. El schema de `mensajes_contacto` y
-`notificaciones` ya está preparado en la migración 002.
+- **Tokens de diseño:** Definidos en [`frontend/src/tokens.css`](./frontend/src/tokens.css), garantizando ratios de contraste WCAG AA/AAA.
+- **Iconografía formal:** Integrada mediante `lucide-react` con asignación semántica según la naturaleza de la actividad (sin emojis en interfaz).
+- **Marcadores dinámicos:** Pines vectoriales de mapa Leaflet adaptados a la categoría de cada evento o institución.
 
 ---
 
 ## Documentación
 
-- [`AGENTS.md`](./AGENTS.md) — arquitectura, convenciones y reglas para agentes
-- [`docs/README.md`](./docs/README.md) — referencia técnica detallada
-- Bitácoras de sprint en la raíz (`Sprint *- Desarrollo.md`)
+- [`AGENTS.md`](./AGENTS.md) — Reglas, arquitecturas y convenciones para agentes de desarrollo.
+- [`conectando-cultura-docs/`](./conectando-cultura-docs/) — Paquete de planificación detallada (flujos, sistema visual, wireframes y contratos de API).

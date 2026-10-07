@@ -1,12 +1,15 @@
+import { useEffect } from "react";
 import { LayersControl, MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Actividad } from "../tipos";
+import { colorSimbolo } from "../utiles/colorCategoria";
+import { obtenerPathsSvgCategoria } from "../utiles/iconosSvg";
+import CategoriaChip from "./CategoriaChip";
+import { Link } from "react-router-dom";
 
-// Fix para el ícono de Leaflet en Vite.
-// Leaflet expone internamente `_getIconUrl` sin tipar, así que se
-// accede con un Record acotado en lugar de `any`.
+// Fix para el ícono de Leaflet en Vite
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
@@ -22,140 +25,158 @@ interface Props {
   actividades: Actividad[];
   centro?: [number, number];
   zoom?: number;
+  actividadSeleccionadaId?: string | null;
+  onSeleccionarActividad?: (actividad: Actividad) => void;
+  altura?: string | number;
 }
 
-function CreadorMarcador({ actividad }: { actividad: Actividad }) {
-  const color = actividad.categoria.color.replace("#", "");
+function CreadorMarcador({
+  actividad,
+  seleccionado = false,
+  onSeleccionar
+}: {
+  actividad: Actividad;
+  seleccionado?: boolean;
+  onSeleccionar?: (actividad: Actividad) => void;
+}) {
+  const color = actividad.categoria.color || "#F98017";
+  const simboloColor = colorSimbolo(color);
+  const escala = seleccionado ? "scale(1.35)" : "scale(1)";
+
+  const svgPaths = obtenerPathsSvgCategoria(
+    actividad.categoria.icono,
+    actividad.categoria.slug,
+    actividad.categoria.nombre
+  );
+
+  // Pin de gota en SVG con el ícono vectorial representativo de la categoría
   const svgIcon = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="34" height="44" viewBox="0 0 34 44">
-      <defs>
-        <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
-        </filter>
-      </defs>
-      <path d="M17 0C7.61 0 0 7.61 0 17c0 11.2 17 27 17 27s17-15.8 17-27C34 7.61 26.39 0 17 0z" fill="#${color}" filter="url(#s)"/>
-      <circle cx="17" cy="16" r="9" fill="#ffffff"/>
-      <text x="17" y="21" text-anchor="middle" font-size="12">${actividad.categoria.icono}</text>
-    </svg>
+    <div style="transform: ${escala}; transition: transform 0.2s ease; display: inline-flex; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
+      <div style="
+        width: 32px;
+        height: 32px;
+        background: ${color};
+        border: 2.5px solid #FFFFFF;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+      ">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="${simboloColor}"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="transform: rotate(45deg); display: block;"
+        >
+          ${svgPaths}
+        </svg>
+      </div>
+    </div>
   `;
 
   const icono = L.divIcon({
     html: svgIcon,
-    className: "",
-    iconSize: [34, 44],
-    iconAnchor: [17, 44],
-    popupAnchor: [0, -42]
+    className: "marcador-pin-categoria",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -34]
   });
 
   const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&destination=${actividad.lat},${actividad.lng}`;
+  const detalleUrl = `/actividades/${actividad.barrio.slug}/${actividad.slug}`;
 
   return (
-    <Marker position={[actividad.lat, actividad.lng]} icon={icono}>
+    <Marker
+      position={[actividad.lat, actividad.lng]}
+      icon={icono}
+      eventHandlers={{
+        click: () => onSeleccionar?.(actividad)
+      }}
+    >
       <Popup>
-        <div style={{ minWidth: "220px", maxWidth: "260px", padding: "4px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "2px 8px",
-              borderRadius: "12px",
-              background: `${actividad.categoria.color}22`,
-              color: actividad.categoria.color,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              marginBottom: "6px"
-            }}
-          >
-            {actividad.categoria.icono} {actividad.categoria.nombre}
+        <div style={{ minWidth: "220px", maxWidth: "270px", padding: "4px", fontFamily: "var(--fuente-cuerpo)" }}>
+          <div style={{ marginBottom: "8px" }}>
+            <CategoriaChip categoria={actividad.categoria} />
           </div>
           <h3
             style={{
               margin: "0 0 6px 0",
-              fontSize: "1rem",
+              fontSize: "15px",
               fontWeight: 700,
-              color: "var(--texto, #1e293b)"
+              color: "var(--tinta)"
             }}
           >
             {actividad.nombre}
           </h3>
-          <p style={{ margin: "0 0 4px 0", fontSize: "0.85rem", color: "#475569" }}>
-            📍 <strong>{actividad.direccion}</strong> ({actividad.barrio.nombre})
+          <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "var(--texto-suave)" }}>
+            <strong>{actividad.direccion}</strong> · {actividad.barrio.nombre}
           </p>
           {actividad.horarios && (
-            <p style={{ margin: "0 0 8px 0", fontSize: "0.8rem", color: "#64748b" }}>
-              🕒 {actividad.horarios}
+            <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "var(--texto-suave)" }}>
+              {actividad.horarios}
             </p>
           )}
           {actividad.descripcion && (
             <p
               style={{
-                margin: "0 0 10px 0",
-                fontSize: "0.8rem",
-                color: "#334155",
-                lineHeight: "1.3"
+                margin: "0 0 12px 0",
+                fontSize: "13px",
+                color: "var(--tinta)",
+                lineHeight: "1.4"
               }}
             >
-              {actividad.descripcion.length > 110
-                ? `${actividad.descripcion.slice(0, 110)}...`
+              {actividad.descripcion.length > 95
+                ? `${actividad.descripcion.slice(0, 95)}...`
                 : actividad.descripcion}
             </p>
           )}
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px" }}>
-            <a
-              href={`/actividades/${actividad.id}`}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Link
+              to={detalleUrl}
               style={{
-                display: "inline-block",
-                padding: "4px 8px",
-                borderRadius: "6px",
-                background: "var(--naranja, #F98017)",
-                color: "#ffffff",
-                fontSize: "0.8rem",
-                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "6px 10px",
+                borderRadius: "var(--radio-control)",
+                background: "var(--boton-fondo)",
+                color: "var(--boton-texto)",
+                fontSize: "12px",
+                fontWeight: 700,
                 textDecoration: "none",
-                textAlign: "center"
+                flex: 1
               }}
             >
-              📄 Ficha
-            </a>
+              Ver detalle
+            </Link>
             <a
               href={urlGoogleMaps}
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: "inline-block",
-                padding: "4px 8px",
-                borderRadius: "6px",
-                background: "#f1f5f9",
-                color: "#334155",
-                fontSize: "0.8rem",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "6px 10px",
+                borderRadius: "var(--radio-control)",
+                border: "1px solid var(--linea)",
+                background: "var(--blanco)",
+                color: "var(--tinta)",
+                fontSize: "12px",
                 fontWeight: 600,
-                textDecoration: "none",
-                textAlign: "center"
+                textDecoration: "none"
               }}
             >
-              🚗 Llegar
+              Cómo llegar
             </a>
-            {actividad.url && (
-              <a
-                href={actividad.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-block",
-                  padding: "4px 8px",
-                  borderRadius: "6px",
-                  background: "#f1f5f9",
-                  color: "#334155",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  textAlign: "center"
-                }}
-              >
-                🌐 Web
-              </a>
-            )}
           </div>
         </div>
       </Popup>
@@ -165,14 +186,33 @@ function CreadorMarcador({ actividad }: { actividad: Actividad }) {
 
 function AjusteZoom({ bounds }: { bounds: LatLngBoundsExpression | null }) {
   const map = useMap();
-  if (bounds) {
-    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-  }
+  useEffect(() => {
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    }
+  }, [bounds, map]);
   return null;
 }
 
-export default function MapaLeaflet({ actividades, centro, zoom = 14 }: Props) {
-  // Centro geográfico real de Mataderos: Alberdi y Directorio / Lisandro de la Torre
+function Centrador({ destino }: { destino?: [number, number] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (destino) {
+      map.flyTo(destino, Math.max(map.getZoom(), 15), { duration: 0.8 });
+    }
+  }, [destino, map]);
+  return null;
+}
+
+export default function MapaLeaflet({
+  actividades,
+  centro,
+  zoom = 14,
+  actividadSeleccionadaId,
+  onSeleccionarActividad,
+  altura = "100%"
+}: Props) {
+  // Centro geográfico de Mataderos
   const centroDefinitivo: [number, number] = centro ?? [-34.656, -58.504];
 
   const bounds: LatLngBoundsExpression | null =
@@ -180,14 +220,20 @@ export default function MapaLeaflet({ actividades, centro, zoom = 14 }: Props) {
       ? actividades.map((a) => [a.lat, a.lng] as [number, number])
       : null;
 
+  const seleccionada = actividades.find((a) => a.id === actividadSeleccionadaId);
+  const destinoCentrado: [number, number] | null = seleccionada
+    ? [seleccionada.lat, seleccionada.lng]
+    : null;
+
   return (
     <div
       style={{
-        height: "560px",
-        borderRadius: "var(--radio)",
+        height: typeof altura === "number" ? `${altura}px` : altura,
+        width: "100%",
+        borderRadius: "var(--radio-tarjeta)",
         overflow: "hidden",
-        border: "1px solid var(--borde)",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)"
+        border: "1px solid var(--linea)",
+        position: "relative"
       }}
     >
       <MapContainer
@@ -197,8 +243,8 @@ export default function MapaLeaflet({ actividades, centro, zoom = 14 }: Props) {
         scrollWheelZoom={true}
       >
         <LayersControl position="topright">
-          {/* Capa principal: Google Maps Roadmap con calles reales, negocios y detalles */}
-          <LayersControl.BaseLayer checked name="🗺️ Google Maps (Calles y Comercios)">
+          {/* Capa principal */}
+          <LayersControl.BaseLayer checked name="Google Maps (Calles)">
             <TileLayer
               attribution='&copy; <a href="https://maps.google.com">Google Maps</a>'
               url="https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
@@ -207,8 +253,8 @@ export default function MapaLeaflet({ actividades, centro, zoom = 14 }: Props) {
             />
           </LayersControl.BaseLayer>
 
-          {/* Capa satélite: Google Maps Híbrido con fotos aéreas y nombres de calles */}
-          <LayersControl.BaseLayer name="🛰️ Google Maps (Satélite e Híbrido)">
+          {/* Capa satélite */}
+          <LayersControl.BaseLayer name="Google Maps (Satélite)">
             <TileLayer
               attribution='&copy; <a href="https://maps.google.com">Google Maps</a>'
               url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
@@ -217,8 +263,8 @@ export default function MapaLeaflet({ actividades, centro, zoom = 14 }: Props) {
             />
           </LayersControl.BaseLayer>
 
-          {/* Capa alternativa: OpenStreetMap */}
-          <LayersControl.BaseLayer name="🌐 OpenStreetMap Estándar">
+          {/* Capa OpenStreetMap */}
+          <LayersControl.BaseLayer name="OpenStreetMap estándar">
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -228,9 +274,19 @@ export default function MapaLeaflet({ actividades, centro, zoom = 14 }: Props) {
         </LayersControl>
 
         {actividades.map((a) => (
-          <CreadorMarcador key={a.id} actividad={a} />
+          <CreadorMarcador
+            key={a.id}
+            actividad={a}
+            seleccionado={a.id === actividadSeleccionadaId}
+            onSeleccionar={onSeleccionarActividad}
+          />
         ))}
-        {bounds && <AjusteZoom bounds={bounds} />}
+
+        {destinoCentrado ? (
+          <Centrador destino={destinoCentrado} />
+        ) : (
+          bounds && <AjusteZoom bounds={bounds} />
+        )}
       </MapContainer>
     </div>
   );

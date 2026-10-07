@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { autenticacionRequerida, adminRequerido } from "../middlewares/autenticacion.middleware.js";
+import {
+  autenticacionRequerida,
+  permisoRequerido
+} from "../middlewares/autenticacion.middleware.js";
 import type { AuthService } from "../services/auth.service.js";
 import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
-import { ContactoService } from "../services/contacto.service.js";
-import { ErrorAplicacion } from "../types.js";
+import { ErrorAplicacion, type Rol } from "../types.js";
 
 interface ErrorPostgrest {
   code?: string;
@@ -19,13 +21,13 @@ function describirError(error: ErrorPostgrest | null): string {
 
 export function crearRutasAdmin(auth: AuthService): Router {
   const router = Router();
-  const servicioContacto = new ContactoService();
 
-  // Todo /api/admin exige sesión + rol admin
-  router.use(autenticacionRequerida(auth), adminRequerido);
+  // Todo /api/admin exige sesión autenticada
+  router.use(autenticacionRequerida(auth));
 
   // GET /api/admin/estadisticas
-  router.get("/estadisticas", async (_req, res) => {
+  // Accesible por gestores y administradores (permiso panel:acceder)
+  router.get("/estadisticas", permisoRequerido("panel:acceder"), async (_req, res) => {
     try {
       exigirSupabase();
 
@@ -55,7 +57,8 @@ export function crearRutasAdmin(auth: AuthService): Router {
   });
 
   // GET /api/admin/usuarios
-  router.get("/usuarios", async (_req, res) => {
+  // Solo accesible por administradores (permiso usuarios:gestionar)
+  router.get("/usuarios", permisoRequerido("usuarios:gestionar"), async (_req, res) => {
     try {
       exigirSupabase();
 
@@ -77,30 +80,53 @@ export function crearRutasAdmin(auth: AuthService): Router {
   });
 
   // PATCH /api/admin/usuarios/:id/rol
-  router.patch("/usuarios/:id/rol", async (req, res) => {
+  // Solo accesible por administradores (permiso usuarios:gestionar)
+  router.patch("/usuarios/:id/rol", permisoRequerido("usuarios:gestionar"), async (req, res) => {
     try {
       const { rol } = req.body as { rol?: unknown };
-      if (rol !== "usuario" && rol !== "admin") {
-        res.status(400).json({ mensaje: "Rol inválido. Debe ser 'usuario' o 'admin'." });
+      if (rol !== "usuario" && rol !== "gestor" && rol !== "admin") {
+        res.status(400).json({ mensaje: "Rol inválido. Debe ser 'usuario', 'gestor' o 'admin'." });
+        return;
+      }
+
+      // Regla: no permitir cambiar el propio rol
+      if (req.usuarioPublico?.id === req.params.id) {
+        res.status(400).json({ mensaje: "No podés cambiar tu propio rol." });
         return;
       }
 
       exigirSupabase();
 
-      const { data, error } = await supabaseAdmin
+      // Regla: si se le quita admin al usuario, verificar que no sea el último
+      const { data: usuarioActual, error: errorBusqueda } = await supabaseAdmin
         .from("usuarios")
-        .update({ rol })
+        .select("id, rol")
         .eq("id", req.params.id)
-        .select("id, nombre, apellido, correo, rol, creado_en")
         .maybeSingle();
 
-      if (error) throw new Error(describirError(error));
-      if (!data) {
+      if (errorBusqueda) throw new Error(describirError(errorBusqueda));
+      if (!usuarioActual) {
         res.status(404).json({ mensaje: "Usuario no encontrado." });
         return;
       }
 
-      res.json({ usuario: data });
+      if (usuarioActual.rol === "admin" && rol !== "admin") {
+        const { count, error: countError } = await supabaseAdmin
+          .from("usuarios")
+          .select("id", { count: "exact", head: true })
+          .eq("rol", "admin");
+
+        if (countError) throw new Error(describirError(countError));
+        if ((count ?? 0) <= 1) {
+          res.status(400).json({
+            mensaje: "No podés quitar el último administrador del sistema."
+          });
+          return;
+        }
+      }
+
+      const usuarioActualizado = await auth.actualizarRol(req.params.id, rol as Rol);
+      res.json({ usuario: usuarioActualizado });
     } catch (err) {
       console.error(err);
       const status = err instanceof ErrorAplicacion ? err.status : 500;
@@ -110,44 +136,16 @@ export function crearRutasAdmin(auth: AuthService): Router {
     }
   });
 
-  // ── Mensajes de contacto (Sprint 8) ──────────────────────────
-
-  // GET /api/admin/mensajes
-  router.get("/mensajes", async (_req, res) => {
+  // DELETE /api/admin/usuarios/:id/sesiones
+  // Cierra todas las sesiones de un usuario
+  router.delete("/usuarios/:id/sesiones", permisoRequerido("usuarios:gestionar"), async (req, res) => {
     try {
-      const mensajes = await servicioContacto.listarMensajes();
-      res.json({ mensajes });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({
-        mensaje: err instanceof Error ? err.message : "Error al listar mensajes de contacto."
-      });
-    }
-  });
-
-  // PATCH /api/admin/mensajes/:id/leido
-  router.patch("/mensajes/:id/leido", async (req, res) => {
-    try {
-      const { leido } = req.body as { leido?: boolean };
-      const mensaje = await servicioContacto.marcarLeido(req.params.id, leido !== false);
-      res.json({ mensaje });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({
-        mensaje: err instanceof Error ? err.message : "Error al actualizar estado del mensaje."
-      });
-    }
-  });
-
-  // DELETE /api/admin/mensajes/:id
-  router.delete("/mensajes/:id", async (req, res) => {
-    try {
-      await servicioContacto.eliminarMensaje(req.params.id);
+      await auth.cerrarSesionesDeUsuario(req.params.id);
       res.status(204).send();
     } catch (err) {
       console.error(err);
       res.status(500).json({
-        mensaje: err instanceof Error ? err.message : "Error al eliminar mensaje."
+        mensaje: err instanceof Error ? err.message : "Error al cerrar las sesiones del usuario."
       });
     }
   });

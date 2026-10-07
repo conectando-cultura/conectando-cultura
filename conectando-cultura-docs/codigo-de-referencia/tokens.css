@@ -1,0 +1,58 @@
+/* Conectando Cultura · tokens de diseño. Importar una vez, en la raíz de la app. */
+:root {
+  color-scheme: light dark;
+
+  /* Neutrales (claro, oscuro). Los valores oscuros son una propuesta sin verificar. */
+  --papel: light-dark(#F2F4F8, #0F1626);
+  --blanco: light-dark(#FFFFFF, #18223A);
+  --tinta: light-dark(#1B2A4A, #E8ECF5);
+  --texto-suave: light-dark(#4F5B73, #A9B3C8);
+  --linea: light-dark(#D5DAE4, #2C3857);
+  --borde-campo: #7C869B;
+
+  /* Acentos */
+  --chapa: light-dark(#2A55C9, #8FB0FF);
+  --cartel: #FFC933;
+  --boton-fondo: light-dark(#1B2A4A, #E8ECF5);
+  --boton-texto: light-dark(#FFFFFF, #1B2A4A);
+
+  /* Estados */
+  --peligro: light-dark(#B42318, #FF9A92);
+  --peligro-fondo: light-dark(#FBE4E1, #3A1B1D);
+  --exito: light-dark(#1B7A4B, #6FD39B);
+  --exito-fondo: light-dark(#E0F2E8, #14301F);
+  --aviso: light-dark(#7A4700, #FFD27A);
+  --aviso-fondo: light-dark(#FFF1D6, #33270E);
+
+  /* Tipografía */
+  --fuente-titulo: "Archivo", "Arial Narrow", sans-serif;
+  --fuente-cuerpo: "Atkinson Hyperlegible", system-ui, sans-serif;
+
+  /* Forma y espacio */
+  --radio-control: 6px;
+  --radio-tarjeta: 12px;
+  --radio-pildora: 999px;
+  --esp-1: 4px; --esp-2: 8px; --esp-3: 12px; --esp-4: 16px;
+  --esp-6: 24px; --esp-8: 32px; --esp-12: 48px;
+  --alto-tactil: 44px;
+  --foco: 3px solid var(--chapa);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font: 400 16px/1.6 var(--fuente-cuerpo);
+}
+h1, h2, h3 {
+  font-family: var(--fuente-titulo);
+  font-stretch: 75%;
+  font-weight: 700;
+  line-height: 1.1;
+}
+:focus-visible { outline: var(--foco); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

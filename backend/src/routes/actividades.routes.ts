@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ActividadesService } from "../services/actividades.service.js";
-import { autenticacionRequerida, adminRequerido } from "../middlewares/autenticacion.middleware.js";
+import { autenticacionRequerida, permisoRequerido } from "../middlewares/autenticacion.middleware.js";
 import type { AuthService } from "../services/auth.service.js";
 import { ErrorAplicacion } from "../types.js";
 
@@ -29,17 +29,22 @@ export function crearRutasActividades(auth: AuthService): Router {
   });
 
   // GET /api/actividades/admin/todas
-  // Listado completo (incluye inactivas). Va en una ruta separada y
-  // protegida: si compartiera handler con la pública, el flag `admin=true`
-  // expondría las actividades dadas de baja a cualquier visitante.
+  // Listado para el panel (incluye inactivas, búsqueda, orden y paginación).
   router.get(
     "/admin/todas",
     autenticacionRequerida(auth),
-    adminRequerido,
-    async (_req, res) => {
+    permisoRequerido("actividades:escribir"),
+    async (req, res) => {
       try {
-        const actividades = await servicio.listarTodasAdmin();
-        res.json({ actividades });
+        const { pagina, limite, orden, q, activo } = req.query as Record<string, string | undefined>;
+        const resultado = await servicio.listarTodasAdmin({
+          pagina: pagina ? Number(pagina) : undefined,
+          limite: limite ? Number(limite) : undefined,
+          orden: orden as "recientes" | "antiguas" | "nombre_asc" | "nombre_desc" | undefined,
+          q,
+          activo: activo !== undefined ? activo === "true" : undefined
+        });
+        res.json(resultado);
       } catch (err) {
         console.error(err);
         res.status(500).json({ mensaje: "Error al obtener actividades." });
@@ -81,27 +86,14 @@ export function crearRutasActividades(auth: AuthService): Router {
     }
   });
 
-  // GET /api/actividades/:id (Ficha técnica de actividad)
-  router.get("/:id", async (req, res) => {
-    try {
-      const actividad = await servicio.obtenerPorId(req.params.id);
-      if (!actividad) {
-        res.status(404).json({ mensaje: "Actividad no encontrada." });
-        return;
-      }
-      res.json({ actividad });
-    } catch {
-      res.status(500).json({ mensaje: "Error al obtener actividad." });
-    }
-  });
-
-  // ── Admin ─────────────────────────────────────────────────
+  // ── Admin / Gestor ─────────────────────────────────────────
+  // Rutas protegidas con permiso actividades:escribir (gestor y admin)
 
   // POST /api/actividades (crear)
   router.post(
     "/",
     autenticacionRequerida(auth),
-    adminRequerido,
+    permisoRequerido("actividades:escribir"),
     async (req, res) => {
       try {
         const datos = req.body;
@@ -121,7 +113,7 @@ export function crearRutasActividades(auth: AuthService): Router {
   router.patch(
     "/:id",
     autenticacionRequerida(auth),
-    adminRequerido,
+    permisoRequerido("actividades:escribir"),
     async (req, res) => {
       try {
         const actividad = await servicio.actualizar(req.params.id, req.body, req.usuarioPublico!.id);
@@ -133,11 +125,27 @@ export function crearRutasActividades(auth: AuthService): Router {
     }
   );
 
-  // DELETE /api/actividades/:id (eliminar lógico)
+  // PATCH /api/actividades/:id/reactivar (reactivar)
+  router.patch(
+    "/:id/reactivar",
+    autenticacionRequerida(auth),
+    permisoRequerido("actividades:escribir"),
+    async (req, res) => {
+      try {
+        const actividad = await servicio.reactivar(req.params.id, req.usuarioPublico!.id);
+        res.json({ actividad });
+      } catch (err) {
+        const status = err instanceof ErrorAplicacion ? err.status : 500;
+        res.status(status).json({ mensaje: err instanceof Error ? err.message : "Error al reactivar actividad." });
+      }
+    }
+  );
+
+  // DELETE /api/actividades/:id (eliminar lógico / desactivar)
   router.delete(
     "/:id",
     autenticacionRequerida(auth),
-    adminRequerido,
+    permisoRequerido("actividades:escribir"),
     async (req, res) => {
       try {
         await servicio.eliminar(req.params.id);

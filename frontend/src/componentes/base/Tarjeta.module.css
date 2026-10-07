@@ -1,0 +1,16 @@
+.tarjeta {
+  background-color: var(--blanco);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-tarjeta);
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.interactiva {
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.interactiva:hover {
+  border-color: var(--borde-campo);
+}

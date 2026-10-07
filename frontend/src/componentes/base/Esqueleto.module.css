@@ -1,0 +1,29 @@
+.esqueleto {
+  background-color: var(--linea);
+  border-radius: var(--radio-control);
+  display: block;
+  animation: pulso 1.5s infinite ease-in-out;
+}
+
+.circular {
+  border-radius: 50%;
+}
+
+@keyframes pulso {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto {
+    animation: none;
+    opacity: 0.7;
+  }
+}

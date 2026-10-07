@@ -45,7 +45,7 @@ export default function Mapa() {
           marginBottom: "20px"
         }}
       >
-        <h1>🗺️ Mapa de Actividades</h1>
+        <h1>Mapa de Actividades</h1>
         <div style={{ display: "flex", gap: "8px" }}>
           <button
             className={vista === "mapa" ? "btn btn-primario" : "btn btn-secundario"}

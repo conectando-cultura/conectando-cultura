@@ -1,32 +1,26 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./componentes/Navbar";
 import Inicio from "./paginas/Inicio";
+import Explorar from "./paginas/Explorar";
+import DetalleActividad from "./paginas/DetalleActividad";
 import Login from "./paginas/Login";
 import Registro from "./paginas/Registro";
 import Bienvenido from "./paginas/Bienvenido";
-import Mapa from "./paginas/Mapa";
-import Actividades from "./paginas/Actividades";
-import ActividadDetalle from "./paginas/ActividadDetalle";
-import Contacto from "./paginas/Contacto";
-import Favoritos from "./paginas/Favoritos";
 import Preferencias from "./paginas/Preferencias";
-import AdminActividades from "./paginas/AdminActividades";
-import ProtegidaAdmin from "./paginas/ProtegidaAdmin";
+import Dashboard from "./paginas/panel/Dashboard";
+import AdminActividades from "./paginas/panel/AdminActividades";
+import AdminUsuarios from "./paginas/panel/AdminUsuarios";
+import ProtegidaPermiso from "./paginas/ProtegidaPermiso";
 import { AuthProvider } from "./contexto/AuthContext";
 import Protegida from "./paginas/Protegida";
+import ComponentesDemo from "./paginas/ComponentesDemo";
 
 function Footer() {
   return (
-    <footer className="footer" style={{ borderTop: "2px solid var(--borde)", padding: "28px 20px", marginTop: "auto", background: "var(--gris-claro)", textAlign: "center" }}>
-      <div style={{ display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap", marginBottom: "12px", fontSize: "0.95rem" }}>
-        <Link to="/" style={{ color: "var(--texto)" }}>Inicio</Link>
-        <Link to="/mapa" style={{ color: "var(--texto)" }}>Mapa</Link>
-        <Link to="/actividades" style={{ color: "var(--texto)" }}>Actividades</Link>
-        <Link to="/contacto" style={{ color: "var(--texto)" }}>Contacto y Soporte</Link>
-      </div>
-      <p style={{ fontSize: "0.85rem", color: "var(--gris)" }}>
-        © {new Date().getFullYear()} Conectando Cultura — Polo Educativo de Mataderos, CABA.
-        Hecho con ❤️ para la comunidad barrial.
+    <footer className="footer">
+      <p>
+        (c) {new Date().getFullYear()} Conectando Cultura. Barrio Mataderos, CABA.
+        Hecho por la comunidad.
       </p>
     </footer>
   );
@@ -49,12 +43,13 @@ export default function App() {
         <Routes>
           {/* Rutas públicas */}
           <Route path="/" element={<Inicio />} />
+          <Route path="/explorar" element={<Explorar />} />
+          <Route path="/actividades/:barrio/:slug" element={<DetalleActividad />} />
+          <Route path="/mapa" element={<Navigate to="/explorar?vista=mapa" replace />} />
+          <Route path="/actividades" element={<Navigate to="/explorar?vista=lista" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
-          <Route path="/mapa" element={<Mapa />} />
-          <Route path="/actividades" element={<Actividades />} />
-          <Route path="/actividades/:id" element={<ActividadDetalle />} />
-          <Route path="/contacto" element={<Contacto />} />
+          <Route path="/componentes" element={<ComponentesDemo />} />
 
           {/* Rutas protegidas */}
           <Route
@@ -62,14 +57,6 @@ export default function App() {
             element={
               <Protegida>
                 <Bienvenido />
-              </Protegida>
-            }
-          />
-          <Route
-            path="/favoritos"
-            element={
-              <Protegida>
-                <Favoritos />
               </Protegida>
             }
           />
@@ -82,13 +69,29 @@ export default function App() {
             }
           />
 
-          {/* Admin (requiere auth + rol admin) */}
+          {/* Panel de administración (según permisos de rol) */}
           <Route
             path="/admin"
             element={
-              <ProtegidaAdmin>
+              <ProtegidaPermiso permiso="panel:acceder">
+                <Dashboard />
+              </ProtegidaPermiso>
+            }
+          />
+          <Route
+            path="/admin/actividades"
+            element={
+              <ProtegidaPermiso permiso="actividades:escribir">
                 <AdminActividades />
-              </ProtegidaAdmin>
+              </ProtegidaPermiso>
+            }
+          />
+          <Route
+            path="/admin/usuarios"
+            element={
+              <ProtegidaPermiso permiso="usuarios:gestionar">
+                <AdminUsuarios />
+              </ProtegidaPermiso>
             }
           />
 

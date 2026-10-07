@@ -8,11 +8,11 @@
 
 ## Stack
 
-- **Frontend:** React 18 + TypeScript 5.7 + Vite 5.4 + react-router-dom 6 + Leaflet (`frontend/`)
+- **Frontend:** React 18 + TypeScript 5.7 + Vite 5.4 + react-router-dom 6 + Lucide React + Leaflet (`frontend/`)
 - **Backend:** Node.js + Express 4 + TypeScript 5.7 (`backend/`)
 - **Persistencia:** Supabase (PostgreSQL), única fuente de verdad. **No hay fallback local.**
 - **API:** REST. El frontend proxea `/api` al backend por Vite (`vite.config.ts`).
-- **Auth:** scrypt (`services/password.ts`) + token Bearer aleatorio de 64 chars hex / 7 días. **No se usa Supabase Auth.**
+- **Auth & RBAC:** scrypt (`services/password.ts`) + token Bearer aleatorio de 64 chars hex / 7 días. Roles: `usuario`, `gestor`, `admin`. **No se usa Supabase Auth.**
 
 ---
 

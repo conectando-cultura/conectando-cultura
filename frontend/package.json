@@ -8,11 +8,13 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sin-emojis": "node scripts/sin-emojis.mjs src"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.52.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",

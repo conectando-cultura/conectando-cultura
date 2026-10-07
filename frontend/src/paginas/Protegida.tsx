@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexto/AuthContext";
 
 /**
@@ -8,13 +8,14 @@ import { useAuth } from "../contexto/AuthContext";
  */
 export default function Protegida({ children }: { children: ReactNode }) {
   const { usuario, cargando } = useAuth();
+  const location = useLocation();
 
   if (cargando) {
     return <p className="cargando">Cargando tu sesión…</p>;
   }
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

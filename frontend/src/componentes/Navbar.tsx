@@ -1,77 +1,175 @@
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexto/AuthContext";
+import { puedeUsuario } from "../utiles/permisos";
+import { Map, SlidersHorizontal, LogOut, LayoutDashboard } from "lucide-react";
 
-export default function Navbar() {
+export default function Navbar(): React.JSX.Element {
   const { usuario, cerrarSesion } = useAuth();
   const ruta = useLocation().pathname;
 
+  const tieneAccesoPanel = puedeUsuario(usuario, "panel:acceder");
+
   return (
-    <nav className="nav">
-      <Link className="nav-marca" to="/">
-        <span className="nav-logo">CC</span>
+    <header
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 24px",
+        backgroundColor: "var(--blanco)",
+        borderBottom: "1px solid var(--linea)",
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
+        boxSizing: "border-box"
+      }}
+    >
+      <Link
+        to="/"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          fontWeight: 700,
+          fontSize: "18px",
+          color: "var(--tinta)",
+          textDecoration: "none",
+          fontFamily: "var(--fuente-titulo)"
+        }}
+      >
+        <span
+          style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "var(--radio-control)",
+            backgroundColor: "var(--tinta)",
+            color: "var(--blanco)",
+            display: "grid",
+            placeItems: "center",
+            fontSize: "14px",
+            fontWeight: 700
+          }}
+        >
+          CC
+        </span>
         Conectando Cultura
       </Link>
 
-      <div className="nav-enlaces">
-        <Link className="nav-enlace" to="/mapa">
-          🗺️ Mapa
-        </Link>
-        <Link className="nav-enlace" to="/actividades">
-          📋 Actividades
-        </Link>
-        <Link className="nav-enlace" to="/contacto">
-          ✉️ Contacto
+      <nav style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+        <Link
+          to="/explorar"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            color: ruta.startsWith("/explorar") ? "var(--chapa)" : "var(--tinta)",
+            fontWeight: 600,
+            fontSize: "14px",
+            textDecoration: "none"
+          }}
+        >
+          <Map size={16} aria-hidden="true" />
+          Explorar
         </Link>
 
         {usuario ? (
           <>
-            {usuario.rol === "admin" && (
+            {tieneAccesoPanel && (
               <Link
-                className={`nav-enlace ${ruta === "/admin" ? "activo" : ""}`}
                 to="/admin"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  color: ruta.startsWith("/admin") ? "var(--chapa)" : "var(--tinta)",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  textDecoration: "none"
+                }}
               >
-                ⚙️ Admin
+                <LayoutDashboard size={16} aria-hidden="true" />
+                Panel
               </Link>
             )}
-            <Link className="nav-enlace" to="/favoritos">
-              ❤️ Favoritos
-            </Link>
-            <Link className="nav-enlace" to="/preferencias">
-              ⚙️ Preferencias
+            <Link
+              to="/preferencias"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                color: ruta === "/preferencias" ? "var(--chapa)" : "var(--tinta)",
+                fontWeight: 600,
+                fontSize: "14px",
+                textDecoration: "none"
+              }}
+            >
+              <SlidersHorizontal size={16} aria-hidden="true" />
+              Preferencias
             </Link>
             <span
-              className="nav-enlace"
-              style={{ color: "var(--naranja)", cursor: "default" }}
+              style={{
+                fontSize: "14px",
+                fontWeight: 700,
+                color: "var(--tinta)",
+                paddingLeft: "6px"
+              }}
             >
               {usuario.nombre}
             </span>
             <button
-              className="btn btn-secundario"
-              style={{ padding: "6px 16px", fontSize: "0.85rem" }}
+              type="button"
               onClick={cerrarSesion}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 12px",
+                borderRadius: "var(--radio-control)",
+                border: "1px solid var(--linea)",
+                backgroundColor: "transparent",
+                color: "var(--tinta)",
+                fontSize: "13px",
+                fontWeight: 600,
+                cursor: "pointer"
+              }}
             >
-              Cerrar sesión
+              <LogOut size={14} aria-hidden="true" />
+              Salir
             </button>
           </>
         ) : (
           <>
             <Link
-              className="nav-enlace"
               to="/login"
-              style={ruta === "/login" ? { color: "var(--naranja)" } : {}}
+              style={{
+                color: "var(--tinta)",
+                fontWeight: 600,
+                fontSize: "14px",
+                textDecoration: "none"
+              }}
             >
-              Iniciar sesión
+              Ingresar
             </Link>
             <Link
-              className="btn btn-primario"
               to="/registro"
-              style={{ padding: "8px 18px", fontSize: "0.9rem" }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "8px 16px",
+                borderRadius: "var(--radio-control)",
+                backgroundColor: "var(--boton-fondo)",
+                color: "var(--boton-texto)",
+                fontWeight: 700,
+                fontSize: "14px",
+                textDecoration: "none"
+              }}
             >
               Crear cuenta
             </Link>
           </>
         )}
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 }

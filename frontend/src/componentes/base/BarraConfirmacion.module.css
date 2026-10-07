@@ -1,0 +1,30 @@
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-4);
+  padding: var(--esp-3) var(--esp-4);
+  background-color: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-control);
+  margin: var(--esp-3) 0;
+  flex-wrap: wrap;
+}
+
+.peligro {
+  background-color: var(--peligro-fondo);
+  border-color: var(--peligro);
+}
+
+.mensaje {
+  font-family: var(--fuente-cuerpo);
+  font-size: 14px;
+  color: var(--tinta);
+  flex: 1;
+}
+
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+}

@@ -1,0 +1,14 @@
+.pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--cat-solido);
+  outline: 1px solid rgba(0, 0, 0, 0.35);
+  transform: rotate(-45deg);
+}
+.seleccionado { transform: rotate(-45deg) scale(1.35); }
+.icono { display: inline-flex; color: var(--cat-simbolo); transform: rotate(45deg); }

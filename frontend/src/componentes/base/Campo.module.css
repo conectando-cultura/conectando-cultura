@@ -1,0 +1,66 @@
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-1);
+  margin-bottom: var(--esp-4);
+  width: 100%;
+}
+
+.etiqueta {
+  font-family: var(--fuente-cuerpo);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+.requerido {
+  color: var(--peligro);
+  margin-left: 2px;
+}
+
+.inputContenedor {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  min-height: var(--alto-tactil);
+  padding: 0 var(--esp-3);
+  font-family: var(--fuente-cuerpo);
+  font-size: 15px;
+  color: var(--tinta);
+  background-color: var(--blanco);
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--radio-control);
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: var(--chapa);
+}
+
+.conError {
+  border-color: var(--peligro);
+}
+
+.textarea {
+  min-height: 90px;
+  padding: var(--esp-2) var(--esp-3);
+  resize: vertical;
+}
+
+.mensajeError {
+  font-family: var(--fuente-cuerpo);
+  font-size: 13px;
+  color: var(--peligro);
+  margin-top: 2px;
+}
+
+.ayuda {
+  font-family: var(--fuente-cuerpo);
+  font-size: 13px;
+  color: var(--texto-suave);
+  margin-top: 2px;
+}

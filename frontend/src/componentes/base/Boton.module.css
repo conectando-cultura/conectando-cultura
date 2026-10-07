@@ -1,0 +1,68 @@
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-2);
+  min-height: var(--alto-tactil);
+  padding: 0 var(--esp-4);
+  border-radius: var(--radio-control);
+  font-family: var(--fuente-cuerpo);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.principal {
+  background-color: var(--boton-fondo);
+  color: var(--boton-texto);
+  border: 2px solid transparent;
+}
+
+.principal:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.secundario {
+  background-color: transparent;
+  color: var(--tinta);
+  border: 2px solid var(--tinta);
+}
+
+.secundario:hover:not(:disabled) {
+  background-color: var(--papel);
+}
+
+.peligro {
+  background-color: transparent;
+  color: var(--peligro);
+  border: 2px solid var(--peligro);
+}
+
+.peligro:hover:not(:disabled) {
+  background-color: var(--peligro-fondo);
+}
+
+.texto {
+  background-color: transparent;
+  color: var(--chapa);
+  border: none;
+  padding: 0 var(--esp-2);
+  text-decoration: underline;
+  min-height: auto;
+}
+
+.texto:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.bloque {
+  width: 100%;
+}

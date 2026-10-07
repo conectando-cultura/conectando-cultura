@@ -4,6 +4,7 @@ import {
   ErrorAplicacion,
   type DatosLogin,
   type DatosRegistro,
+  type Rol,
   type Usuario,
   type UsuarioPublico
 } from "../types.js";
@@ -108,12 +109,16 @@ export class AuthService {
     return usuarios.map((u) => aPublico(u));
   }
 
-  async actualizarRol(id: string, rol: "usuario" | "admin"): Promise<UsuarioPublico> {
+  async actualizarRol(id: string, rol: Rol): Promise<UsuarioPublico> {
     const actualizado = await this.usuarios.actualizarRol(id, rol);
     if (!actualizado) {
       throw new ErrorAplicacion("Usuario no encontrado.", 404);
     }
     return aPublico(actualizado);
+  }
+
+  async cerrarSesionesDeUsuario(usuarioId: string): Promise<void> {
+    await this.sesiones.eliminarPorUsuario(usuarioId);
   }
 
   /** Verifica que un usuario exista (usado por el bootstrap del admin). */

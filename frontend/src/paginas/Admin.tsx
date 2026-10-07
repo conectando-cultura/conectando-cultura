@@ -1,58 +1,59 @@
+import { Lock, Wrench, CalendarDays, FolderOpen, Users, BarChart3 } from "lucide-react";
+
 export default function Admin() {
   return (
     <div className="main">
-      <h1>🔒 Panel de Administración</h1>
-      <p style={{ color: "var(--gris)", marginTop: "8px" }}>
-        Sección protegida. Solo administradores pueden acceder.
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <Lock size={24} color="var(--tinta)" />
+        <h1>Panel de Administración</h1>
+      </div>
+      <p style={{ color: "var(--texto-suave)", marginTop: "8px" }}>
+        Sección protegida para gestores y administradores.
       </p>
 
       <div
         style={{
           marginTop: "32px",
           padding: "32px",
-          background: "var(--gris-claro)",
-          borderRadius: "var(--radio)",
-          border: "1px solid var(--borde)",
+          background: "var(--papel)",
+          borderRadius: "var(--radio-tarjeta)",
+          border: "1px solid var(--linea)",
           textAlign: "center"
         }}
       >
         <div
           style={{
-            width: "64px",
-            height: "64px",
+            width: "56px",
+            height: "56px",
             borderRadius: "50%",
-            background: "var(--naranja)",
+            background: "var(--boton-fondo)",
+            color: "var(--boton-texto)",
             display: "grid",
             placeItems: "center",
-            margin: "0 auto 20px",
-            fontSize: "2rem"
+            margin: "0 auto 20px"
           }}
         >
-          🔧
+          <Wrench size={24} />
         </div>
-        <h2 style={{ marginBottom: "12px" }}>Panel en construcción</h2>
-        <p style={{ color: "var(--gris)", maxWidth: "400px", margin: "0 auto" }}>
-          El panel de administración (CRUD de actividades, gestión de categorías y
-          usuarios) se implementa en el{" "}
-          <strong>Sprint 4</strong> del roadmap del proyecto.
-        </p>
-        <p style={{ color: "var(--gris)", marginTop: "12px", fontSize: "0.9rem" }}>
-          Si tenés el rol de administrador asignado en Supabase, contactá al equipo
-          de desarrollo para activar el acceso.
+        <h2 style={{ marginBottom: "12px", fontFamily: "var(--fuente-titulo)" }}>
+          Panel en evolución
+        </h2>
+        <p style={{ color: "var(--texto-suave)", maxWidth: "420px", margin: "0 auto" }}>
+          El módulo de administración incluye gestión de actividades, estadísticas y asignación de roles.
         </p>
       </div>
 
       <div className="grilla" style={{ marginTop: "28px" }}>
         {[
-          { icono: "📋", titulo: "Gestionar Actividades", estado: "Pendiente Sprint 4" },
-          { icono: "📂", titulo: "Gestionar Categorías", estado: "Pendiente Sprint 4" },
-          { icono: "👥", titulo: "Gestionar Usuarios", estado: "Pendiente Sprint 4" },
-          { icono: "📊", titulo: "Reportes", estado: "Pendiente Sprint 4" }
+          { icono: <CalendarDays size={28} />, titulo: "Gestionar Actividades", estado: "Disponible" },
+          { icono: <FolderOpen size={28} />, titulo: "Gestionar Categorías", estado: "Catálogo activo" },
+          { icono: <Users size={28} />, titulo: "Gestionar Usuarios", estado: "Disponible para Admin" },
+          { icono: <BarChart3 size={28} />, titulo: "Estadísticas", estado: "Disponible" }
         ].map((item) => (
           <div key={item.titulo} className="tarjeta">
-            <div style={{ fontSize: "2rem", marginBottom: "10px" }}>{item.icono}</div>
+            <div style={{ color: "var(--chapa)", marginBottom: "10px" }}>{item.icono}</div>
             <h3>{item.titulo}</h3>
-            <p style={{ color: "var(--naranja)", fontSize: "0.88rem", fontWeight: 600 }}>
+            <p style={{ color: "var(--chapa)", fontSize: "0.88rem", fontWeight: 600 }}>
               {item.estado}
             </p>
           </div>

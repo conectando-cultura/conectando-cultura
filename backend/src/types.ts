@@ -1,12 +1,16 @@
 /** Tipos compartidos del backend (módulo de autenticación). */
 
+export type Rol = "usuario" | "gestor" | "admin";
+
+export type Permiso = "panel:acceder" | "actividades:escribir" | "usuarios:gestionar";
+
 export interface Usuario {
   id: string;
   nombre: string;
   apellido: string;
   correo: string;
   contrasenaHash: string;
-  rol?: "usuario" | "admin";
+  rol?: Rol;
   creadoEn: string;
 }
 
@@ -16,7 +20,7 @@ export interface UsuarioPublico {
   nombre: string;
   apellido: string;
   correo: string;
-  rol: "usuario" | "admin";
+  rol: Rol;
 }
 
 export interface Sesion {

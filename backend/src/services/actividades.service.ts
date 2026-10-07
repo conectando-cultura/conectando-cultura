@@ -245,20 +245,80 @@ export class ActividadesService {
     if (error) throw new Error(describirError(error));
   }
 
-  /** Listado para el panel admin: incluye activas e inactivas. */
-  async listarTodasAdmin(): Promise<Array<ActividadPublica & { activo: boolean }>> {
+  /** Reactivación lógica: `activo` pasa a true. */
+  async reactivar(id: string, usuarioId: string): Promise<ActividadPublica> {
+    return this.actualizar(id, { activo: true }, usuarioId);
+  }
+
+  /** Listado para el panel admin: soporta filtros, búsqueda, orden y paginación. */
+  async listarTodasAdmin(
+    opciones: {
+      pagina?: number;
+      limite?: number;
+      orden?: "recientes" | "antiguas" | "nombre_asc" | "nombre_desc";
+      q?: string;
+      activo?: boolean;
+    } = {}
+  ): Promise<{
+    actividades: Array<ActividadPublica & { activo: boolean }>;
+    total: number;
+    pagina: number;
+    limite: number;
+  }> {
     exigirSupabase();
 
-    const { data, error } = await supabaseAdmin
+    const pagina = Math.max(1, Number(opciones.pagina) || 1);
+    const limite = opciones.limite ? Math.max(1, Math.min(100, Number(opciones.limite))) : 50;
+    const desde = (pagina - 1) * limite;
+    const hasta = desde + limite - 1;
+
+    let consulta = supabaseAdmin
       .from("actividades")
-      .select(SELECCION)
-      .order("created_at", { ascending: false });
+      .select(SELECCION, { count: "exact" });
+
+    if (opciones.activo !== undefined) {
+      consulta = consulta.eq("activo", opciones.activo);
+    }
+
+    if (opciones.q && opciones.q.trim()) {
+      const termino = opciones.q.trim();
+      consulta = consulta.or(`nombre.ilike.%${termino}%,descripcion.ilike.%${termino}%,direccion.ilike.%${termino}%`);
+    }
+
+    switch (opciones.orden) {
+      case "antiguas":
+        consulta = consulta.order("created_at", { ascending: true });
+        break;
+      case "nombre_asc":
+        consulta = consulta.order("nombre", { ascending: true });
+        break;
+      case "nombre_desc":
+        consulta = consulta.order("nombre", { ascending: false });
+        break;
+      case "recientes":
+      default:
+        consulta = consulta.order("created_at", { ascending: false });
+        break;
+    }
+
+    if (opciones.pagina !== undefined || opciones.limite !== undefined) {
+      consulta = consulta.range(desde, hasta);
+    }
+
+    const { data, count, error } = await consulta;
 
     if (error) throw new Error(describirError(error));
 
-    return ((data as unknown as ActividadConRelaciones[]) ?? []).map((fila) => ({
+    const actividades = ((data as unknown as ActividadConRelaciones[]) ?? []).map((fila) => ({
       ...aPublica(fila),
       activo: fila.activo !== false
     }));
+
+    return {
+      actividades,
+      total: count ?? actividades.length,
+      pagina,
+      limite
+    };
   }
 }

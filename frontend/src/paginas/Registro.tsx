@@ -1,143 +1,218 @@
-import { useState, type FormEvent } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexto/AuthContext";
-import type { DatosRegistro } from "../tipos";
+import { Campo, Boton } from "../componentes/base";
+import { Eye, EyeOff } from "lucide-react";
 
-export default function Registro() {
-  const { registrar } = useAuth();
+const EXPRESION_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export default function Registro(): React.JSX.Element {
+  const { usuario, registrar } = useAuth();
   const navegar = useNavigate();
 
-  const [formulario, setFormulario] = useState<DatosRegistro>({
+  const [formulario, setFormulario] = useState({
     nombre: "",
     apellido: "",
     correo: "",
     contrasena: "",
     confirmacion: ""
   });
-  const [error, setError] = useState<string | null>(null);
-  const [exito, setExito] = useState<string | null>(null);
+
+  const [errores, setErrores] = useState<Record<string, string>>({});
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  function actualizar(campo: keyof DatosRegistro, valor: string) {
-    setFormulario((previo) => ({ ...previo, [campo]: valor }));
-  }
+  useEffect(() => {
+    if (usuario) {
+      navegar("/preferencias", { replace: true });
+    }
+  }, [usuario, navegar]);
 
-  async function manejarEnvio(evento: FormEvent) {
+  const validarCampo = (campo: string, valor: string): string => {
+    switch (campo) {
+      case "nombre":
+        return valor.trim() ? "" : "Completá tu nombre.";
+      case "apellido":
+        return valor.trim() ? "" : "Completá tu apellido.";
+      case "correo":
+        if (!valor.trim()) return "Completá tu correo electrónico.";
+        if (!EXPRESION_EMAIL.test(valor.trim())) return "Revisá el formato del correo.";
+        return "";
+      case "contrasena":
+        if (!valor) return "Ingresá una contraseña.";
+        if (valor.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
+        return "";
+      case "confirmacion":
+        if (!valor) return "Repetí tu contraseña.";
+        if (valor !== formulario.contrasena) return "Las contraseñas no coinciden.";
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  const manejarCambio = (campo: string, valor: string) => {
+    setFormulario((prev) => ({ ...prev, [campo]: valor }));
+    if (errores[campo]) {
+      setErrores((prev) => ({ ...prev, [campo]: "" }));
+    }
+  };
+
+  const manejarBlur = (campo: string) => {
+    const error = validarCampo(campo, formulario[campo as keyof typeof formulario]);
+    setErrores((prev) => ({ ...prev, [campo]: error }));
+  };
+
+  async function manejarEnvio(evento: React.FormEvent) {
     evento.preventDefault();
-    setError(null);
-    setEnviando(true);
+    setErrorGeneral(null);
 
-    const mensaje = await registrar(formulario);
-    setEnviando(false);
+    const nuevosErrores: Record<string, string> = {};
+    Object.keys(formulario).forEach((c) => {
+      const err = validarCampo(c, formulario[c as keyof typeof formulario]);
+      if (err) nuevosErrores[c] = err;
+    });
 
-    if (mensaje) {
-      setError(mensaje);
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErrores(nuevosErrores);
       return;
     }
 
-    setExito("¡Cuenta creada con éxito! Redirigiendo al inicio de sesión…");
-    window.setTimeout(() => navegar("/login"), 1500);
+    setEnviando(true);
+
+    try {
+      await registrar(formulario);
+      // Redirige directamente a la configuración inicial de preferencias
+      navegar("/preferencias", { replace: true, state: { primeraVez: true } });
+    } catch (err: unknown) {
+      const mensaje = err instanceof Error ? err.message : "Error al crear la cuenta.";
+      if (mensaje.includes("correo") && mensaje.includes("registrado")) {
+        setErrores((prev) => ({
+          ...prev,
+          correo: "Ese correo ya tiene cuenta. Ingresá o usá otro."
+        }));
+      } else {
+        setErrorGeneral(mensaje);
+      }
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
     <div className="contendor-form">
-      <section className="caja-form">
-        <h1>Crear cuenta</h1>
-        <p className="sub">Completá tus datos para registrarte en Conectando Cultura</p>
+      <section className="caja-form" style={{ maxWidth: "460px" }}>
+        <h1 style={{ fontFamily: "var(--fuente-titulo)", fontSize: "28px", margin: "0 0 8px 0", textAlign: "center" }}>
+          Crear cuenta
+        </h1>
+        <p className="sub" style={{ textAlign: "center", marginBottom: "24px" }}>
+          Guardá tus preferencias y enterate de lo nuevo.
+        </p>
 
-        {error && (
-          <div className="alerta alerta-error" role="alert">
-            {error}
-          </div>
-        )}
-        {exito && (
-          <div className="alerta alerta-exito" role="status">
-            {exito}
+        {errorGeneral && (
+          <div className="alerta alerta-error" role="alert" style={{ marginBottom: "20px" }}>
+            {errorGeneral}
           </div>
         )}
 
         <form onSubmit={manejarEnvio} noValidate>
-          <div className="campo">
-            <label htmlFor="nombre">Nombre</label>
-            <input
-              type="text"
-              id="nombre"
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <Campo
+              etiqueta="Nombre"
+              id="registro-nombre"
               name="nombre"
-              placeholder="Ej: Juan"
+              placeholder="Ej: Ana"
               autoComplete="given-name"
               value={formulario.nombre}
-              onChange={(evento) => actualizar("nombre", evento.target.value)}
+              onChange={(e) => manejarCambio("nombre", e.target.value)}
+              onBlur={() => manejarBlur("nombre")}
+              error={errores.nombre}
               required
             />
-          </div>
-
-          <div className="campo">
-            <label htmlFor="apellido">Apellido</label>
-            <input
-              type="text"
-              id="apellido"
+            <Campo
+              etiqueta="Apellido"
+              id="registro-apellido"
               name="apellido"
-              placeholder="Ej: Mendoza"
+              placeholder="Ej: Gómez"
               autoComplete="family-name"
               value={formulario.apellido}
-              onChange={(evento) => actualizar("apellido", evento.target.value)}
+              onChange={(e) => manejarCambio("apellido", e.target.value)}
+              onBlur={() => manejarBlur("apellido")}
+              error={errores.apellido}
               required
             />
           </div>
 
-          <div className="campo">
-            <label htmlFor="correo">Correo electrónico</label>
-            <input
-              type="email"
-              id="correo"
-              name="correo"
-              placeholder="tucorreo@ejemplo.com"
-              autoComplete="email"
-              value={formulario.correo}
-              onChange={(evento) => actualizar("correo", evento.target.value)}
-              required
-            />
-          </div>
+          <Campo
+            etiqueta="Correo electrónico"
+            type="email"
+            id="registro-correo"
+            name="correo"
+            placeholder="tunombre@ejemplo.com"
+            autoComplete="email"
+            value={formulario.correo}
+            onChange={(e) => manejarCambio("correo", e.target.value)}
+            onBlur={() => manejarBlur("correo")}
+            error={errores.correo}
+            required
+          />
 
-          <div className="campo">
-            <label htmlFor="contrasena">Contraseña</label>
-            <input
-              type="password"
-              id="contrasena"
+          <div style={{ position: "relative" }}>
+            <Campo
+              etiqueta="Contraseña"
+              type={mostrarContrasena ? "text" : "password"}
+              id="registro-contrasena"
               name="contrasena"
               placeholder="Mínimo 6 caracteres"
               autoComplete="new-password"
               value={formulario.contrasena}
-              onChange={(evento) => actualizar("contrasena", evento.target.value)}
+              onChange={(e) => manejarCambio("contrasena", e.target.value)}
+              onBlur={() => manejarBlur("contrasena")}
+              error={errores.contrasena}
               required
             />
+            <button
+              type="button"
+              onClick={() => setMostrarContrasena(!mostrarContrasena)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "38px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--texto-suave)"
+              }}
+              aria-label={mostrarContrasena ? "Ocultar contraseña" : "Ver contraseña"}
+            >
+              {mostrarContrasena ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
-          <div className="campo">
-            <label htmlFor="confirmacion">Confirmar contraseña</label>
-            <input
-              type="password"
-              id="confirmacion"
-              name="confirmacion"
-              placeholder="Repetí tu contraseña"
-              autoComplete="new-password"
-              value={formulario.confirmacion}
-              onChange={(evento) => actualizar("confirmacion", evento.target.value)}
-              required
-            />
-          </div>
+          <Campo
+            etiqueta="Repetir contraseña"
+            type={mostrarContrasena ? "text" : "password"}
+            id="registro-confirmacion"
+            name="confirmacion"
+            placeholder="Repetí la contraseña elegida"
+            autoComplete="new-password"
+            value={formulario.confirmacion}
+            onChange={(e) => manejarCambio("confirmacion", e.target.value)}
+            onBlur={() => manejarBlur("confirmacion")}
+            error={errores.confirmacion}
+            required
+          />
 
-          <button
-            type="submit"
-            className="btn btn-primario btn-bloque"
-            disabled={enviando || exito !== null}
-          >
-            {enviando ? "Registrando…" : "Registrarme"}
-          </button>
+          <div style={{ marginTop: "24px" }}>
+            <Boton type="submit" variante="principal" bloque disabled={enviando}>
+              {enviando ? "Creando cuenta..." : "Crear cuenta"}
+            </Boton>
+          </div>
         </form>
 
-        <p className="pie-form">
-          ¿Ya tenés cuenta? <Link to="/login">Iniciá sesión</Link>
+        <p className="pie-form" style={{ textAlign: "center", marginTop: "20px" }}>
+          ¿Ya tenés cuenta? <Link to="/login" style={{ color: "var(--chapa)", fontWeight: 700 }}>Ingresar</Link>
         </p>
       </section>
     </div>
