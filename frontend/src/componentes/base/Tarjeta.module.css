@@ -1,16 +1,19 @@
 .tarjeta {
-  background-color: var(--blanco);
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-tarjeta);
-  padding: 14px;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-4);
+  box-shadow: var(--sombra-2);
+  padding: 24px;
   box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .interactiva {
   cursor: pointer;
-  transition: border-color 0.15s ease;
 }
 
 .interactiva:hover {
-  border-color: var(--borde-campo);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  border-color: var(--color-acento-suave);
 }

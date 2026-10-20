@@ -12,12 +12,11 @@ import ActividadCard from "../componentes/ActividadCard";
 import CategoriaChip from "../componentes/CategoriaChip";
 import MapaLeaflet from "../componentes/MapaLeaflet";
 import {
-  Boton,
   Esqueleto,
-  EstadoVacio,
   EstadoError
 } from "../componentes/base";
-import { Search, Map as IconoMapa, List, X, Check } from "lucide-react";
+import { Search, Map as IconoMapa, List, Columns, X, Check, Compass, RotateCcw } from "lucide-react";
+import estilos from "./Explorar.module.css";
 
 export default function Explorar(): React.JSX.Element {
   const {
@@ -124,266 +123,223 @@ export default function Explorar(): React.JSX.Element {
   const todasLasCategorias = filtros.categorias.length === 0;
 
   return (
-    <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "16px 20px", width: "100%", boxSizing: "border-box" }}>
-      {/* ── Barra superior de filtros ───────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          alignItems: "center",
-          flexWrap: "wrap",
-          marginBottom: "16px"
-        }}
-      >
-        {/* Búsqueda por texto */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "var(--blanco)",
-            border: "1.5px solid var(--borde-campo)",
-            borderRadius: "var(--radio-control)",
-            padding: "0 12px",
-            minHeight: "var(--alto-tactil)",
-            flex: "1 1 240px"
-          }}
-        >
-          <Search size={18} color="var(--texto-suave)" aria-hidden="true" />
-          <input
-            type="search"
-            placeholder="Buscar actividades..."
-            value={filtros.q}
-            onChange={(e) => setQ(e.target.value)}
-            style={{
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              width: "100%",
-              fontFamily: "var(--fuente-cuerpo)",
-              fontSize: "15px",
-              color: "var(--tinta)"
-            }}
-          />
-          {filtros.q && (
+    <div className="w-full bg-brand-bg py-6 md:py-8 font-body text-brand-ink">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        
+        {/* ── Barra Superior de Búsqueda y Filtros de Barrio (Croquis Search Bar) ── */}
+        <section className="mb-6">
+          <div className="flex flex-col gap-3 rounded-3xl border border-brand-gray-light bg-brand-white p-3 shadow-[0_6px_11px_rgba(0,0,0,0.06)] md:flex-row md:items-center md:rounded-full md:p-2.5">
+            {/* Input de Búsqueda por texto */}
+            <div className="flex flex-1 items-center gap-3 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+              <Search size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
+              <input
+                type="search"
+                placeholder="Buscar actividades por nombre, descripción o dirección..."
+                value={filtros.q}
+                onChange={(e) => setQ(e.target.value)}
+                className="w-full bg-transparent font-body text-sm text-brand-ink placeholder:text-brand-muted outline-none"
+                aria-label="Buscar actividades"
+              />
+              {filtros.q && (
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  className="rounded-full p-1 text-brand-muted hover:bg-brand-gray-light hover:text-brand-ink"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+
+            {/* Selector de barrio estilo Croquis */}
+            <div className="flex items-center gap-2 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 md:w-64 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+              <Compass size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
+              <select
+                value={filtros.barrio}
+                onChange={(e) => setBarrio(e.target.value)}
+                className="w-full cursor-pointer bg-transparent font-sans text-sm font-medium text-brand-ink outline-none"
+                aria-label="Filtrar por barrio"
+              >
+                <option value="">Todos los barrios</option>
+                {barrios.map((b) => (
+                  <option key={b.id} value={b.slug}>
+                    {b.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Toggle de vistas: Lista | Mapa | Ambas */}
+            <div className="flex items-center justify-center rounded-full border border-brand-gray-light bg-brand-bg p-1 shadow-inner">
+              <button
+                type="button"
+                onClick={() => setVista("lista")}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold transition-all ${
+                  filtros.vista === "lista"
+                    ? "bg-brand-orange text-brand-ink shadow-sm"
+                    : "text-brand-gray hover:text-brand-ink"
+                }`}
+                aria-pressed={filtros.vista === "lista"}
+                title="Ver sólo lista"
+              >
+                <List size={14} />
+                <span>Lista</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setVista("mapa")}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold transition-all ${
+                  filtros.vista === "mapa"
+                    ? "bg-brand-orange text-brand-ink shadow-sm"
+                    : "text-brand-gray hover:text-brand-ink"
+                }`}
+                aria-pressed={filtros.vista === "mapa"}
+                title="Ver sólo mapa"
+              >
+                <IconoMapa size={14} />
+                <span>Mapa</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setVista("ambas")}
+                className={`hidden lg:inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold transition-all ${
+                  filtros.vista === "ambas"
+                    ? "bg-brand-orange text-brand-ink shadow-sm"
+                    : "text-brand-gray hover:text-brand-ink"
+                }`}
+                aria-pressed={filtros.vista === "ambas"}
+                title="Ver lista y mapa en paralelo"
+              >
+                <Columns size={14} />
+                <span>Ambas</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Tira de Filtros de Categoría (CategoriaChip strip) ── */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
             <button
               type="button"
-              onClick={() => setQ("")}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: "var(--texto-suave)" }}
-              aria-label="Limpiar búsqueda"
+              onClick={() => setCategorias([])}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold transition-all shrink-0 ${
+                todasLasCategorias
+                  ? "bg-brand-ink text-brand-white shadow-sm"
+                  : "border border-brand-gray-light bg-brand-white text-brand-gray hover:border-brand-orange hover:text-brand-ink"
+              }`}
+              aria-pressed={todasLasCategorias}
             >
-              <X size={16} />
+              {todasLasCategorias && <Check size={13} strokeWidth={2.5} />}
+              <span>Todas las categorías</span>
             </button>
+
+            {categorias.map((cat) => (
+              <CategoriaChip
+                key={cat.id}
+                categoria={cat}
+                seleccionada={filtros.categorias.includes(cat.slug)}
+                onAlternar={() => alternarCategoria(cat.slug)}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* ── Encabezado de Resultados y Contador (Croquis SearchResultsPage style) ── */}
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-brand-gray-light pb-4">
+          <div>
+            <p className="font-body text-xs font-medium text-brand-muted">
+              {cargando
+                ? "Buscando actividades culturales..."
+                : `${actividadesFiltradas.length} ${
+                    actividadesFiltradas.length === 1 ? "actividad encontrada" : "actividades encontradas"
+                  } en ${barrioActual}`}
+            </p>
+            <h1 className="mt-1 font-display text-2xl md:text-3xl text-brand-gray">
+              {filtros.barrio ? `Actividades en ${barrioActual}` : "¿Qué querés hacer hoy?"}
+            </h1>
+          </div>
+
+          {tieneFiltrosActivos && (
+            <div className="flex items-center gap-3">
+              {preferenciasAplicadas && (
+                <span className="hidden sm:inline font-sans text-xs text-brand-muted">
+                  Basado en tus preferencias guardadas
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setPreferenciasAplicadas(false);
+                  limpiarFiltros();
+                }}
+                className="inline-flex items-center gap-1 font-sans text-xs font-semibold text-brand-orange hover:text-brand-orange-light underline underline-offset-4"
+              >
+                <RotateCcw size={13} />
+                <span>Restablecer filtros</span>
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Selector de barrio */}
-        <div style={{ flex: "0 1 200px" }}>
-          <select
-            value={filtros.barrio}
-            onChange={(e) => setBarrio(e.target.value)}
-            style={{
-              width: "100%",
-              minHeight: "var(--alto-tactil)",
-              padding: "0 12px",
-              borderRadius: "var(--radio-control)",
-              border: "1.5px solid var(--borde-campo)",
-              backgroundColor: "var(--blanco)",
-              color: "var(--tinta)",
-              fontFamily: "var(--fuente-cuerpo)",
-              fontSize: "15px",
-              cursor: "pointer"
-            }}
-            aria-label="Filtrar por barrio"
-          >
-            <option value="">Todos los barrios</option>
-            {barrios.map((b) => (
-              <option key={b.id} value={b.slug}>
-                {b.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Toggle Mapa / Lista (en móvil / selector de vista) */}
-        <div
-          style={{
-            display: "flex",
-            borderRadius: "var(--radio-control)",
-            border: "1px solid var(--linea)",
-            overflow: "hidden",
-            marginLeft: "auto"
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setVista(filtros.vista === "mapa" ? "ambas" : "mapa")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              background: filtros.vista === "mapa" ? "var(--boton-fondo)" : "var(--blanco)",
-              color: filtros.vista === "mapa" ? "var(--boton-texto)" : "var(--tinta)",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 700,
-              fontSize: "14px"
-            }}
-            aria-pressed={filtros.vista === "mapa"}
-          >
-            <IconoMapa size={16} />
-            Mapa
-          </button>
-          <button
-            type="button"
-            onClick={() => setVista(filtros.vista === "lista" ? "ambas" : "lista")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              background: filtros.vista === "lista" ? "var(--boton-fondo)" : "var(--blanco)",
-              color: filtros.vista === "lista" ? "var(--boton-texto)" : "var(--tinta)",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 700,
-              fontSize: "14px"
-            }}
-            aria-pressed={filtros.vista === "lista"}
-          >
-            <List size={16} />
-            Lista
-          </button>
-        </div>
-      </div>
-
-      {/* ── Chips de categoría ─────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          overflowX: "auto",
-          paddingBottom: "10px",
-          marginBottom: "16px",
-          alignItems: "center"
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setCategorias([])}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "5px 12px",
-            borderRadius: "var(--radio-pildora)",
-            border: "2px solid",
-            borderColor: todasLasCategorias ? "var(--tinta)" : "transparent",
-            backgroundColor: todasLasCategorias ? "var(--tinta)" : "var(--papel)",
-            color: todasLasCategorias ? "var(--blanco)" : "var(--tinta)",
-            fontFamily: "var(--fuente-cuerpo)",
-            fontSize: "14px",
-            fontWeight: todasLasCategorias ? 700 : 400,
-            cursor: "pointer",
-            whiteSpace: "nowrap"
-          }}
-          aria-pressed={todasLasCategorias}
-        >
-          {todasLasCategorias && <Check size={16} />}
-          Todas
-        </button>
-
-        {categorias.map((cat) => (
-          <CategoriaChip
-            key={cat.id}
-            categoria={cat}
-            seleccionada={filtros.categorias.includes(cat.slug)}
-            onAlternar={() => alternarCategoria(cat.slug)}
-          />
-        ))}
-      </div>
-
-      {/* Aviso de filtros activos */}
-      {tieneFiltrosActivos && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "8px 12px",
-            backgroundColor: "var(--papel)",
-            borderRadius: "var(--radio-control)",
-            fontSize: "14px",
-            marginBottom: "16px"
-          }}
-        >
-          <span>
-            {preferenciasAplicadas
-              ? `Filtrando por tus preferencias (${actividadesFiltradas.length} actividades)`
-              : `Mostrando resultados filtrados (${actividadesFiltradas.length} actividades)`}
-          </span>
-          <Boton
-            variante="texto"
-            onClick={() => {
-              setPreferenciasAplicadas(false);
-              limpiarFiltros();
-            }}
-          >
-            Quitar
-          </Boton>
-        </div>
-      )}
-
-      {/* ── Contenido: Lista y Mapa sincronizados ───────────────────── */}
-      {error ? (
-        <EstadoError descripcion={error} onReintentar={cargarDatos} />
-      ) : cargando ? (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <Esqueleto alto={180} />
-            <Esqueleto alto={180} />
-            <Esqueleto alto={180} />
+        {/* ── Estado de Error / Carga / Contenido ── */}
+        {error ? (
+          <EstadoError descripcion={error} onReintentar={cargarDatos} />
+        ) : cargando ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-4">
+              <Esqueleto alto={220} />
+              <Esqueleto alto={220} />
+              <Esqueleto alto={220} />
+            </div>
+            <Esqueleto alto={680} />
           </div>
-          <Esqueleto alto={560} />
-        </div>
-      ) : actividadesFiltradas.length === 0 ? (
-        <EstadoVacio
-          titulo={`No hay actividades en ${barrioActual}`}
-          descripcion="Probá con otros filtros o explorá todos los barrios."
-          textoBoton="Ver todos los barrios"
-          onAccion={limpiarFiltros}
-        />
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              filtros.vista === "mapa"
-                ? "1fr"
-                : filtros.vista === "lista"
-                ? "1fr"
-                : "minmax(320px, 420px) 1fr",
-            gap: "20px",
-            alignItems: "start"
-          }}
-        >
-          {/* Columna de Lista */}
-          {filtros.vista !== "mapa" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--texto-suave)" }}>
-                {actividadesFiltradas.length}{" "}
-                {actividadesFiltradas.length === 1 ? "actividad" : "actividades"} · {barrioActual}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "14px",
-                  maxHeight: filtros.vista === "ambas" ? "750px" : "none",
-                  overflowY: filtros.vista === "ambas" ? "auto" : "visible",
-                  paddingRight: filtros.vista === "ambas" ? "6px" : 0
+        ) : actividadesFiltradas.length === 0 ? (
+          /* Empty State estilo Croquis SearchResultsPage con rounded-3xl y botón restablecer */
+          <div className="my-8 rounded-3xl border border-brand-gray-light bg-brand-white p-10 md:p-14 text-center shadow-[0_6px_11px_rgba(0,0,0,0.06)]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-bg text-brand-orange">
+              <Compass size={32} />
+            </div>
+            <h2 className="font-display text-2xl md:text-3xl text-brand-gray">
+              No hay actividades con estos filtros
+            </h2>
+            <p className="mx-auto mt-2 max-w-md font-body text-sm text-brand-muted">
+              No encontramos propuestas en <span className="font-semibold text-brand-gray">{barrioActual}</span> con las categorías o términos seleccionados.
+            </p>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setPreferenciasAplicadas(false);
+                  limpiarFiltros();
                 }}
+                className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-6 py-2.5 font-sans text-sm font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-orange-light"
+              >
+                <RotateCcw size={15} />
+                <span>Ver todas las actividades</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Cuadrícula interactiva y responsiva sincronizada con MapaLeaflet */
+          <div
+            className={`grid gap-6 items-start ${
+              filtros.vista === "mapa"
+                ? "grid-cols-1"
+                : filtros.vista === "lista"
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                : "grid-cols-1 lg:grid-cols-[minmax(340px,460px)_1fr]"
+            }`}
+          >
+            {/* Columna de Lista de Tarjetas */}
+            {filtros.vista !== "mapa" && (
+              <div
+                className={`flex flex-col gap-5 ${
+                  filtros.vista === "ambas"
+                    ? `lg:max-h-[780px] lg:overflow-y-auto lg:pr-2 ${estilos.scrollContenedor}`
+                    : ""
+                }`}
               >
                 {actividadesFiltradas.map((act) => (
                   <ActividadCard
@@ -394,28 +350,29 @@ export default function Explorar(): React.JSX.Element {
                   />
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Columna de Mapa */}
-          {filtros.vista !== "lista" && (
-            <div
-              style={{
-                position: filtros.vista === "ambas" ? "sticky" : "relative",
-                top: "20px",
-                height: filtros.vista === "ambas" ? "750px" : "600px"
-              }}
-            >
-              <MapaLeaflet
-                actividades={actividadesFiltradas}
-                actividadSeleccionadaId={actividadSeleccionadaId}
-                onSeleccionarActividad={manejarSeleccion}
-                altura="100%"
-              />
-            </div>
-          )}
-        </div>
-      )}
+            {/* Columna de MapaLeaflet */}
+            {filtros.vista !== "lista" && (
+              <div
+                className={`${
+                  filtros.vista === "ambas"
+                    ? "lg:sticky lg:top-6 h-[500px] lg:h-[780px]"
+                    : "h-[620px] w-full"
+                }`}
+              >
+                <MapaLeaflet
+                  actividades={actividadesFiltradas}
+                  actividadSeleccionadaId={actividadSeleccionadaId}
+                  onSeleccionarActividad={manejarSeleccion}
+                  altura="100%"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

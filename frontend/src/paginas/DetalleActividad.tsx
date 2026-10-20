@@ -5,7 +5,7 @@ import type { Actividad } from "../tipos";
 import { useAuth } from "../contexto/AuthContext";
 import { puedeUsuario } from "../utiles/permisos";
 import CategoriaChip from "../componentes/CategoriaChip";
-import { Badge, Boton, Esqueleto, EstadoError } from "../componentes/base";
+import { Badge, Esqueleto, EstadoError } from "../componentes/base";
 import { IconoCategoria } from "../componentes/iconos";
 import ActividadCard from "../componentes/ActividadCard";
 import MapaLeaflet from "../componentes/MapaLeaflet";
@@ -16,8 +16,10 @@ import {
   Clock,
   MapPin,
   Pencil,
-  Check
+  Check,
+  ChevronRight
 } from "lucide-react";
+import estilos from "./DetalleActividad.module.css";
 
 export default function DetalleActividad(): React.JSX.Element {
   const { barrio, slug } = useParams<{ barrio: string; slug: string }>();
@@ -75,24 +77,28 @@ export default function DetalleActividad(): React.JSX.Element {
 
   if (cargando) {
     return (
-      <div style={{ maxWidth: "860px", margin: "0 auto", padding: "32px 20px" }}>
-        <Esqueleto alto={24} ancho="40%" style={{ marginBottom: "20px" }} />
-        <Esqueleto alto={280} style={{ marginBottom: "24px" }} />
-        <Esqueleto alto={36} ancho="70%" style={{ marginBottom: "16px" }} />
-        <Esqueleto alto={100} />
+      <div className="w-full bg-brand-bg py-10 font-body">
+        <div className="mx-auto max-w-5xl px-4 md:px-8">
+          <Esqueleto alto={28} ancho="30%" className="mb-6 rounded-full" />
+          <Esqueleto alto={420} className="mb-8 rounded-3xl" />
+          <Esqueleto alto={40} ancho="65%" className="mb-4 rounded-xl" />
+          <Esqueleto alto={120} className="rounded-2xl" />
+        </div>
       </div>
     );
   }
 
   if (error || !actividad) {
     return (
-      <div style={{ maxWidth: "860px", margin: "0 auto", padding: "40px 20px" }}>
-        <EstadoError
-          titulo="Actividad no encontrada"
-          descripcion="La actividad que buscás no existe o fue dada de baja."
-          textoReintentar="Volver a explorar"
-          onReintentar={() => window.location.assign("/explorar")}
-        />
+      <div className="w-full bg-brand-bg py-16 font-body">
+        <div className="mx-auto max-w-3xl px-4 md:px-8">
+          <EstadoError
+            titulo="Actividad no encontrada"
+            descripcion="La actividad que buscás no existe o fue dada de baja en este barrio."
+            textoReintentar="Volver al catálogo"
+            onReintentar={() => window.location.assign("/explorar")}
+          />
+        </div>
       </div>
     );
   }
@@ -100,249 +106,280 @@ export default function DetalleActividad(): React.JSX.Element {
   const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&destination=${actividad.lat},${actividad.lng}`;
 
   return (
-    <article style={{ maxWidth: "900px", margin: "0 auto", padding: "24px 20px", fontFamily: "var(--fuente-cuerpo)" }}>
-      {/* ── Migas de pan y botón Editar ─────────────────────────────── */}
-      <nav
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontSize: "14px",
-          color: "var(--texto-suave)",
-          marginBottom: "16px",
-          flexWrap: "wrap",
-          gap: "8px"
-        }}
-        aria-label="Miga de pan"
-      >
-        <div>
-          <Link to="/" style={{ color: "var(--texto-suave)", textDecoration: "none" }}>Inicio</Link>
-          <span style={{ margin: "0 6px" }}>›</span>
-          <Link to="/explorar" style={{ color: "var(--texto-suave)", textDecoration: "none" }}>Actividades</Link>
-          <span style={{ margin: "0 6px" }}>›</span>
-          <Link to={`/explorar?barrio=${actividad.barrio.slug}`} style={{ color: "var(--texto-suave)", textDecoration: "none" }}>
-            {actividad.barrio.nombre}
-          </Link>
-          <span style={{ margin: "0 6px" }}>›</span>
-          <span style={{ color: "var(--tinta)", fontWeight: 600 }}>{actividad.nombre}</span>
-        </div>
-
-        {puedeEditar && (
-          <Link
-            to={`/admin/actividades`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 12px",
-              borderRadius: "var(--radio-control)",
-              border: "1px solid var(--tinta)",
-              color: "var(--tinta)",
-              textDecoration: "none",
-              fontWeight: 700,
-              fontSize: "13px"
-            }}
-          >
-            <Pencil size={14} />
-            Editar actividad
-          </Link>
-        )}
-      </nav>
-
-      {/* ── Imagen de cabecera o bloque de categoría ────────────────── */}
-      {actividad.imagenUrl ? (
-        <div
-          style={{
-            width: "100%",
-            height: "320px",
-            borderRadius: "var(--radio-tarjeta)",
-            overflow: "hidden",
-            marginBottom: "20px"
-          }}
-        >
+    <article className="w-full bg-brand-bg font-body text-brand-ink">
+      
+      {/* ── DesignHero: Portada inmersiva con gradiente y título Kavoon ── */}
+      <section className="relative flex h-[380px] md:h-[500px] items-center justify-center overflow-hidden bg-brand-ink">
+        {actividad.imagenUrl ? (
           <img
             src={actividad.imagenUrl}
             alt={actividad.nombre}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            className={`absolute inset-0 h-full w-full object-cover ${estilos.heroImagen}`}
           />
-        </div>
-      ) : (
-        <div
-          style={{
-            width: "100%",
-            height: "180px",
-            borderRadius: "var(--radio-tarjeta)",
-            backgroundColor: `${actividad.categoria.color}15`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: actividad.categoria.color,
-            marginBottom: "20px"
-          }}
-          aria-hidden="true"
-        >
-          <IconoCategoria
-            clave={actividad.categoria.icono}
-            slug={actividad.categoria.slug}
-            nombre={actividad.categoria.nombre}
-            tamano={56}
-          />
-        </div>
-      )}
-
-      {/* ── Chips y Badges ─────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-        <CategoriaChip categoria={actividad.categoria} />
-        {actividad.destacado && <Badge tipo="destacada" />}
-      </div>
-
-      {/* ── Título principal ───────────────────────────────────────── */}
-      <h1
-        style={{
-          fontFamily: "var(--fuente-titulo)",
-          fontSize: "32px",
-          color: "var(--tinta)",
-          margin: "0 0 16px 0",
-          lineHeight: 1.15
-        }}
-      >
-        {actividad.nombre}
-      </h1>
-
-      {/* ── Botones de acción ──────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "32px" }}>
-        <a
-          href={urlGoogleMaps}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "0 18px",
-            minHeight: "var(--alto-tactil)",
-            backgroundColor: "var(--boton-fondo)",
-            color: "var(--boton-texto)",
-            borderRadius: "var(--radio-control)",
-            fontWeight: 700,
-            textDecoration: "none",
-            fontSize: "15px"
-          }}
-        >
-          <Navigation size={18} />
-          Cómo llegar
-        </a>
-
-        <Boton
-          variante="secundario"
-          icono={copiado ? <Check size={18} /> : <Share2 size={18} />}
-          onClick={compartir}
-        >
-          {copiado ? "Enlace copiado" : "Compartir"}
-        </Boton>
-
-        {actividad.url && (
-          <a
-            href={actividad.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "0 18px",
-              minHeight: "var(--alto-tactil)",
-              backgroundColor: "transparent",
-              color: "var(--tinta)",
-              border: "2px solid var(--linea)",
-              borderRadius: "var(--radio-control)",
-              fontWeight: 700,
-              textDecoration: "none",
-              fontSize: "15px"
-            }}
+        ) : (
+          <div
+            className="absolute inset-0 flex items-center justify-center opacity-40"
+            style={{ backgroundColor: actividad.categoria.color }}
+            aria-hidden="true"
           >
-            <ExternalLink size={18} />
-            Sitio web oficial
-          </a>
+            <IconoCategoria
+              clave={actividad.categoria.icono}
+              slug={actividad.categoria.slug}
+              nombre={actividad.categoria.nombre}
+              tamano={120}
+            />
+          </div>
         )}
-      </div>
 
-      {/* ── Bloque Antes de ir + Mini mapa ──────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "24px",
-          marginBottom: "36px",
-          alignItems: "start"
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: "var(--blanco)",
-            border: "1px solid var(--linea)",
-            borderRadius: "var(--radio-tarjeta)",
-            padding: "20px"
-          }}
-        >
-          <h2 style={{ fontSize: "18px", margin: "0 0 16px 0", color: "var(--tinta)" }}>
-            Antes de ir
-          </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-              <MapPin size={18} color="var(--texto-suave)" style={{ marginTop: "2px", flexShrink: 0 }} />
-              <div>
-                <strong style={{ display: "block", color: "var(--tinta)" }}>Dirección</strong>
-                <span style={{ color: "var(--texto-suave)" }}>{actividad.direccion} ({actividad.barrio.nombre})</span>
-              </div>
-            </div>
+        {/* Gradiente oscuro superior e inferior Croquis */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/75" />
 
-            {actividad.horarios && (
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <Clock size={18} color="var(--texto-suave)" style={{ marginTop: "2px", flexShrink: 0 }} />
-                <div>
-                  <strong style={{ display: "block", color: "var(--tinta)" }}>Horarios</strong>
-                  <span style={{ color: "var(--texto-suave)" }}>{actividad.horarios}</span>
-                </div>
-              </div>
-            )}
+        {/* Contenido centrado del Hero */}
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pt-8 text-center">
+          {/* Miga de pan sutil integrada */}
+          <nav
+            aria-label="Miga de pan"
+            className="mb-4 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full bg-black/40 px-4 py-1.5 text-xs font-sans text-brand-white backdrop-blur-sm"
+          >
+            <Link to="/" className="text-white/80 hover:text-white transition-colors hover:no-underline">
+              Inicio
+            </Link>
+            <ChevronRight size={13} className="text-white/60" aria-hidden="true" />
+            <Link to="/explorar" className="text-white/80 hover:text-white transition-colors hover:no-underline">
+              Explorar
+            </Link>
+            <ChevronRight size={13} className="text-white/60" aria-hidden="true" />
+            <Link
+              to={`/explorar?barrio=${actividad.barrio.slug}`}
+              className="text-white/80 hover:text-white transition-colors hover:no-underline"
+            >
+              {actividad.barrio.nombre}
+            </Link>
+          </nav>
+
+          {/* Título en tipografía display Kavoon */}
+          <h1 className="mx-auto max-w-4xl font-display text-3xl md:text-5xl lg:text-6xl leading-tight text-white drop-shadow-md">
+            {actividad.nombre}
+          </h1>
+
+          {/* Categoría y barrio badges en hero */}
+          <div className="mt-5 flex items-center justify-center gap-2.5 flex-wrap">
+            <CategoriaChip categoria={actividad.categoria} />
+            {actividad.destacado && <Badge tipo="destacada" />}
+            <span className="rounded-full bg-brand-orange px-3.5 py-1 font-sans text-xs font-bold text-brand-ink shadow-sm">
+              {actividad.barrio.nombre}
+            </span>
           </div>
         </div>
-
-        {/* Mini mapa */}
-        <div style={{ height: "220px" }}>
-          <MapaLeaflet
-            actividades={[actividad]}
-            centro={[actividad.lat, actividad.lng]}
-            zoom={15}
-            altura="100%"
-          />
-        </div>
-      </div>
-
-      {/* ── Sobre esta actividad ────────────────────────────────────── */}
-      <section style={{ marginBottom: "48px" }}>
-        <h2 style={{ fontSize: "22px", margin: "0 0 14px 0", color: "var(--tinta)" }}>
-          Sobre esta actividad
-        </h2>
-        <p style={{ fontSize: "16px", lineHeight: "1.6", color: "var(--tinta)", maxWidth: "68ch" }}>
-          {actividad.descripcion}
-        </p>
       </section>
 
-      {/* ── Más en este barrio ──────────────────────────────────────── */}
-      {relacionadas.length > 0 && (
-        <section style={{ borderTop: "1px solid var(--linea)", paddingTop: "36px" }}>
-          <h2 style={{ fontSize: "22px", margin: "0 0 20px 0", color: "var(--tinta)" }}>
-            Más actividades en {actividad.barrio.nombre}
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
-            {relacionadas.map((rel) => (
-              <ActividadCard key={rel.id} actividad={rel} />
-            ))}
+      {/* ── DetailIntro: Cuerpo principal con layout 1fr y sidebar 327px ── */}
+      <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
+        
+        {/* Barra de acción rápida superior (RBAC + Compartir) */}
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-brand-gray-light pb-4">
+          <div className="flex items-center gap-2">
+            <span className="font-sans text-sm font-semibold tracking-wide text-brand-orange uppercase">
+              {actividad.barrio.nombre}
+            </span>
+            <span className="text-brand-muted">·</span>
+            <span className="font-body text-sm text-brand-gray">
+              {actividad.categoria.nombre}
+            </span>
           </div>
-        </section>
-      )}
+
+          <div className="flex items-center gap-3">
+            {puedeEditar && (
+              <Link
+                to="/admin/actividades"
+                className="inline-flex items-center gap-1.5 rounded-full border border-brand-ink bg-brand-white px-4 py-2 font-sans text-xs font-bold text-brand-ink transition-colors hover:bg-brand-ink hover:text-brand-white hover:no-underline"
+              >
+                <Pencil size={14} aria-hidden="true" />
+                <span>Editar en panel</span>
+              </Link>
+            )}
+
+            <button
+              type="button"
+              onClick={compartir}
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-gray-light bg-brand-white px-4 py-2 font-sans text-xs font-semibold text-brand-gray shadow-sm transition-colors hover:border-brand-orange hover:text-brand-orange"
+            >
+              {copiado ? <Check size={14} className="text-brand-orange" /> : <Share2 size={14} />}
+              <span>{copiado ? "Enlace copiado" : "Compartir"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Layout en grilla estilo Croquis PackageDetailPage / DetailIntro */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_327px] items-start">
+          
+          {/* Columna Principal: Descripción, CTAs de navegación y Mini Mapa */}
+          <div className="flex flex-col gap-8">
+            {/* Descripción completa */}
+            <section className="rounded-3xl border border-brand-gray-light bg-brand-white p-6 md:p-8 shadow-[0_6px_11px_rgba(0,0,0,0.06)]">
+              <h2 className="font-display text-2xl md:text-3xl text-brand-gray mb-4">
+                Sobre esta actividad
+              </h2>
+              <p className="font-body text-base md:text-lg leading-relaxed text-brand-gray whitespace-pre-line">
+                {actividad.descripcion}
+              </p>
+
+              {/* Botones de acción principales Croquis */}
+              <div className="mt-8 flex flex-wrap items-center gap-3 pt-6 border-t border-brand-gray-light">
+                <a
+                  href={urlGoogleMaps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-orange px-6 py-3 font-sans text-sm font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-orange-light hover:no-underline"
+                >
+                  <Navigation size={17} aria-hidden="true" />
+                  <span>Cómo llegar</span>
+                </a>
+
+                {actividad.url && (
+                  <a
+                    href={actividad.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-brand-gray-light bg-brand-white px-5 py-3 font-sans text-sm font-semibold text-brand-gray transition-colors hover:border-brand-orange hover:text-brand-orange hover:no-underline"
+                  >
+                    <ExternalLink size={16} aria-hidden="true" />
+                    <span>Sitio web oficial</span>
+                  </a>
+                )}
+              </div>
+            </section>
+
+            {/* Ubicación interactiva con Mini MapaLeaflet */}
+            <section className="rounded-3xl border border-brand-gray-light bg-brand-white p-6 shadow-[0_6px_11px_rgba(0,0,0,0.06)]">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-display text-xl text-brand-gray">Ubicación en el barrio</h3>
+                  <p className="font-body text-xs text-brand-muted mt-0.5">
+                    {actividad.direccion} · {actividad.barrio.nombre}
+                  </p>
+                </div>
+                <a
+                  href={urlGoogleMaps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:inline-flex items-center gap-1 font-sans text-xs font-semibold text-brand-orange hover:text-brand-orange-light underline underline-offset-4"
+                >
+                  <span>Abrir en Google Maps</span>
+                  <ExternalLink size={13} />
+                </a>
+              </div>
+
+              <div className="h-[280px] w-full rounded-2xl overflow-hidden border border-brand-gray-light">
+                <MapaLeaflet
+                  actividades={[actividad]}
+                  centro={[actividad.lat, actividad.lng]}
+                  zoom={15}
+                  altura="100%"
+                />
+              </div>
+            </section>
+          </div>
+
+          {/* Columna Lateral (Sidebar 327px): Tarjeta "Antes de ir" estilo FeatureList */}
+          <aside className="sticky top-6 flex flex-col gap-6">
+            <div className={estilos.tarjetaAntesDeIr}>
+              <div className={estilos.cabeceraAntesDeIr}>
+                <h3 className="font-sans text-base font-bold text-brand-ink">
+                  Antes de ir
+                </h3>
+              </div>
+              <ul className="space-y-4 p-6">
+                {/* Dirección */}
+                <li className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-bg text-brand-orange">
+                    <MapPin size={16} aria-hidden="true" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="block font-sans text-xs font-bold text-brand-ink uppercase tracking-wider">
+                      Dirección
+                    </span>
+                    <p className="mt-0.5 font-body text-sm leading-snug text-brand-gray">
+                      {actividad.direccion}
+                    </p>
+                    <span className="font-body text-xs text-brand-muted">
+                      {actividad.barrio.nombre}
+                    </span>
+                  </div>
+                </li>
+
+                {/* Horarios si existen */}
+                {actividad.horarios && (
+                  <li className="flex items-start gap-3 pt-3 border-t border-brand-gray-light">
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-bg text-brand-orange">
+                      <Clock size={16} aria-hidden="true" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="block font-sans text-xs font-bold text-brand-ink uppercase tracking-wider">
+                        Horarios de atención
+                      </span>
+                      <p className="mt-0.5 font-body text-sm leading-snug text-brand-gray">
+                        {actividad.horarios}
+                      </p>
+                    </div>
+                  </li>
+                )}
+
+                {/* Categoría cultural */}
+                <li className="flex items-start gap-3 pt-3 border-t border-brand-gray-light">
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-bg text-brand-orange">
+                    <IconoCategoria
+                      clave={actividad.categoria.icono}
+                      slug={actividad.categoria.slug}
+                      nombre={actividad.categoria.nombre}
+                      tamano={16}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <span className="block font-sans text-xs font-bold text-brand-ink uppercase tracking-wider">
+                      Categoría
+                    </span>
+                    <p className="mt-0.5 font-body text-sm font-medium text-brand-gray">
+                      {actividad.categoria.nombre}
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </aside>
+
+        </div>
+
+        {/* ── Actividades Relacionadas en el mismo barrio ── */}
+        {relacionadas.length > 0 && (
+          <section className="mt-16 border-t border-brand-gray-light pt-10">
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <p className="font-sans text-xs font-semibold uppercase tracking-wider text-brand-orange">
+                  Seguí descubriendo
+                </p>
+                <h2 className="mt-1 font-display text-2xl md:text-3xl text-brand-gray">
+                  Más actividades en {actividad.barrio.nombre}
+                </h2>
+              </div>
+              <Link
+                to={`/explorar?barrio=${actividad.barrio.slug}`}
+                className="hidden sm:inline-flex items-center gap-1 font-sans text-xs font-semibold text-brand-orange hover:text-brand-orange-light underline underline-offset-4"
+              >
+                <span>Ver todas en {actividad.barrio.nombre}</span>
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {relacionadas.map((rel) => (
+                <ActividadCard key={rel.id} actividad={rel} />
+              ))}
+            </div>
+          </section>
+        )}
+
+      </div>
     </article>
   );
 }

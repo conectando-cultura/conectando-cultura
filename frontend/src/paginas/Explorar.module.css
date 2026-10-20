@@ -1,0 +1,23 @@
+/* Explorar.module.css - Estilos complementarios para la vista de Exploración */
+.scrollContenedor {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-borde, #E3E3E1) transparent;
+}
+
+.scrollContenedor::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollContenedor::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollContenedor::-webkit-scrollbar-thumb {
+  background: var(--color-borde, #E3E3E1);
+  border-radius: 9999px;
+}
+
+.scrollContenedor::-webkit-scrollbar-thumb:hover {
+  background: var(--color-acento-suave, #FFAA5C);
+}

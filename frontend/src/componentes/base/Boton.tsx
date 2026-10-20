@@ -30,7 +30,11 @@ export default function Boton({
 
   return (
     <button type={type} className={clases} {...resto}>
-      {icono && <span aria-hidden="true">{icono}</span>}
+      {icono && (
+        <span className={estilos.icono} aria-hidden="true">
+          {icono}
+        </span>
+      )}
       {children}
     </button>
   );

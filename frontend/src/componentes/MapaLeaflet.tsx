@@ -8,6 +8,8 @@ import { colorSimbolo } from "../utiles/colorCategoria";
 import { obtenerPathsSvgCategoria } from "../utiles/iconosSvg";
 import CategoriaChip from "./CategoriaChip";
 import { Link } from "react-router-dom";
+import { Navigation, ArrowRight } from "lucide-react";
+import estilos from "./MapaLeaflet.module.css";
 
 // Fix para el ícono de Leaflet en Vite
 L.Icon.Default.mergeOptions({
@@ -39,9 +41,9 @@ function CreadorMarcador({
   seleccionado?: boolean;
   onSeleccionar?: (actividad: Actividad) => void;
 }) {
-  const color = actividad.categoria.color || "#F98017";
+  const color = actividad.categoria.color || "#FF8F50";
   const simboloColor = colorSimbolo(color);
-  const escala = seleccionado ? "scale(1.35)" : "scale(1)";
+  const escala = seleccionado ? "scale(1.3)" : "scale(1)";
 
   const svgPaths = obtenerPathsSvgCategoria(
     actividad.categoria.icono,
@@ -49,14 +51,14 @@ function CreadorMarcador({
     actividad.categoria.nombre
   );
 
-  // Pin de gota en SVG con el ícono vectorial representativo de la categoría
+  // Pin de gota en SVG con el ícono vectorial representativo de la categoría y elevación Croquis
   const svgIcon = `
-    <div style="transform: ${escala}; transition: transform 0.2s ease; display: inline-flex; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));">
+    <div style="transform: ${escala}; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); display: inline-flex; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25)); cursor: pointer;">
       <div style="
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
         background: ${color};
-        border: 2.5px solid #FFFFFF;
+        border: 2.5px solid #FEFEFE;
         border-radius: 50% 50% 50% 0;
         transform: rotate(-45deg);
         display: flex;
@@ -85,9 +87,9 @@ function CreadorMarcador({
   const icono = L.divIcon({
     html: svgIcon,
     className: "marcador-pin-categoria",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -34]
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36]
   });
 
   const urlGoogleMaps = `https://www.google.com/maps/dir/?api=1&destination=${actividad.lat},${actividad.lng}`;
@@ -102,80 +104,48 @@ function CreadorMarcador({
       }}
     >
       <Popup>
-        <div style={{ minWidth: "220px", maxWidth: "270px", padding: "4px", fontFamily: "var(--fuente-cuerpo)" }}>
-          <div style={{ marginBottom: "8px" }}>
+        <div className="min-w-[220px] max-w-[270px] p-1 font-body text-brand-ink">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <CategoriaChip categoria={actividad.categoria} />
+            <span className="font-sans text-xs font-semibold text-brand-orange">
+              {actividad.barrio.nombre}
+            </span>
           </div>
-          <h3
-            style={{
-              margin: "0 0 6px 0",
-              fontSize: "15px",
-              fontWeight: 700,
-              color: "var(--tinta)"
-            }}
-          >
+          <h3 className="mb-1.5 font-display text-lg leading-snug text-brand-gray">
             {actividad.nombre}
           </h3>
-          <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "var(--texto-suave)" }}>
-            <strong>{actividad.direccion}</strong> · {actividad.barrio.nombre}
+          <p className="mb-1 text-xs text-brand-muted">
+            <strong className="font-semibold text-brand-gray">{actividad.direccion}</strong>
           </p>
           {actividad.horarios && (
-            <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "var(--texto-suave)" }}>
+            <p className="mb-2 text-xs text-brand-muted">
               {actividad.horarios}
             </p>
           )}
           {actividad.descripcion && (
-            <p
-              style={{
-                margin: "0 0 12px 0",
-                fontSize: "13px",
-                color: "var(--tinta)",
-                lineHeight: "1.4"
-              }}
-            >
+            <p className="mb-3 text-xs leading-relaxed text-brand-gray">
               {actividad.descripcion.length > 95
                 ? `${actividad.descripcion.slice(0, 95)}...`
                 : actividad.descripcion}
             </p>
           )}
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className="flex items-center gap-2 pt-1">
             <Link
               to={detalleUrl}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "6px 10px",
-                borderRadius: "var(--radio-control)",
-                background: "var(--boton-fondo)",
-                color: "var(--boton-texto)",
-                fontSize: "12px",
-                fontWeight: 700,
-                textDecoration: "none",
-                flex: 1
-              }}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-orange px-3 py-1.5 font-sans text-xs font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-orange-light hover:no-underline"
             >
-              Ver detalle
+              <span>Ver detalle</span>
+              <ArrowRight size={13} aria-hidden="true" />
             </Link>
             <a
               href={urlGoogleMaps}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "6px 10px",
-                borderRadius: "var(--radio-control)",
-                border: "1px solid var(--linea)",
-                background: "var(--blanco)",
-                color: "var(--tinta)",
-                fontSize: "12px",
-                fontWeight: 600,
-                textDecoration: "none"
-              }}
+              aria-label={`Cómo llegar a ${actividad.nombre} en Google Maps`}
+              className="inline-flex items-center justify-center rounded-full border border-brand-gray-light bg-brand-white p-1.5 text-brand-gray transition-colors hover:border-brand-orange hover:text-brand-orange hover:no-underline"
+              title="Cómo llegar"
             >
-              Cómo llegar
+              <Navigation size={14} aria-hidden="true" />
             </a>
           </div>
         </div>
@@ -225,16 +195,12 @@ export default function MapaLeaflet({
     ? [seleccionada.lat, seleccionada.lng]
     : null;
 
+  const alturaEstilo = typeof altura === "number" ? `${altura}px` : altura;
+
   return (
     <div
-      style={{
-        height: typeof altura === "number" ? `${altura}px` : altura,
-        width: "100%",
-        borderRadius: "var(--radio-tarjeta)",
-        overflow: "hidden",
-        border: "1px solid var(--linea)",
-        position: "relative"
-      }}
+      className={estilos.contenedorMapa}
+      style={{ height: alturaEstilo }}
     >
       <MapContainer
         center={centroDefinitivo}
@@ -244,7 +210,7 @@ export default function MapaLeaflet({
       >
         <LayersControl position="topright">
           {/* Capa principal */}
-          <LayersControl.BaseLayer checked name="Google Maps (Calles)">
+          <LayersControl.BaseLayer checked name="Callejero">
             <TileLayer
               attribution='&copy; <a href="https://maps.google.com">Google Maps</a>'
               url="https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
@@ -254,7 +220,7 @@ export default function MapaLeaflet({
           </LayersControl.BaseLayer>
 
           {/* Capa satélite */}
-          <LayersControl.BaseLayer name="Google Maps (Satélite)">
+          <LayersControl.BaseLayer name="Satélite">
             <TileLayer
               attribution='&copy; <a href="https://maps.google.com">Google Maps</a>'
               url="https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
@@ -264,7 +230,7 @@ export default function MapaLeaflet({
           </LayersControl.BaseLayer>
 
           {/* Capa OpenStreetMap */}
-          <LayersControl.BaseLayer name="OpenStreetMap estándar">
+          <LayersControl.BaseLayer name="OpenStreetMap">
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -9,12 +9,14 @@ export interface CategoriaChipProps {
   categoria: Categoria | { id?: string; nombre: string; color: string; icono: string; slug?: string };
   seleccionada?: boolean;
   onAlternar?: (categoria: Categoria | { id?: string; nombre: string; color: string; icono: string; slug?: string }) => void;
+  className?: string;
 }
 
 export default function CategoriaChip({
   categoria,
   seleccionada = false,
-  onAlternar
+  onAlternar,
+  className = ""
 }: CategoriaChipProps): React.JSX.Element {
   const { solido, fondo, texto } = coloresCategoria(categoria.color);
   const variables = {
@@ -29,16 +31,18 @@ export default function CategoriaChip({
         clave={categoria.icono}
         slug={categoria.slug}
         nombre={categoria.nombre}
-        tamano={16}
+        tamano={15}
       />
       <span>{categoria.nombre}</span>
-      {seleccionada && <Check size={16} strokeWidth={2} aria-hidden="true" />}
+      {seleccionada && <Check size={14} strokeWidth={2.5} aria-hidden="true" />}
     </>
   );
 
+  const claseCompuesta = `${estilos.chip} ${className}`.trim();
+
   if (!onAlternar) {
     return (
-      <span className={estilos.chip} style={variables}>
+      <span className={claseCompuesta} style={variables}>
         {contenido}
       </span>
     );
@@ -47,7 +51,7 @@ export default function CategoriaChip({
   return (
     <button
       type="button"
-      className={`${estilos.chip} ${estilos.boton} ${seleccionada ? estilos.seleccionada : ""}`}
+      className={`${claseCompuesta} ${estilos.boton} ${seleccionada ? estilos.seleccionada : ""}`}
       style={variables}
       aria-pressed={seleccionada}
       onClick={() => onAlternar(categoria)}

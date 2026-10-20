@@ -15,7 +15,9 @@ import {
   Heart,
   PlusCircle,
   ArrowRight,
-  ShieldAlert
+  ShieldAlert,
+  Sparkles,
+  Info
 } from "lucide-react";
 
 export default function Dashboard(): React.JSX.Element {
@@ -46,35 +48,23 @@ export default function Dashboard(): React.JSX.Element {
 
   return (
     <LayoutPanel>
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Cabecera */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "28px"
-          }}
-        >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1
-              style={{
-                fontFamily: "var(--fuente-titulo)",
-                fontSize: "28px",
-                color: "var(--tinta)",
-                margin: "0 0 6px 0"
-              }}
-            >
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-orange/15 text-brand-orange mb-2">
+              <Sparkles size={13} />
+              Panel de control
+            </div>
+            <h1 className="font-display text-2xl md:text-3xl text-brand-ink">
               Dashboard
             </h1>
-            <p style={{ color: "var(--texto-suave)", fontSize: "15px", margin: 0 }}>
-              Resumen general y estado operativo de Conectando Cultura.
+            <p className="font-body text-sm text-brand-gray mt-1">
+              Resumen general y estado operativo de Conectando Cultura en Comuna 9.
             </p>
           </div>
 
-          <Link to="/admin/actividades?accion=nueva" style={{ textDecoration: "none" }}>
+          <Link to="/admin/actividades?accion=nueva">
             <Boton variante="principal">
               <PlusCircle size={18} />
               Nueva actividad
@@ -84,11 +74,11 @@ export default function Dashboard(): React.JSX.Element {
 
         {/* Estados de carga y error */}
         {cargando && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
-            <Esqueleto alto="130px" />
-            <Esqueleto alto="130px" />
-            <Esqueleto alto="130px" />
-            <Esqueleto alto="130px" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <Esqueleto alto="130px" className="rounded-3xl" />
+            <Esqueleto alto="130px" className="rounded-3xl" />
+            <Esqueleto alto="130px" className="rounded-3xl" />
+            <Esqueleto alto="130px" className="rounded-3xl" />
           </div>
         )}
 
@@ -100,185 +90,145 @@ export default function Dashboard(): React.JSX.Element {
           />
         )}
 
-        {/* Grid de Métricas */}
+        {/* Grid de Métricas con Croquis KPI Cards */}
         {!cargando && estadisticas && (
           <>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: "20px",
-                marginBottom: "32px"
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {/* Tarjeta 1: Actividades activas */}
               <Link
                 to="/admin/actividades?activo=true"
-                style={{ textDecoration: "none", color: "inherit" }}
+                className="group block transition-transform hover:-translate-y-1"
               >
-                <Tarjeta style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--texto-suave)" }}>
+                <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Actividades activas
                     </span>
-                    <div
-                      style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "8px",
-                        backgroundColor: "#ecfdf5",
-                        color: "#059669",
-                        display: "grid",
-                        placeItems: "center"
-                      }}
-                    >
+                    <div className="w-10 h-10 rounded-2xl bg-brand-orange/15 text-brand-orange flex items-center justify-center">
                       <CalendarDays size={20} />
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "32px", fontWeight: 800, fontFamily: "var(--fuente-titulo)", color: "var(--tinta)" }}>
+                  <div>
+                    <span className="block font-display text-4xl text-brand-ink mb-2">
                       {estadisticas.actividadesActivas}
                     </span>
-                    <span style={{ fontSize: "12px", color: "var(--chapa)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      Ver activas <ArrowRight size={14} />
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-orange group-hover:underline">
+                      Ver publicadas <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
-                </Tarjeta>
+                </div>
               </Link>
 
               {/* Tarjeta 2: Inactivas / Por revisar */}
               <Link
                 to="/admin/actividades?activo=false"
-                style={{ textDecoration: "none", color: "inherit" }}
+                className="group block transition-transform hover:-translate-y-1"
               >
-                <Tarjeta style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--texto-suave)" }}>
-                      {esAdmin ? "Inactivas u ocultas" : "Inactivas para revisar"}
+                <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                      {esAdmin ? "Inactivas u ocultas" : "Para revisar"}
                     </span>
-                    <div
-                      style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "8px",
-                        backgroundColor: "var(--peligro-fondo)",
-                        color: "var(--peligro)",
-                        display: "grid",
-                        placeItems: "center"
-                      }}
-                    >
+                    <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
                       <CalendarOff size={20} />
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "32px", fontWeight: 800, fontFamily: "var(--fuente-titulo)", color: "var(--tinta)" }}>
+                  <div>
+                    <span className="block font-display text-4xl text-brand-ink mb-2">
                       {inactivas}
                     </span>
-                    <span style={{ fontSize: "12px", color: "var(--peligro)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      Revisar <ArrowRight size={14} />
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 group-hover:underline">
+                      Revisar inactivas <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
-                </Tarjeta>
+                </div>
               </Link>
 
               {/* Tarjeta 3: Usuarios registrados */}
               <Link
                 to={esAdmin ? "/admin/usuarios" : "#"}
-                style={{ textDecoration: "none", color: "inherit", cursor: esAdmin ? "pointer" : "default" }}
+                className={`group block transition-transform ${esAdmin ? "hover:-translate-y-1" : "cursor-default"}`}
               >
-                <Tarjeta style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--texto-suave)" }}>
+                <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Vecinos registrados
                     </span>
-                    <div
-                      style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "8px",
-                        backgroundColor: "#eff6ff",
-                        color: "#2563eb",
-                        display: "grid",
-                        placeItems: "center"
-                      }}
-                    >
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                       <Users size={20} />
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "32px", fontWeight: 800, fontFamily: "var(--fuente-titulo)", color: "var(--tinta)" }}>
+                  <div>
+                    <span className="block font-display text-4xl text-brand-ink mb-2">
                       {estadisticas.totalUsuarios}
                     </span>
-                    {esAdmin && (
-                      <span style={{ fontSize: "12px", color: "var(--chapa)", display: "flex", alignItems: "center", gap: "4px" }}>
-                        Gestionar <ArrowRight size={14} />
+                    {esAdmin ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-orange group-hover:underline">
+                        Gestionar roles <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                       </span>
+                    ) : (
+                      <span className="text-xs text-brand-muted">En toda la red</span>
                     )}
                   </div>
-                </Tarjeta>
+                </div>
               </Link>
 
               {/* Tarjeta 4: Vecinos con preferencias personalizadas */}
-              <Tarjeta style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                  <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--texto-suave)" }}>
+              <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                     Con preferencias
                   </span>
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "8px",
-                      backgroundColor: "#fdf2f8",
-                      color: "#db2777",
-                      display: "grid",
-                      placeItems: "center"
-                    }}
-                  >
+                  <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center">
                     <Heart size={20} />
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: "32px", fontWeight: 800, fontFamily: "var(--fuente-titulo)", color: "var(--tinta)" }}>
+                <div>
+                  <span className="block font-display text-4xl text-brand-ink mb-2">
                     {estadisticas.totalPreferencias}
                   </span>
-                  <span style={{ fontSize: "12px", color: "var(--texto-suave)" }}>
-                    configuradas
-                  </span>
+                  <span className="text-xs text-brand-muted">Perfiles activos configurados</span>
                 </div>
-              </Tarjeta>
+              </div>
             </div>
 
             {/* Accesos Rápidos y Ayuda */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
-              <Tarjeta>
-                <h2 style={{ fontSize: "18px", fontFamily: "var(--fuente-titulo)", margin: "0 0 12px 0", color: "var(--tinta)" }}>
-                  Flujo de trabajo sugerido
-                </h2>
-                <ul style={{ margin: 0, paddingLeft: "20px", color: "var(--texto-suave)", fontSize: "14px", lineHeight: 1.6 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Tarjeta className="!rounded-3xl p-6 md:p-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Info size={20} className="text-brand-orange shrink-0" />
+                  <h2 className="font-display text-xl text-brand-ink">
+                    Flujo de trabajo sugerido
+                  </h2>
+                </div>
+                <ul className="space-y-3 font-body text-sm text-brand-gray leading-relaxed list-disc list-inside">
                   <li>Revisá que las actividades tengan geolocalización correcta antes de publicarlas.</li>
-                  <li>Las actividades inactivas no son visibles en el catálogo ni en el mapa para vecinos.</li>
+                  <li>Las actividades inactivas u ocultas no son visibles en el catálogo ni en el mapa para vecinos.</li>
                   <li>Mantené actualizados los horarios y referencias para facilitar la llegada de los vecinos.</li>
                 </ul>
               </Tarjeta>
 
               {esAdmin && (
-                <Tarjeta style={{ borderLeft: "4px solid var(--naranja)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                    <ShieldAlert size={20} style={{ color: "var(--naranja)" }} />
-                    <h2 style={{ fontSize: "18px", fontFamily: "var(--fuente-titulo)", margin: 0, color: "var(--tinta)" }}>
-                      Panel SuperAdmin
-                    </h2>
+                <div className="rounded-3xl border border-brand-orange/40 bg-brand-white p-6 md:p-8 shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <ShieldAlert size={22} className="text-brand-orange shrink-0" />
+                      <h2 className="font-display text-xl text-brand-ink">
+                        Control de permisos y accesos
+                      </h2>
+                    </div>
+                    <p className="font-body text-sm text-brand-gray mb-6 leading-relaxed">
+                      Tenés nivel SuperAdmin. Podés asignar roles de gestor a referentes barriales y revocar sesiones activas de usuarios.
+                    </p>
                   </div>
-                  <p style={{ fontSize: "14px", color: "var(--texto-suave)", margin: "0 0 16px 0", lineHeight: 1.5 }}>
-                    Tenés acceso total a la asignación de roles y revocación de sesiones concurrentes de usuarios del sistema.
-                  </p>
-                  <Link to="/admin/usuarios" style={{ textDecoration: "none" }}>
-                    <Boton variante="secundario">
-                      Administrar usuarios y permisos
-                    </Boton>
-                  </Link>
-                </Tarjeta>
+                  <div>
+                    <Link to="/admin/usuarios">
+                      <Boton variante="secundario">
+                        Administrar usuarios y permisos
+                      </Boton>
+                    </Link>
+                  </div>
+                </div>
               )}
             </div>
           </>

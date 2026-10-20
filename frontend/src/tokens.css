@@ -3,24 +3,29 @@
   /* Modo claro por defecto con soporte explícito y fallback a light-dark */
   color-scheme: light;
 
-  /* Neutrales (contraste según 04-sistema-visual.md):
-     --tinta: 14,2:1 sobre blanco; 12,9:1 sobre papel
-     --texto-suave: 6,8:1 sobre blanco
-     --chapa: 6,5:1 sobre blanco
-     --borde-campo: 3,3:1 sobre blanco
-  */
-  --papel: #F2F4F8;
-  --blanco: #FFFFFF;
-  --tinta: #1B2A4A;
-  --texto-suave: #4F5B73;
-  --linea: #D5DAE4;
+  /* Croquis brand tokens (Option A: Coexistencia con Tailwind CSS v4) */
+  --color-acento: #FF8F50;
+  --color-acento-suave: #FFAA5C;
+  --color-fondo: #F4F4F4;
+  --color-superficie: #FEFEFE;
+  --color-texto: #1B160E;
+  --color-texto-secundario: #302D27;
+  --color-texto-tenue: #6B7D8D;
+  --color-borde: #E3E3E1;
+
+  /* Neutrales y puentes legacy (compatibilidad con CSS Modules) */
+  --papel: var(--color-fondo);
+  --blanco: var(--color-superficie);
+  --tinta: var(--color-texto);
+  --texto-suave: var(--color-texto-secundario);
+  --linea: var(--color-borde);
   --borde-campo: #7C869B;
 
   /* Acentos */
-  --chapa: #2A55C9;
+  --chapa: var(--color-acento);
   --cartel: #FFC933;
-  --boton-fondo: #1B2A4A;
-  --boton-texto: #FFFFFF;
+  --boton-fondo: var(--color-acento);
+  --boton-texto: var(--color-texto);
 
   /* Estados accesibles (todos >= 4,5:1) */
   --peligro: #B42318;
@@ -30,14 +35,17 @@
   --aviso: #7A4700;
   --aviso-fondo: #FFF1D6;
 
-  /* Tipografía oficial */
-  --fuente-titulo: "Archivo", "Poppins", sans-serif;
-  --fuente-cuerpo: "Atkinson Hyperlegible", "Poppins", system-ui, sans-serif;
+  /* Tipografía oficial Croquis */
+  --fuente-display: "Kavoon", serif;
+  --fuente-titulo: "Poppins", sans-serif;
+  --fuente-cuerpo: "Montserrat", sans-serif;
 
   /* Forma y espacio */
   --radio-control: 6px;
   --radio-tarjeta: 12px;
   --radio-pildora: 999px;
+  --radio-4: 24px;
+  --sombra-2: 0 6px 11px rgba(0, 0, 0, 0.1);
   --esp-1: 4px;
   --esp-2: 8px;
   --esp-3: 12px;
@@ -51,6 +59,15 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
+  --color-fondo: #0F1626;
+  --color-superficie: #18223A;
+  --color-texto: #E8ECF5;
+  --color-texto-secundario: #A9B3C8;
+  --color-texto-tenue: #7C869B;
+  --color-borde: #2C3857;
+  --color-acento: #8FB0FF;
+  --color-acento-suave: #FFAA5C;
+
   --papel: #0F1626;
   --blanco: #18223A;
   --tinta: #E8ECF5;

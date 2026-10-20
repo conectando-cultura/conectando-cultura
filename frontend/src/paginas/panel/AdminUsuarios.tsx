@@ -8,13 +8,12 @@ import {
 import type { UsuarioPublico, Rol } from "../../tipos";
 import { useAuth } from "../../contexto/AuthContext";
 import { ETIQUETA_ROL } from "../../utiles/permisos";
-import Tarjeta from "../../componentes/base/Tarjeta";
 import Boton from "../../componentes/base/Boton";
 import Badge from "../../componentes/base/Badge";
 import BarraConfirmacion from "../../componentes/base/BarraConfirmacion";
 import Esqueleto from "../../componentes/base/Esqueleto";
 import EstadoError from "../../componentes/base/EstadoError";
-import { Search, LogOut, CheckCircle2 } from "lucide-react";
+import { Search, LogOut, CheckCircle2, Sparkles, UserCheck } from "lucide-react";
 
 export default function AdminUsuarios(): React.JSX.Element {
   const { token, usuario: usuarioActual } = useAuth();
@@ -58,7 +57,7 @@ export default function AdminUsuarios(): React.JSX.Element {
         prev.map((u) => (u.id === res.usuario.id ? { ...u, rol: res.usuario.rol } : u))
       );
       setMensajeExito(
-        `Rol de ${cambioPendiente.usuario.nombre} cambiado a ${ETIQUETA_ROL[cambioPendiente.nuevoRol]}.`
+        `Rol de ${cambioPendiente.usuario.nombre} actualizado a ${ETIQUETA_ROL[cambioPendiente.nuevoRol]}.`
       );
       setCambioPendiente(null);
       setTimeout(() => setMensajeExito(null), 4000);
@@ -91,58 +90,34 @@ export default function AdminUsuarios(): React.JSX.Element {
 
   return (
     <LayoutPanel>
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Cabecera */}
-        <div style={{ marginBottom: "24px" }}>
-          <h1
-            style={{
-              fontFamily: "var(--fuente-titulo)",
-              fontSize: "28px",
-              color: "var(--tinta)",
-              margin: "0 0 6px 0"
-            }}
-          >
-            Usuarios y Roles
-          </h1>
-          <p style={{ color: "var(--texto-suave)", fontSize: "15px", margin: 0 }}>
-            Administrá permisos y accesos al panel. Solo administradores autorizados.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-orange/15 text-brand-orange mb-2">
+              <Sparkles size={13} />
+              Gobernanza comunitaria
+            </div>
+            <h1 className="font-display text-2xl md:text-3xl text-brand-ink">
+              Usuarios y Roles
+            </h1>
+            <p className="font-body text-sm text-brand-gray mt-1">
+              Administrá permisos de acceso al panel y niveles de gestión de actividades.
+            </p>
+          </div>
         </div>
 
         {/* Mensaje de éxito */}
         {mensajeExito && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "12px 16px",
-              backgroundColor: "#ecfdf5",
-              color: "#065f46",
-              borderRadius: "var(--radio-control)",
-              marginBottom: "20px",
-              fontSize: "14px",
-              fontWeight: 600
-            }}
-          >
-            <CheckCircle2 size={18} />
+          <div className="flex items-center gap-2 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium">
+            <CheckCircle2 size={18} className="shrink-0 text-emerald-600" />
             <span>{mensajeExito}</span>
           </div>
         )}
 
         {/* Buscador */}
-        <div style={{ marginBottom: "20px", position: "relative", maxWidth: "420px" }}>
-          <span
-            style={{
-              position: "absolute",
-              left: "14px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--texto-suave)",
-              display: "grid",
-              placeItems: "center"
-            }}
-          >
+        <div className="relative max-w-md">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none">
             <Search size={18} />
           </span>
           <input
@@ -150,60 +125,48 @@ export default function AdminUsuarios(): React.JSX.Element {
             value={filtroTexto}
             onChange={(e) => setFiltroTexto(e.target.value)}
             placeholder="Buscar por nombre o correo..."
-            style={{
-              width: "100%",
-              minHeight: "var(--alto-tactil)",
-              paddingLeft: "42px",
-              paddingRight: "16px",
-              borderRadius: "var(--radio-control)",
-              border: "1px solid var(--linea)",
-              backgroundColor: "var(--blanco)",
-              fontSize: "14px",
-              outline: "none"
-            }}
+            className="w-full min-h-[44px] pl-11 pr-4 rounded-full border border-brand-gray-light bg-brand-white text-brand-ink font-body text-sm placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all"
           />
         </div>
 
         {/* Estados de carga / error */}
         {cargando && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <Esqueleto alto="54px" />
-            <Esqueleto alto="54px" />
-            <Esqueleto alto="54px" />
+          <div className="space-y-3">
+            <Esqueleto alto="64px" className="rounded-2xl" />
+            <Esqueleto alto="64px" className="rounded-2xl" />
+            <Esqueleto alto="64px" className="rounded-2xl" />
           </div>
         )}
 
         {error && (
-          <div style={{ marginBottom: "20px" }}>
-            <EstadoError titulo="Ocurrió un inconveniente" descripcion={error} onReintentar={cargar} />
-          </div>
+          <EstadoError titulo="Ocurrió un inconveniente" descripcion={error} onReintentar={cargar} />
         )}
 
-        {/* Tabla de Usuarios */}
+        {/* Tabla de Usuarios en Card rounded-3xl */}
         {!cargando && (
-          <Tarjeta style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+          <div className="rounded-3xl border border-brand-gray-light bg-brand-white shadow-[0_6px_11px_rgba(0,0,0,0.1)] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr style={{ backgroundColor: "var(--papel)", borderBottom: "1px solid var(--linea)" }}>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
-                      Nombre
+                  <tr className="bg-brand-bg/80 border-b border-brand-gray-light">
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                      Vecino / Referente
                     </th>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Correo
                     </th>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Rol
                     </th>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase", textAlign: "right" }}>
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted text-right">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-brand-gray-light">
                   {usuariosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={4} style={{ padding: "32px", textAlign: "center", color: "var(--texto-suave)" }}>
+                      <td colSpan={4} className="py-12 text-center text-brand-muted font-body text-sm">
                         No se encontraron usuarios coincidentes.
                       </td>
                     </tr>
@@ -215,25 +178,27 @@ export default function AdminUsuarios(): React.JSX.Element {
                       return (
                         <tr
                           key={u.id}
-                          style={{
-                            borderBottom: "1px solid var(--linea)",
-                            backgroundColor: esPropio ? "rgba(249, 128, 23, 0.04)" : "transparent"
-                          }}
+                          className={`hover:bg-brand-bg/40 transition-colors ${
+                            esPropio ? "bg-brand-orange/5" : ""
+                          }`}
                         >
-                          <td style={{ padding: "14px 16px" }}>
-                            <div style={{ fontWeight: 600, color: "var(--tinta)", fontSize: "14px" }}>
-                              {u.nombre} {u.apellido}
-                            </div>
-                            {esPropio && (
-                              <span style={{ fontSize: "11px", color: "var(--chapa)", fontWeight: 700 }}>
-                                (Tu cuenta actual)
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <span className="font-sans font-semibold text-sm text-brand-ink">
+                                {u.nombre} {u.apellido}
                               </span>
-                            )}
+                              {esPropio && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-full">
+                                  <UserCheck size={11} />
+                                  Tu cuenta
+                                </span>
+                              )}
+                            </div>
                           </td>
-                          <td style={{ padding: "14px 16px", color: "var(--texto-suave)", fontSize: "14px" }}>
+                          <td className="py-4 px-6 font-body text-sm text-brand-gray">
                             {u.correo}
                           </td>
-                          <td style={{ padding: "14px 16px" }}>
+                          <td className="py-4 px-6">
                             {esPropio ? (
                               <Badge tipo="destacada" texto={ETIQUETA_ROL[rol]} />
                             ) : (
@@ -243,16 +208,7 @@ export default function AdminUsuarios(): React.JSX.Element {
                                   const nuevo = e.target.value as Rol;
                                   setCambioPendiente({ usuario: u, nuevoRol: nuevo });
                                 }}
-                                style={{
-                                  padding: "6px 10px",
-                                  borderRadius: "var(--radio-control)",
-                                  border: "1px solid var(--linea)",
-                                  backgroundColor: "var(--blanco)",
-                                  fontSize: "13px",
-                                  fontWeight: 600,
-                                  color: "var(--tinta)",
-                                  cursor: "pointer"
-                                }}
+                                className="px-3 py-1.5 rounded-full border border-brand-gray-light bg-brand-white text-xs font-semibold text-brand-ink cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all"
                               >
                                 <option value="usuario">Usuario</option>
                                 <option value="gestor">Gestor</option>
@@ -260,14 +216,14 @@ export default function AdminUsuarios(): React.JSX.Element {
                               </select>
                             )}
                           </td>
-                          <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                          <td className="py-4 px-6 text-right">
                             <Boton
                               variante="texto"
                               onClick={() => setCierrePendiente(u)}
                               disabled={esPropio}
                               title={esPropio ? "No podés cerrar tu propia sesión desde aquí" : "Cerrar sesiones activas"}
                             >
-                              <LogOut size={16} />
+                              <LogOut size={15} />
                               Cerrar sesiones
                             </Boton>
                           </td>
@@ -278,7 +234,7 @@ export default function AdminUsuarios(): React.JSX.Element {
                 </tbody>
               </table>
             </div>
-          </Tarjeta>
+          </div>
         )}
 
         {/* Barra de Confirmación: Cambio de Rol */}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexto/AuthContext";
 import {
   obtenerPreferencias,
@@ -10,7 +10,7 @@ import {
 import type { Barrio, Categoria } from "../tipos";
 import CategoriaChip from "../componentes/CategoriaChip";
 import { Boton, Esqueleto, EstadoError } from "../componentes/base";
-import { Check } from "lucide-react";
+import { Check, Sparkles, MapPin, Compass, ArrowRight, Layers } from "lucide-react";
 
 export default function Preferencias(): React.JSX.Element {
   const { usuario, token } = useAuth();
@@ -24,6 +24,10 @@ export default function Preferencias(): React.JSX.Element {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Dirty state tracking
+  const [guardadasBarrioId, setGuardadasBarrioId] = useState<string>("");
+  const [guardadasSeleccionadas, setGuardadasSeleccionadas] = useState<string[]>([]);
 
   const esPrimeraVez = Boolean(
     (ubicacion.state as { primeraVez?: boolean })?.primeraVez
@@ -41,10 +45,12 @@ export default function Preferencias(): React.JSX.Element {
         setBarrios(b);
         setCategorias(c);
         if (prefs) {
-          setBarrioId(prefs.barrioId ?? "");
-          if (prefs.categorias) {
-            setSeleccionadas(prefs.categorias.map((x) => x.id));
-          }
+          const bId = prefs.barrioId ?? "";
+          const catIds = prefs.categorias ? prefs.categorias.map((x) => x.id) : [];
+          setBarrioId(bId);
+          setSeleccionadas(catIds);
+          setGuardadasBarrioId(bId);
+          setGuardadasSeleccionadas(catIds);
         }
       })
       .catch((err) => {
@@ -60,19 +66,43 @@ export default function Preferencias(): React.JSX.Element {
     );
   };
 
-  const barrioElegido = useMemo(() => {
-    if (!barrioId) return "todos los barrios";
-    const b = barrios.find((x) => x.id === barrioId);
-    return b ? b.nombre : "todos los barrios";
+  const seleccionarTodas = () => {
+    setSeleccionadas(categorias.map((c) => c.id));
+  };
+
+  const deseleccionarTodas = () => {
+    setSeleccionadas([]);
+  };
+
+  const barrioElegidoObj = useMemo(() => {
+    if (!barrioId) return null;
+    return barrios.find((x) => x.id === barrioId) || null;
   }, [barrios, barrioId]);
 
-  const categoriasElegidasTexto = useMemo(() => {
-    if (seleccionadas.length === 0) return "todas las categorías";
-    const nombres = categorias
-      .filter((c) => seleccionadas.includes(c.id))
-      .map((c) => c.nombre);
-    return nombres.join(", ");
+  const categoriasElegidasList = useMemo(() => {
+    return categorias.filter((c) => seleccionadas.includes(c.id));
   }, [categorias, seleccionadas]);
+
+  // Chequeo si hay cambios sin guardar
+  const tieneCambios = useMemo(() => {
+    if (barrioId !== guardadasBarrioId) return true;
+    if (seleccionadas.length !== guardadasSeleccionadas.length) return true;
+    const setGuardadas = new Set(guardadasSeleccionadas);
+    return seleccionadas.some((id) => !setGuardadas.has(id));
+  }, [barrioId, seleccionadas, guardadasBarrioId, guardadasSeleccionadas]);
+
+  // Parámetros de URL para explorar
+  const queryStringExplorar = useMemo(() => {
+    const params = new URLSearchParams();
+    if (barrioElegidoObj) {
+      params.set("barrio", barrioElegidoObj.slug);
+    }
+    if (categoriasElegidasList.length > 0) {
+      params.set("categorias", categoriasElegidasList.map((c) => c.slug).join(","));
+    }
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }, [barrioElegidoObj, categoriasElegidasList]);
 
   async function handleGuardar(e: React.FormEvent) {
     e.preventDefault();
@@ -87,21 +117,10 @@ export default function Preferencias(): React.JSX.Element {
         categoriaIds: seleccionadas
       });
 
-      // Construir URL de redirección a Explorar con los filtros elegidos
-      const params = new URLSearchParams();
-      if (barrioId) {
-        const b = barrios.find((x) => x.id === barrioId);
-        if (b) params.set("barrio", b.slug);
-      }
-      if (seleccionadas.length > 0) {
-        const slugs = categorias
-          .filter((c) => seleccionadas.includes(c.id))
-          .map((c) => c.slug);
-        if (slugs.length > 0) params.set("categorias", slugs.join(","));
-      }
+      setGuardadasBarrioId(barrioId);
+      setGuardadasSeleccionadas(seleccionadas);
 
-      const qs = params.toString();
-      navegar(`/explorar${qs ? `?${qs}` : ""}`, { replace: true });
+      navegar(`/explorar${queryStringExplorar}`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar preferencias.");
     } finally {
@@ -115,138 +134,217 @@ export default function Preferencias(): React.JSX.Element {
 
   if (cargando) {
     return (
-      <div style={{ maxWidth: "700px", margin: "0 auto", padding: "40px 20px" }}>
-        <Esqueleto alto={32} ancho="50%" style={{ marginBottom: "16px" }} />
-        <Esqueleto alto={18} ancho="70%" style={{ marginBottom: "32px" }} />
-        <Esqueleto alto={80} style={{ marginBottom: "24px" }} />
-        <Esqueleto alto={200} />
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
+        <Esqueleto alto="40px" ancho="40%" className="mb-4" />
+        <Esqueleto alto="20px" ancho="60%" className="mb-8" />
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
+          <Esqueleto alto="420px" className="rounded-3xl" />
+          <Esqueleto alto="360px" className="rounded-3xl" />
+        </div>
       </div>
     );
   }
 
   const titulo = esPrimeraVez && usuario?.nombre
     ? `Te damos la bienvenida, ${usuario.nombre}`
-    : "Tus preferencias";
+    : "Tus preferencias culturales";
 
   return (
-    <div style={{ maxWidth: "740px", margin: "0 auto", padding: "32px 20px 48px", width: "100%", boxSizing: "border-box" }}>
-      <h1
-        style={{
-          fontFamily: "var(--fuente-titulo)",
-          fontSize: "30px",
-          color: "var(--tinta)",
-          margin: "0 0 8px 0"
-        }}
-      >
-        {titulo}
-      </h1>
-      <p style={{ color: "var(--texto-suave)", fontSize: "16px", margin: "0 0 28px 0" }}>
-        Elegí qué actividades querés ver primero al explorar la plataforma.
-      </p>
-
-      {error && <EstadoError descripcion={error} />}
-
-      <form onSubmit={handleGuardar}>
-        {/* ── Barrio ──────────────────────────────────────────────── */}
-        <div style={{ marginBottom: "28px" }}>
-          <label
-            htmlFor="pref-barrio"
-            style={{ display: "block", fontWeight: 700, fontSize: "15px", marginBottom: "8px", color: "var(--tinta)" }}
-          >
-            Barrio de preferencia
-          </label>
-          <select
-            id="pref-barrio"
-            value={barrioId}
-            onChange={(e) => setBarrioId(e.target.value)}
-            style={{
-              width: "100%",
-              minHeight: "var(--alto-tactil)",
-              padding: "0 12px",
-              borderRadius: "var(--radio-control)",
-              border: "1.5px solid var(--borde-campo)",
-              backgroundColor: "var(--blanco)",
-              color: "var(--tinta)",
-              fontFamily: "var(--fuente-cuerpo)",
-              fontSize: "15px"
-            }}
-          >
-            <option value="">Todos los barrios</option>
-            {barrios.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* ── Categorías ──────────────────────────────────────────── */}
-        <div style={{ marginBottom: "32px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
-            <span style={{ fontWeight: 700, fontSize: "15px", color: "var(--tinta)" }}>
-              Categorías de interés
-            </span>
-            <span style={{ fontSize: "13px", color: "var(--texto-suave)" }}>
-              {seleccionadas.length === 0
-                ? "Ninguna: te mostramos todo"
-                : `${seleccionadas.length} seleccionada${seleccionadas.length > 1 ? "s" : ""}`}
-            </span>
+    <div className="min-h-screen bg-brand-bg py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        {/* Cabecera de Página */}
+        <div className="mb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-orange/15 text-brand-orange mb-3">
+            <Sparkles size={13} />
+            Personalización de cartelera
           </div>
+          <h1 className="font-display text-3xl md:text-4xl text-brand-ink mb-2">
+            {titulo}
+          </h1>
+          <p className="font-body text-base text-brand-gray max-w-2xl">
+            Elegí qué barrio y qué temáticas culturales querés que prioricemos cuando explores la plataforma.
+          </p>
+        </div>
 
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-            {categorias.map((cat) => (
-              <CategoriaChip
-                key={cat.id}
-                categoria={cat}
-                seleccionada={seleccionadas.includes(cat.id)}
-                onAlternar={() => alternarCategoria(cat.id)}
-              />
-            ))}
+        {error && (
+          <div className="mb-6">
+            <EstadoError descripcion={error} />
           </div>
-        </div>
+        )}
 
-        {/* ── Resumen en vivo ─────────────────────────────────────── */}
-        <div
-          style={{
-            backgroundColor: "var(--papel)",
-            border: "1px solid var(--linea)",
-            borderRadius: "var(--radio-control)",
-            padding: "16px 20px",
-            marginBottom: "32px",
-            fontSize: "15px",
-            lineHeight: 1.5,
-            color: "var(--tinta)"
-          }}
-        >
-          <strong style={{ display: "block", marginBottom: "4px" }}>
-            Vas a ver primero:
-          </strong>
-          Actividades en <em>{barrioElegido}</em> · <em>{categoriasElegidasTexto}</em>.
-        </div>
+        <form onSubmit={handleGuardar}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
+            {/* Columna Principal: Configuración */}
+            <div className="bg-brand-white rounded-3xl border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] p-6 md:p-8 space-y-8">
+              {/* Sección Barrio */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label
+                    htmlFor="pref-barrio"
+                    className="font-sans font-semibold text-base text-brand-ink flex items-center gap-2"
+                  >
+                    <MapPin size={18} className="text-brand-orange" />
+                    Barrio de preferencia
+                  </label>
+                  <span className="text-xs text-brand-muted font-body">Comuna 9 · CABA</span>
+                </div>
+                <p className="font-body text-xs text-brand-gray mb-3">
+                  Si elegís uno en particular, te mostraremos primero las actividades que quedan a pocas cuadras.
+                </p>
+                <select
+                  id="pref-barrio"
+                  value={barrioId}
+                  onChange={(e) => setBarrioId(e.target.value)}
+                  className="w-full min-h-[44px] px-4 rounded-xl border border-brand-gray-light bg-brand-white text-brand-ink font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all"
+                >
+                  <option value="">Todos los barrios de la comuna</option>
+                  {barrios.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        {/* ── Botones ─────────────────────────────────────────────── */}
-        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-          <Boton
-            type="submit"
-            variante="principal"
-            disabled={guardando}
-            icono={<Check size={18} />}
-          >
-            {guardando ? "Guardando..." : "Guardar y explorar"}
-          </Boton>
+              {/* Sección Categorías */}
+              <div className="pt-6 border-t border-brand-gray-light">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <div>
+                    <label className="font-sans font-semibold text-base text-brand-ink flex items-center gap-2">
+                      <Layers size={18} className="text-brand-orange" />
+                      Categorías de interés
+                    </label>
+                    <p className="font-body text-xs text-brand-gray mt-1">
+                      Tocá las opciones para activar o desactivar lo que te entusiasma.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={seleccionarTodas}
+                      className="text-brand-orange hover:underline font-semibold"
+                    >
+                      Todas
+                    </button>
+                    <span className="text-brand-muted">·</span>
+                    <button
+                      type="button"
+                      onClick={deseleccionarTodas}
+                      className="text-brand-muted hover:text-brand-ink hover:underline"
+                    >
+                      Limpiar
+                    </button>
+                  </div>
+                </div>
 
-          {esPrimeraVez && (
-            <Boton
-              type="button"
-              variante="secundario"
-              onClick={omitir}
-              disabled={guardando}
-            >
-              Omitir por ahora
-            </Boton>
-          )}
-        </div>
-      </form>
+                <div className="flex flex-wrap gap-2.5 pt-2">
+                  {categorias.map((cat) => (
+                    <CategoriaChip
+                      key={cat.id}
+                      categoria={cat}
+                      seleccionada={seleccionadas.includes(cat.id)}
+                      onAlternar={() => alternarCategoria(cat.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Botones de Acción */}
+              <div className="pt-6 border-t border-brand-gray-light flex flex-wrap items-center gap-4">
+                <Boton
+                  type="submit"
+                  variante="principal"
+                  disabled={guardando}
+                  icono={<Check size={18} />}
+                >
+                  {guardando ? "Guardando preferencias..." : "Guardar y explorar"}
+                </Boton>
+
+                {esPrimeraVez && (
+                  <Boton
+                    type="button"
+                    variante="secundario"
+                    onClick={omitir}
+                    disabled={guardando}
+                  >
+                    Omitir por ahora
+                  </Boton>
+                )}
+
+                {tieneCambios && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-brand-orange font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-brand-orange animate-pulse" />
+                    Cambios sin guardar
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Columna Lateral Sticky: Resumen Cultural */}
+            <aside className="sticky top-24 rounded-3xl overflow-hidden border border-brand-gray-light bg-brand-white shadow-[0_6px_11px_rgba(0,0,0,0.1)]">
+              <div className="bg-brand-orange-light px-6 py-4 flex items-center justify-between">
+                <h2 className="font-display text-lg text-brand-ink">
+                  Tu resumen cultural
+                </h2>
+                <Compass size={20} className="text-brand-ink/80" />
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div>
+                  <span className="block text-xs uppercase tracking-wider text-brand-muted font-bold mb-1">
+                    Barrio principal
+                  </span>
+                  <div className="flex items-center gap-2 font-sans font-medium text-sm text-brand-ink">
+                    <MapPin size={16} className="text-brand-orange shrink-0" />
+                    <span>{barrioElegidoObj ? barrioElegidoObj.nombre : "Todos los barrios"}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs uppercase tracking-wider text-brand-muted font-bold">
+                      Categorías elegidas
+                    </span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-bg text-brand-gray">
+                      {seleccionadas.length === 0 ? "Todas" : seleccionadas.length}
+                    </span>
+                  </div>
+
+                  {categoriasElegidasList.length === 0 ? (
+                    <p className="font-body text-xs text-brand-muted italic">
+                      Te mostraremos todas las categorías culturales sin filtros.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto pr-1">
+                      {categoriasElegidasList.map((cat) => (
+                        <span
+                          key={cat.id}
+                          className="px-2.5 py-1 rounded-full text-xs font-sans font-medium bg-brand-bg text-brand-ink border border-brand-gray-light"
+                        >
+                          {cat.nombre}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-brand-gray-light text-xs text-brand-gray font-body space-y-3">
+                  <p>
+                    Cuando entres a la cartelera, estos filtros se aplicarán automáticamente a tus búsquedas.
+                  </p>
+                  <Link
+                    to={`/explorar${queryStringExplorar}`}
+                    className="inline-flex items-center gap-1.5 text-brand-orange font-semibold hover:underline"
+                  >
+                    Ver vista previa en catálogo
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

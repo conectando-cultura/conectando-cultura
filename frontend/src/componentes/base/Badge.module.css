@@ -2,30 +2,40 @@
   display: inline-flex;
   align-items: center;
   gap: var(--esp-1);
-  padding: 3px var(--esp-2);
+  padding: 4px 12px;
   border-radius: var(--radio-pildora);
-  font-family: var(--fuente-cuerpo);
+  font-family: var(--fuente-titulo);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
+}
+
+.icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .activa {
   background-color: var(--exito-fondo);
   color: var(--exito);
+  border: 1px solid rgba(27, 122, 75, 0.2);
 }
 
 .inactiva {
-  background-color: var(--papel);
-  color: var(--texto-suave);
+  background-color: var(--color-fondo);
+  color: var(--color-texto-secundario);
+  border: 1px solid var(--color-borde);
 }
 
 .oculta {
   background-color: var(--aviso-fondo);
   color: var(--aviso);
+  border: 1px solid rgba(122, 71, 0, 0.2);
 }
 
 .destacada {
-  background-color: var(--cartel);
-  color: #1B2A4A;
+  background-color: #FFE6D5;
+  color: #9A4300;
+  border: 1px solid var(--color-acento);
 }

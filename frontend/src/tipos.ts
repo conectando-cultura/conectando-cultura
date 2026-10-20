@@ -54,3 +54,14 @@ export interface Preferencias {
   barrio: Barrio | null;
   categorias: Categoria[];
 }
+
+export interface Resena {
+  id: string;
+  actividadId: string;
+  usuarioId: string;
+  autorNombre: string;
+  calificacion: 1 | 2 | 3 | 4 | 5;
+  comentario: string;
+  fecha: string;
+}
+

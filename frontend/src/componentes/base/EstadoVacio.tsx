@@ -21,7 +21,7 @@ export default function EstadoVacio({
   return (
     <div className={estilos.contenedor} role="status">
       <div className={estilos.icono} aria-hidden="true">
-        {icono ?? <Search size={40} strokeWidth={1.5} />}
+        {icono ?? <Search size={36} strokeWidth={1.8} />}
       </div>
       <h3 className={estilos.titulo}>{titulo}</h3>
       <p className={estilos.descripcion}>{descripcion}</p>

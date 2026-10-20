@@ -1,0 +1,19 @@
+/* DetalleActividad.module.css - Moduladores visuales para DetalleActividad */
+.heroImagen {
+  object-position: center 35%;
+}
+
+.tarjetaAntesDeIr {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--color-borde, #E3E3E1);
+  background-color: var(--color-superficie, #FEFEFE);
+  box-shadow: 0 6px 11px rgba(0, 0, 0, 0.08);
+}
+
+.cabeceraAntesDeIr {
+  background-color: var(--color-acento-suave, #FFAA5C);
+  padding: 14px 24px;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+}

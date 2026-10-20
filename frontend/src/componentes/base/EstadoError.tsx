@@ -21,7 +21,7 @@ export default function EstadoError({
   return (
     <div className={estilos.contenedor} role="alert">
       <div className={`${estilos.icono} ${estilos.iconoError}`} aria-hidden="true">
-        {icono ?? <AlertCircle size={40} strokeWidth={1.5} />}
+        {icono ?? <AlertCircle size={36} strokeWidth={1.8} />}
       </div>
       <h3 className={estilos.titulo}>{titulo}</h3>
       <p className={estilos.descripcion}>{descripcion}</p>

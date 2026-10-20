@@ -11,7 +11,6 @@ import {
 import { obtenerBarrios, obtenerCategorias } from "../../api/actividades";
 import type { Actividad, Barrio, Categoria } from "../../tipos";
 import { useAuth } from "../../contexto/AuthContext";
-import Tarjeta from "../../componentes/base/Tarjeta";
 import Boton from "../../componentes/base/Boton";
 import Campo from "../../componentes/base/Campo";
 import Badge from "../../componentes/base/Badge";
@@ -25,10 +24,13 @@ import {
   Pencil,
   Power,
   RotateCcw,
-  MapPin,
   ExternalLink,
   X,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  Navigation
 } from "lucide-react";
 
 type ActividadAdmin = Actividad & { activo: boolean };
@@ -214,7 +216,7 @@ export default function AdminActividades(): React.JSX.Element {
         }));
         setGeoMensaje(`Coordenadas ubicadas: ${data[0].lat}, ${data[0].lon}`);
       } else {
-        setGeoMensaje("No encontramos esa dirección. Probá con otra o cargá las coordenadas a mano.");
+        setGeoMensaje("No encontramos esa dirección. Podés ingresar las coordenadas a mano.");
       }
     } catch {
       setGeoMensaje("Error al conectar con el servicio de geocodificación.");
@@ -303,31 +305,19 @@ export default function AdminActividades(): React.JSX.Element {
 
   return (
     <LayoutPanel>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Cabecera */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-            gap: "16px",
-            marginBottom: "24px"
-          }}
-        >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1
-              style={{
-                fontFamily: "var(--fuente-titulo)",
-                fontSize: "28px",
-                color: "var(--tinta)",
-                margin: "0 0 6px 0"
-              }}
-            >
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-orange/15 text-brand-orange mb-2">
+              <Sparkles size={13} />
+              Cartelera y programación
+            </div>
+            <h1 className="font-display text-2xl md:text-3xl text-brand-ink">
               Gestión de Actividades
             </h1>
-            <p style={{ color: "var(--texto-suave)", fontSize: "15px", margin: 0 }}>
-              Cargá, editá y organizá las actividades culturales de los barrios.
+            <p className="font-body text-sm text-brand-gray mt-1">
+              Cargá, editá y organizá las actividades culturales de la Comuna 9.
             </p>
           </div>
 
@@ -337,172 +327,119 @@ export default function AdminActividades(): React.JSX.Element {
           </Boton>
         </div>
 
-        {/* Barra de Filtros y Búsqueda */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px",
-            marginBottom: "20px"
-          }}
-        >
+        {/* Barra de Filtros, Búsqueda y Orden */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Búsqueda por nombre */}
-          <div style={{ position: "relative", minWidth: "260px", flex: 1, maxWidth: "400px" }}>
-            <span
-              style={{
-                position: "absolute",
-                left: "14px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--texto-suave)",
-                display: "grid",
-                placeItems: "center"
-              }}
-            >
+          <div className="relative flex-1 max-w-md">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none">
               <Search size={18} />
             </span>
             <input
               type="search"
               value={q}
               onChange={(e) => actualizarFiltro("q", e.target.value || null)}
-              placeholder="Buscar por nombre..."
-              style={{
-                width: "100%",
-                minHeight: "var(--alto-tactil)",
-                paddingLeft: "42px",
-                paddingRight: "16px",
-                borderRadius: "var(--radio-control)",
-                border: "1px solid var(--linea)",
-                backgroundColor: "var(--blanco)",
-                fontSize: "14px",
-                outline: "none"
-              }}
+              placeholder="Buscar actividad por nombre..."
+              className="w-full min-h-[44px] pl-11 pr-4 rounded-full border border-brand-gray-light bg-brand-white text-brand-ink font-body text-sm placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all"
             />
           </div>
 
           {/* Filtros de estado y orden */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            {/* Estado */}
-            <div style={{ display: "flex", backgroundColor: "var(--blanco)", borderRadius: "var(--radio-control)", border: "1px solid var(--linea)", padding: "2px" }}>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Pill Group de Estado */}
+            <div className="inline-flex p-1 rounded-full bg-brand-white border border-brand-gray-light shadow-2xs">
               <button
                 type="button"
                 onClick={() => actualizarFiltro("activo", null)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "var(--radio-control)",
-                  border: "none",
-                  backgroundColor: estadoFiltro === null ? "var(--chapa)" : "transparent",
-                  color: estadoFiltro === null ? "var(--blanco)" : "var(--tinta)",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer"
-                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-sans font-semibold transition-all ${
+                  estadoFiltro === null
+                    ? "bg-brand-orange text-brand-ink shadow-xs"
+                    : "text-brand-gray hover:text-brand-ink"
+                }`}
               >
                 Todas
               </button>
               <button
                 type="button"
                 onClick={() => actualizarFiltro("activo", "true")}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "var(--radio-control)",
-                  border: "none",
-                  backgroundColor: estadoFiltro === "true" ? "#059669" : "transparent",
-                  color: estadoFiltro === "true" ? "var(--blanco)" : "var(--tinta)",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer"
-                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-sans font-semibold transition-all ${
+                  estadoFiltro === "true"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-brand-gray hover:text-brand-ink"
+                }`}
               >
                 Activas
               </button>
               <button
                 type="button"
                 onClick={() => actualizarFiltro("activo", "false")}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "var(--radio-control)",
-                  border: "none",
-                  backgroundColor: estadoFiltro === "false" ? "var(--peligro)" : "transparent",
-                  color: estadoFiltro === "false" ? "var(--blanco)" : "var(--tinta)",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer"
-                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-sans font-semibold transition-all ${
+                  estadoFiltro === "false"
+                    ? "bg-red-600 text-white shadow-xs"
+                    : "text-brand-gray hover:text-brand-ink"
+                }`}
               >
                 Inactivas
               </button>
             </div>
 
-            {/* Orden */}
-            <select
-              value={orden}
-              onChange={(e) => actualizarFiltro("orden", e.target.value)}
-              style={{
-                minHeight: "var(--alto-tactil)",
-                padding: "0 12px",
-                borderRadius: "var(--radio-control)",
-                border: "1px solid var(--linea)",
-                backgroundColor: "var(--blanco)",
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "var(--tinta)",
-                cursor: "pointer"
-              }}
-            >
-              <option value="recientes">Más recientes</option>
-              <option value="antiguas">Más antiguas</option>
-              <option value="nombre_asc">Nombre (A-Z)</option>
-              <option value="nombre_desc">Nombre (Z-A)</option>
-            </select>
+            {/* Selector de Orden */}
+            <div className="flex items-center gap-1.5 bg-brand-white border border-brand-gray-light rounded-full px-3 py-1.5 shadow-2xs">
+              <SlidersHorizontal size={14} className="text-brand-muted" />
+              <select
+                value={orden}
+                onChange={(e) => actualizarFiltro("orden", e.target.value)}
+                className="bg-transparent text-xs font-sans font-semibold text-brand-ink focus:outline-none cursor-pointer"
+              >
+                <option value="recientes">Más recientes</option>
+                <option value="antiguas">Más antiguas</option>
+                <option value="nombre_asc">Nombre (A-Z)</option>
+                <option value="nombre_desc">Nombre (Z-A)</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Estados de carga / error */}
         {cargando && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <Esqueleto alto="60px" />
-            <Esqueleto alto="60px" />
-            <Esqueleto alto="60px" />
+          <div className="space-y-3">
+            <Esqueleto alto="64px" className="rounded-2xl" />
+            <Esqueleto alto="64px" className="rounded-2xl" />
+            <Esqueleto alto="64px" className="rounded-2xl" />
           </div>
         )}
 
         {error && (
-          <div style={{ marginBottom: "20px" }}>
-            <EstadoError titulo="Ocurrió un inconveniente" descripcion={error} onReintentar={cargarDatos} />
-          </div>
+          <EstadoError titulo="Ocurrió un inconveniente" descripcion={error} onReintentar={cargarDatos} />
         )}
 
-        {/* Tabla */}
+        {/* Tabla / Card List */}
         {!cargando && (
-          <Tarjeta style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+          <div className="rounded-3xl border border-brand-gray-light bg-brand-white shadow-[0_6px_11px_rgba(0,0,0,0.1)] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr style={{ backgroundColor: "var(--papel)", borderBottom: "1px solid var(--linea)" }}>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                  <tr className="bg-brand-bg/80 border-b border-brand-gray-light">
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Actividad
                     </th>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Barrio
                     </th>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Categoría
                     </th>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase" }}>
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Estado
                     </th>
-                    <th style={{ padding: "14px 16px", fontSize: "12px", color: "var(--texto-suave)", textTransform: "uppercase", textAlign: "right" }}>
+                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted text-right">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-brand-gray-light">
                   {actividades.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ padding: "36px", textAlign: "center", color: "var(--texto-suave)" }}>
+                      <td colSpan={5} className="py-12 text-center text-brand-muted font-body text-sm">
                         No se encontraron actividades con los filtros seleccionados.
                       </td>
                     </tr>
@@ -510,55 +447,47 @@ export default function AdminActividades(): React.JSX.Element {
                     actividades.map((a) => (
                       <tr
                         key={a.id}
-                        style={{
-                          borderBottom: "1px solid var(--linea)",
-                          opacity: a.activo ? 1 : 0.55,
-                          transition: "opacity 0.15s ease"
-                        }}
+                        className={`hover:bg-brand-bg/40 transition-colors ${
+                          !a.activo ? "opacity-60 bg-brand-bg/20" : ""
+                        }`}
                       >
-                        <td style={{ padding: "14px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <strong style={{ fontSize: "14px", color: "var(--tinta)" }}>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <strong className="font-sans font-semibold text-sm text-brand-ink">
                               {a.nombre}
                             </strong>
                             {a.destacado && (
                               <Badge tipo="destacada" icono={<Sparkles size={11} />} texto="Destacada" />
                             )}
                           </div>
-                          <span style={{ fontSize: "12px", color: "var(--texto-suave)", display: "block", marginTop: "2px" }}>
+                          <span className="block text-xs text-brand-muted font-body mt-1">
                             {a.direccion}
                           </span>
                         </td>
-                        <td style={{ padding: "14px 16px", fontSize: "14px", color: "var(--tinta)" }}>
+                        <td className="py-4 px-6 font-body text-sm text-brand-gray">
                           {a.barrio.nombre}
                         </td>
-                        <td style={{ padding: "14px 16px" }}>
+                        <td className="py-4 px-6">
                           <CategoriaChip categoria={a.categoria} />
                         </td>
-                        <td style={{ padding: "14px 16px" }}>
+                        <td className="py-4 px-6">
                           <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              fontSize: "13px",
-                              fontWeight: 600,
-                              color: a.activo ? "#059669" : "var(--peligro)"
-                            }}
+                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                              a.activo
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-red-50 text-red-600"
+                            }`}
                           >
                             <span
-                              style={{
-                                width: "8px",
-                                height: "8px",
-                                borderRadius: "50%",
-                                backgroundColor: a.activo ? "#059669" : "var(--peligro)"
-                              }}
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                a.activo ? "bg-emerald-500" : "bg-red-500"
+                              }`}
                             />
                             {a.activo ? "Activa" : "Inactiva"}
                           </span>
                         </td>
-                        <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <td className="py-4 px-6 text-right">
+                          <div className="inline-flex items-center gap-2">
                             <Boton
                               variante="texto"
                               onClick={() => abrirEditar(a)}
@@ -598,25 +527,17 @@ export default function AdminActividades(): React.JSX.Element {
 
             {/* Paginación */}
             {paginasTotales > 1 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "14px 16px",
-                  borderTop: "1px solid var(--linea)",
-                  backgroundColor: "var(--papel)"
-                }}
-              >
-                <span style={{ fontSize: "13px", color: "var(--texto-suave)" }}>
-                  Página {pagina} de {paginasTotales} ({total} actividades)
+              <div className="flex items-center justify-between px-6 py-4 border-t border-brand-gray-light bg-brand-bg/50">
+                <span className="font-body text-xs text-brand-muted">
+                  Página {pagina} de {paginasTotales} ({total} actividades registradas)
                 </span>
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div className="flex items-center gap-2">
                   <Boton
                     variante="secundario"
                     disabled={pagina <= 1}
                     onClick={() => actualizarFiltro("pagina", String(pagina - 1))}
                   >
+                    <ChevronLeft size={16} />
                     Anterior
                   </Boton>
                   <Boton
@@ -625,84 +546,57 @@ export default function AdminActividades(): React.JSX.Element {
                     onClick={() => actualizarFiltro("pagina", String(pagina + 1))}
                   >
                     Siguiente
+                    <ChevronRight size={16} />
                   </Boton>
                 </div>
               </div>
             )}
-          </Tarjeta>
+          </div>
         )}
 
-        {/* Modal / Formulario de Creación / Edición */}
+        {/* Modal / Formulario con cabecera Croquis bg-brand-orange-light */}
         {modalAbierto && (
           <div
-            style={{
-              position: "fixed",
-              inset: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.45)",
-              display: "grid",
-              placeItems: "center",
-              zIndex: 1100,
-              padding: "20px"
-            }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) cerrarModal();
             }}
           >
-            <div
-              style={{
-                backgroundColor: "var(--blanco)",
-                borderRadius: "var(--radio-tarjeta)",
-                width: "100%",
-                maxWidth: "680px",
-                maxHeight: "90vh",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                boxShadow: "0 20px 40px rgba(0,0,0,0.15)"
-              }}
-            >
-              {/* Cabecera del modal */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "20px 24px",
-                  borderBottom: "1px solid var(--linea)"
-                }}
-              >
-                <h2 style={{ margin: 0, fontFamily: "var(--fuente-titulo)", fontSize: "20px", color: "var(--tinta)" }}>
-                  {modoEdicion ? `Editar: ${modoEdicion.nombre}` : "Nueva actividad cultural"}
-                </h2>
+            <div className="w-full max-w-2xl max-h-[90vh] bg-brand-white rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-brand-gray-light animate-in fade-in zoom-in-95 duration-150">
+              {/* Header Band Croquis */}
+              <div className="bg-brand-orange-light px-6 py-4 flex items-center justify-between border-b border-brand-orange">
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-wider text-brand-ink/70">
+                    {modoEdicion ? "Actualizar registro" : "Nueva propuesta comunitaria"}
+                  </span>
+                  <h2 className="font-display text-xl text-brand-ink leading-tight">
+                    {modoEdicion ? `Editar: ${modoEdicion.nombre}` : "Nueva actividad cultural"}
+                  </h2>
+                </div>
                 <button
                   type="button"
                   onClick={cerrarModal}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--texto-suave)",
-                    padding: "4px"
-                  }}
+                  className="w-8 h-8 rounded-full bg-brand-white/80 hover:bg-brand-white text-brand-ink flex items-center justify-center transition-colors shadow-2xs"
+                  aria-label="Cerrar modal"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
-              {/* Contenido scrolleable */}
-              <form onSubmit={guardarActividad} style={{ overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* Formulario Scrolleable */}
+              <form onSubmit={guardarActividad} className="overflow-y-auto p-6 md:p-8 space-y-6">
                 {erroresForm.general && (
-                  <div style={{ padding: "12px", backgroundColor: "var(--peligro-fondo)", color: "var(--peligro)", borderRadius: "var(--radio-control)", fontSize: "14px" }}>
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
                     {erroresForm.general}
                   </div>
                 )}
 
                 {/* 1. Datos básicos */}
                 <div>
-                  <h3 style={{ fontSize: "15px", fontFamily: "var(--fuente-titulo)", color: "var(--chapa)", margin: "0 0 12px 0", borderBottom: "1px solid var(--linea)", paddingBottom: "6px" }}>
-                    1. Datos básicos
+                  <h3 className="font-display text-base text-brand-orange mb-3 pb-1 border-b border-brand-gray-light">
+                    1. Datos de la actividad
                   </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div className="space-y-4">
                     <Campo
                       id="act-nombre"
                       etiqueta="Nombre de la actividad"
@@ -710,27 +604,24 @@ export default function AdminActividades(): React.JSX.Element {
                       value={form.nombre}
                       error={erroresForm.nombre}
                       onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                      placeholder="Ej: Feria de las Artesanías"
+                      placeholder="Ej: Taller de Murga y Percusión Barrial"
                     />
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="act-cat" style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--tinta)", marginBottom: "6px" }}>
+                        <label
+                          htmlFor="act-cat"
+                          className="block font-sans text-xs font-bold uppercase tracking-wider text-brand-gray mb-1.5"
+                        >
                           Categoría *
                         </label>
                         <select
                           id="act-cat"
                           value={form.categoriaId}
                           onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}
-                          style={{
-                            width: "100%",
-                            minHeight: "var(--alto-tactil)",
-                            borderRadius: "var(--radio-control)",
-                            border: `1px solid ${erroresForm.categoriaId ? "var(--peligro)" : "var(--linea)"}`,
-                            padding: "0 12px",
-                            fontSize: "14px",
-                            backgroundColor: "var(--blanco)"
-                          }}
+                          className={`w-full min-h-[44px] px-3.5 rounded-xl border bg-brand-white text-sm font-body text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all ${
+                            erroresForm.categoriaId ? "border-red-500" : "border-brand-gray-light"
+                          }`}
                         >
                           <option value="">Seleccionar categoría</option>
                           {categorias.map((c) => (
@@ -742,22 +633,19 @@ export default function AdminActividades(): React.JSX.Element {
                       </div>
 
                       <div>
-                        <label htmlFor="act-barrio" style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--tinta)", marginBottom: "6px" }}>
+                        <label
+                          htmlFor="act-barrio"
+                          className="block font-sans text-xs font-bold uppercase tracking-wider text-brand-gray mb-1.5"
+                        >
                           Barrio *
                         </label>
                         <select
                           id="act-barrio"
                           value={form.barrioId}
                           onChange={(e) => setForm({ ...form, barrioId: e.target.value })}
-                          style={{
-                            width: "100%",
-                            minHeight: "var(--alto-tactil)",
-                            borderRadius: "var(--radio-control)",
-                            border: `1px solid ${erroresForm.barrioId ? "var(--peligro)" : "var(--linea)"}`,
-                            padding: "0 12px",
-                            fontSize: "14px",
-                            backgroundColor: "var(--blanco)"
-                          }}
+                          className={`w-full min-h-[44px] px-3.5 rounded-xl border bg-brand-white text-sm font-body text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all ${
+                            erroresForm.barrioId ? "border-red-500" : "border-brand-gray-light"
+                          }`}
                         >
                           <option value="">Seleccionar barrio</option>
                           {barrios.map((b) => (
@@ -771,15 +659,15 @@ export default function AdminActividades(): React.JSX.Element {
                   </div>
                 </div>
 
-                {/* 2. Ubicación */}
+                {/* 2. Ubicación con Nominatim Geocoding */}
                 <div>
-                  <h3 style={{ fontSize: "15px", fontFamily: "var(--fuente-titulo)", color: "var(--chapa)", margin: "0 0 12px 0", borderBottom: "1px solid var(--linea)", paddingBottom: "6px" }}>
-                    2. Ubicación geográfica
+                  <h3 className="font-display text-base text-brand-orange mb-3 pb-1 border-b border-brand-gray-light">
+                    2. Ubicación y Georreferenciación
                   </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div className="space-y-4">
                     <div>
-                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
-                        <div style={{ flex: 1 }}>
+                      <div className="flex gap-2 items-end">
+                        <div className="flex-1">
                           <Campo
                             id="act-dir"
                             etiqueta="Dirección o punto de encuentro"
@@ -796,18 +684,18 @@ export default function AdminActividades(): React.JSX.Element {
                           disabled={geocodificando}
                           title="Buscar coordenadas en OpenStreetMap"
                         >
-                          <MapPin size={16} />
+                          <Navigation size={16} />
                           {geocodificando ? "Buscando..." : "Ubicar"}
                         </Boton>
                       </div>
                       {geoMensaje && (
-                        <p style={{ fontSize: "12px", color: "var(--texto-suave)", marginTop: "6px", marginInline: 0 }}>
+                        <p className="mt-2 text-xs font-body text-brand-muted">
                           {geoMensaje}
                         </p>
                       )}
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Campo
                         id="act-lat"
                         etiqueta="Latitud"
@@ -824,30 +712,28 @@ export default function AdminActividades(): React.JSX.Element {
                   </div>
                 </div>
 
-                {/* 3. Contenido */}
+                {/* 3. Contenido y detalles */}
                 <div>
-                  <h3 style={{ fontSize: "15px", fontFamily: "var(--fuente-titulo)", color: "var(--chapa)", margin: "0 0 12px 0", borderBottom: "1px solid var(--linea)", paddingBottom: "6px" }}>
-                    3. Detalles y contenido
+                  <h3 className="font-display text-base text-brand-orange mb-3 pb-1 border-b border-brand-gray-light">
+                    3. Horarios y descripción
                   </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div className="space-y-4">
                     <div>
-                      <label htmlFor="act-desc" style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--tinta)", marginBottom: "6px" }}>
-                        Descripción *
+                      <label
+                        htmlFor="act-desc"
+                        className="block font-sans text-xs font-bold uppercase tracking-wider text-brand-gray mb-1.5"
+                      >
+                        Descripción de la propuesta *
                       </label>
                       <textarea
                         id="act-desc"
                         rows={3}
                         value={form.descripcion}
                         onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                        placeholder="Contá de qué se trata la propuesta cultural..."
-                        style={{
-                          width: "100%",
-                          borderRadius: "var(--radio-control)",
-                          border: `1px solid ${erroresForm.descripcion ? "var(--peligro)" : "var(--linea)"}`,
-                          padding: "10px 14px",
-                          fontSize: "14px",
-                          fontFamily: "var(--fuente-cuerpo)"
-                        }}
+                        placeholder="Contá de qué se trata, a quiénes está dirigida y qué deben traer..."
+                        className={`w-full p-3 rounded-xl border bg-brand-white text-sm font-body text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all ${
+                          erroresForm.descripcion ? "border-red-500" : "border-brand-gray-light"
+                        }`}
                       />
                     </div>
 
@@ -856,13 +742,13 @@ export default function AdminActividades(): React.JSX.Element {
                       etiqueta="Días y horarios"
                       value={form.horarios}
                       onChange={(e) => setForm({ ...form, horarios: e.target.value })}
-                      placeholder="Ej: Sábados y domingos de 11 a 18 h"
+                      placeholder="Ej: Sábados de 16 a 18 h"
                     />
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Campo
                         id="act-url"
-                        etiqueta="Sitio web o enlace"
+                        etiqueta="Sitio web o enlace externo"
                         type="url"
                         value={form.url}
                         onChange={(e) => setForm({ ...form, url: e.target.value })}
@@ -870,7 +756,7 @@ export default function AdminActividades(): React.JSX.Element {
                       />
                       <Campo
                         id="act-img"
-                        etiqueta="URL de imagen"
+                        etiqueta="URL de imagen de portada"
                         type="url"
                         value={form.imagenUrl}
                         onChange={(e) => setForm({ ...form, imagenUrl: e.target.value })}
@@ -880,32 +766,28 @@ export default function AdminActividades(): React.JSX.Element {
                   </div>
                 </div>
 
-                {/* 4. Publicación */}
+                {/* 4. Publicación y visibilidad */}
                 <div>
-                  <h3 style={{ fontSize: "15px", fontFamily: "var(--fuente-titulo)", color: "var(--chapa)", margin: "0 0 12px 0", borderBottom: "1px solid var(--linea)", paddingBottom: "6px" }}>
-                    4. Publicación
+                  <h3 className="font-display text-base text-brand-orange mb-3 pb-1 border-b border-brand-gray-light">
+                    4. Estado de publicación
                   </h3>
-                  <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
-                    <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px", fontWeight: 600 }}>
+                  <div className="flex flex-wrap items-center gap-6">
+                    <label className="inline-flex items-center gap-2 cursor-pointer font-sans text-sm font-semibold text-brand-ink">
                       <input
                         type="checkbox"
                         checked={form.destacado}
                         onChange={(e) => setForm({ ...form, destacado: e.target.checked })}
+                        className="w-4 h-4 rounded text-brand-orange focus:ring-brand-orange border-brand-gray-light"
                       />
-                      Destacar en portada
+                      Destacar en cartelera principal
                     </label>
 
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 600 }}>Visibilidad:</span>
+                    <div className="inline-flex items-center gap-2">
+                      <span className="font-sans text-xs font-semibold text-brand-gray">Visibilidad:</span>
                       <select
                         value={form.visibilidad}
                         onChange={(e) => setForm({ ...form, visibilidad: e.target.value as FormActividad["visibilidad"] })}
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "var(--radio-control)",
-                          border: "1px solid var(--linea)",
-                          fontSize: "13px"
-                        }}
+                        className="px-3 py-1.5 rounded-full border border-brand-gray-light bg-brand-white text-xs font-semibold text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-orange"
                       >
                         <option value="publica">Pública</option>
                         <option value="privada">Privada</option>
@@ -915,38 +797,21 @@ export default function AdminActividades(): React.JSX.Element {
                   </div>
                 </div>
 
-                {/* Pie del modal */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingTop: "16px",
-                    borderTop: "1px solid var(--linea)",
-                    marginTop: "8px"
-                  }}
-                >
+                {/* Pie del modal con acciones */}
+                <div className="pt-4 border-t border-brand-gray-light flex items-center justify-between">
                   {modoEdicion ? (
                     <a
                       href={`/actividades/${modoEdicion.barrio.slug}/${modoEdicion.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        fontSize: "13px",
-                        color: "var(--chapa)",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        textDecoration: "none",
-                        fontWeight: 600
-                      }}
+                      className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-brand-orange hover:underline"
                     >
                       <ExternalLink size={14} />
-                      Ver cómo se ve
+                      Ver cómo se ve en el sitio
                     </a>
                   ) : <span />}
 
-                  <div style={{ display: "flex", gap: "10px" }}>
+                  <div className="flex items-center gap-3">
                     <Boton variante="secundario" onClick={cerrarModal}>
                       Cancelar
                     </Boton>

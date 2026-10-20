@@ -3,11 +3,12 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--esp-4);
-  padding: var(--esp-3) var(--esp-4);
-  background-color: var(--papel);
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-control);
-  margin: var(--esp-3) 0;
+  padding: 16px 24px;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-4);
+  box-shadow: var(--sombra-2);
+  margin: var(--esp-4) 0;
   flex-wrap: wrap;
 }
 
@@ -18,8 +19,9 @@
 
 .mensaje {
   font-family: var(--fuente-cuerpo);
-  font-size: 14px;
-  color: var(--tinta);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-texto);
   flex: 1;
 }
 

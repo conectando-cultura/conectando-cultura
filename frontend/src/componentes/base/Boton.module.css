@@ -4,14 +4,15 @@
   justify-content: center;
   gap: var(--esp-2);
   min-height: var(--alto-tactil);
-  padding: 0 var(--esp-4);
-  border-radius: var(--radio-control);
-  font-family: var(--fuente-cuerpo);
+  padding: 10px 22px;
+  border-radius: var(--radio-pildora);
+  font-family: var(--fuente-titulo);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.4;
   cursor: pointer;
   text-decoration: none;
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+  transition: all 0.15s ease;
   box-sizing: border-box;
 }
 
@@ -20,24 +21,31 @@
   cursor: not-allowed;
 }
 
+.icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .principal {
-  background-color: var(--boton-fondo);
-  color: var(--boton-texto);
+  background-color: var(--color-acento);
+  color: var(--color-texto);
   border: 2px solid transparent;
 }
 
 .principal:hover:not(:disabled) {
-  opacity: 0.9;
+  background-color: var(--color-acento-suave);
+  opacity: 0.95;
 }
 
 .secundario {
   background-color: transparent;
-  color: var(--tinta);
-  border: 2px solid var(--tinta);
+  color: var(--color-texto-secundario);
+  border: 2px solid var(--color-texto-secundario);
 }
 
 .secundario:hover:not(:disabled) {
-  background-color: var(--papel);
+  background-color: rgba(48, 45, 39, 0.08);
 }
 
 .peligro {
@@ -52,7 +60,7 @@
 
 .texto {
   background-color: transparent;
-  color: var(--chapa);
+  color: var(--color-texto);
   border: none;
   padding: 0 var(--esp-2);
   text-decoration: underline;

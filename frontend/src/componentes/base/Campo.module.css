@@ -7,10 +7,11 @@
 }
 
 .etiqueta {
-  font-family: var(--fuente-cuerpo);
+  font-family: var(--fuente-titulo);
   font-size: 14px;
-  font-weight: 700;
-  color: var(--tinta);
+  font-weight: 600;
+  color: var(--color-texto);
+  margin-bottom: 2px;
 }
 
 .requerido {
@@ -27,27 +28,36 @@
 .input {
   width: 100%;
   min-height: var(--alto-tactil);
-  padding: 0 var(--esp-3);
+  padding: 0 20px;
   font-family: var(--fuente-cuerpo);
   font-size: 15px;
-  color: var(--tinta);
-  background-color: var(--blanco);
-  border: 1.5px solid var(--borde-campo);
-  border-radius: var(--radio-control);
+  color: var(--color-texto);
+  background-color: var(--color-superficie);
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-pildora);
   box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
 }
 
 .input:focus {
-  border-color: var(--chapa);
+  border-color: var(--color-acento);
+  box-shadow: 0 0 0 2px var(--color-acento);
 }
 
 .conError {
   border-color: var(--peligro);
 }
 
+.conError:focus {
+  border-color: var(--peligro);
+  box-shadow: 0 0 0 2px var(--peligro);
+}
+
 .textarea {
-  min-height: 90px;
-  padding: var(--esp-2) var(--esp-3);
+  min-height: 100px;
+  padding: 14px 20px;
+  border-radius: 16px;
   resize: vertical;
 }
 
@@ -55,12 +65,12 @@
   font-family: var(--fuente-cuerpo);
   font-size: 13px;
   color: var(--peligro);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .ayuda {
   font-family: var(--fuente-cuerpo);
   font-size: 13px;
-  color: var(--texto-suave);
-  margin-top: 2px;
+  color: var(--color-texto-tenue);
+  margin-top: 4px;
 }

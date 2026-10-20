@@ -1,23 +1,26 @@
 .esqueleto {
-  background-color: var(--linea);
-  border-radius: var(--radio-control);
+  background: linear-gradient(
+    90deg,
+    #EBEBEA 0%,
+    #F5F5F3 50%,
+    #EBEBEA 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 12px;
   display: block;
-  animation: pulso 1.5s infinite ease-in-out;
+  animation: shimmer 1.8s infinite ease-in-out;
 }
 
 .circular {
-  border-radius: 50%;
+  border-radius: 999px;
 }
 
-@keyframes pulso {
+@keyframes shimmer {
   0% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
+    background-position: 200% 0;
   }
   100% {
-    opacity: 0.5;
+    background-position: -200% 0;
   }
 }
 

@@ -8,7 +8,7 @@
 
 ## Stack
 
-- **Frontend:** React 18 + TypeScript 5.7 + Vite 5.4 + react-router-dom 6 + Lucide React + Leaflet (`frontend/`)
+- **Frontend:** React 18 + TypeScript 5.7 + Vite 5.4 + Tailwind CSS v4 (`@tailwindcss/postcss`) + `tokens.css` (Opción A: coexistencia con CSS Modules) + react-router-dom 6 + Lucide React + Leaflet (`frontend/`)
 - **Backend:** Node.js + Express 4 + TypeScript 5.7 (`backend/`)
 - **Persistencia:** Supabase (PostgreSQL), única fuente de verdad. **No hay fallback local.**
 - **API:** REST. El frontend proxea `/api` al backend por Vite (`vite.config.ts`).
@@ -62,21 +62,23 @@ backend/src/
 
 frontend/src/
   main.tsx, App.tsx            # Router + Layout (Navbar / Routes / Footer)
-  tipos.ts                     # Categoria, Barrio, Actividad, Preferencias
+  tokens.css, index.css        # Tokens CSS + Tailwind CSS v4 (Opción A coexistencia)
+  tipos.ts                     # Categoria, Barrio, Actividad, Preferencias, Resena
   api/
     client.ts                  # ÚNICO cliente HTTP (fetch + manejo de errores)
     actividades.ts             # Wrappers tipados sobre client.ts
   contexto/AuthContext.tsx     # Única fuente de sesión (token en localStorage "cc_token")
   componentes/
-    Navbar.tsx                 # Enlace "Admin" visible sólo para rol admin
-    MapaLeaflet.tsx            # Mapa con marcadores por categoría
-    ActividadCard.tsx, Filtros.tsx
+    Navbar.tsx                 # Navegación + acceso a Panel según permisos RBAC
+    MapaLeaflet.tsx            # Mapa interactivo con marcadores SVG por categoría
+    ActividadCard.tsx, CategoriaChip.tsx, PinCategoria.tsx, iconos.tsx
+    base/                      # Primitivos UI (Boton, Tarjeta, Campo, Badge, BarraConfirmacion, etc.)
+    panel/                     # LayoutPanel
   paginas/
-    Inicio, Login, Registro, Bienvenido           # públicas / auth
-    Mapa, Actividades                             # públicas
-    Preferencias                                  # requiere auth
-    AdminActividades                              # requiere auth + rol admin
-    Protegida.tsx, ProtegidaAdmin.tsx             # guardas de ruta
+    Inicio, Explorar, DetalleActividad            # públicas / catálogo y mapa
+    Login, Registro, Bienvenido                   # auth y onboarding
+    Preferencias, Protegida.tsx                   # requiere auth
+    panel/                                        # Dashboard, AdminActividades, AdminUsuarios
 ```
 
 ---
@@ -94,6 +96,7 @@ npm run build       # tsc -> dist/
 cd frontend && npm install
 npm run dev         # vite
 npm run typecheck   # tsc --noEmit
+npm run sin-emojis  # verifica cero emojis en frontend/src
 npm run build       # tsc --noEmit && vite build
 ```
 
@@ -151,17 +154,39 @@ Ejecutar desde el dashboard de Supabase → SQL Editor, o `supabase db push`.
 - Cohesión alta / acoplamiento bajo: las páginas sólo usan `useAuth()` + `api/`;
   las rutas sólo delegan a un servicio; los repositorios aíslan la persistencia.
 - DTOs: nunca exponer `contrasenaHash`. Todo pasa por `aPublico()`.
-- Design System: 60-30-10, blanco / naranja `#F98017` / amarillo `#FBC02D`, Poppins,
-  botones redondeados, mobile-first.
+- Design System (Croquis + Opción A): paleta cálida editorial (`brand-orange` `#FF8F50`,
+  `brand-orange-light` `#FFAA5C`, `brand-ink` `#1B160E`, `brand-bg` `#F4F4F4`,
+  `brand-white` `#FEFEFE`), jerarquía tipográfica `Kavoon` (`font-display`) / `Poppins`
+  (`font-sans`) / `Montserrat` (`font-body`), bordes `rounded-3xl` / `rounded-full`,
+  contraste dinámico WCAG >= 4.8:1 en categorías (`colorCategoria.ts`) y política de cero
+  emojis (`npm run sin-emojis`).
+
+---
+
+## Gobernanza Multi-Agente (Rediseño UI Croquis)
+
+Cualquier agente que modifique `frontend/` durante el rediseño visual basado en `Croquis-Conectando-Cultura-main` debe seguir la arquitectura modular por fases:
+
+1. **Reglas contextuales de Frontend**: leer `frontend/AGENTS.md` antes de editar cualquier archivo en `frontend/`.
+2. **Skills de proyecto obligatorias** (registradas en `.atl/skill-registry.md`):
+   - `.agents/skills/croquis-design-system/SKILL.md`: tokens visuales Croquis, coexistencia Tailwind CSS v4 + `tokens.css` (Opción A), tipografías y geometría.
+   - `.agents/skills/domain-ui-adapters/SKILL.md`: invariantes de dominio (`CategoriaChip` WCAG >= 4.8:1, `MapaLeaflet`, `useFiltrosExplorar`, `iconos.tsx` sin emojis, RBAC).
+   - `.opencode/skills/typescript-magician/SKILL.md`: tipado estricto sin `any`.
+3. **Especificaciones modulares por fase (`specs/`)**:
+   - `specs/fase-0-fundamentos.spec.md` — Setup Tailwind v4 + `tokens.css`, fuentes Google, tipo `Resena` y limpieza de páginas legacy no ruteadas.
+   - `specs/fase-1-layout-base.spec.md` — `Navbar`, `Footer`, `Layout` (`App.tsx`) y primitivos en `componentes/base/*`.
+   - `specs/fase-2-inicio-barrios.spec.md` — `ActividadCard`, `CategoriaChip` y portada `Inicio.tsx` (Hero, buscador píldora, 9 categorías, destacadas, mosaico de 6 barrios de Comuna 9 y CTA).
+   - `specs/fase-3-explorar-detalle.spec.md` — Catálogo `Explorar.tsx`, `MapaLeaflet.tsx`, `PinCategoria.tsx` y `DetalleActividad.tsx`.
+   - `specs/fase-4-auth-admin.spec.md` — `Login`, `Registro`, `Bienvenido`, `Preferencias` y panel RBAC (`LayoutPanel`, `Dashboard`, `AdminActividades`, `AdminUsuarios`).
 
 ---
 
 ## Reglas para agentes
 
 1. Correr `npx tsc --noEmit` en `backend/` y `frontend/` **antes y después** de tocar
-   TypeScript.
+   TypeScript, y `npm run sin-emojis` en `frontend/` al tocar componentes UI.
 2. Si tocás el schema, actualizá `backend/src/types-db.ts` en el mismo cambio: los tipos
-  derivados son la única forma de que el typecheck detecte el desalineamiento.
+   derivados son la única forma de que el typecheck detecte el desalineamiento.
 3. No reintroducir un fallback de datos. Si Supabase falla, el error sube al cliente:
    un sistema que "funciona" con datos de mentira esconde el problema hasta producción.
 4. No tocar la seguridad: scrypt + tokens Bearer, y no loguear ni devolver secretos.

@@ -25,7 +25,11 @@ export default function Badge({
 
   return (
     <span className={`${estilos.badge} ${estilos[tipo]}`}>
-      {icono && <span aria-hidden="true">{icono}</span>}
+      {icono && (
+        <span className={estilos.icono} aria-hidden="true">
+          {icono}
+        </span>
+      )}
       {etiqueta}
     </span>
   );
