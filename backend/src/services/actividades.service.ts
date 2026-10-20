@@ -44,7 +44,7 @@ function describirError(error: { code?: string; message?: string; details?: stri
 
 const SELECCION = `
   id, nombre, slug, descripcion, horarios, direccion, lat, lng,
-  url, imagen_url, destacado, activo, fecha_inicio, fecha_fin, es_recurrente, dias_semana,
+  url, imagen_url, destacado, activo,
   categoria_id, categorias(nombre, slug, color, icono),
   barrio_id, barrios(nombre, slug)
 `;
@@ -150,29 +150,31 @@ export class ActividadesService {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
+    const payload: Record<string, unknown> = {
+      nombre,
+      slug,
+      descripcion: String(datos.descripcion ?? ""),
+      horarios: String(datos.horarios ?? ""),
+      direccion: String(datos.direccion ?? ""),
+      lat: Number(datos.lat) || -34.653,
+      lng: Number(datos.lng) || -58.517,
+      url: String(datos.url ?? ""),
+      imagen_url: String(datos.imagenUrl ?? ""),
+      categoria_id: String(datos.categoriaId ?? ""),
+      barrio_id: String(datos.barrioId ?? ""),
+      destacado: Boolean(datos.destacado),
+      created_by: usuarioId,
+      updated_by: usuarioId,
+      activo: true
+    };
+    if (datos.fechaInicio !== undefined) payload.fecha_inicio = datos.fechaInicio ? String(datos.fechaInicio) : null;
+    if (datos.fechaFin !== undefined) payload.fecha_fin = datos.fechaFin ? String(datos.fechaFin) : null;
+    if (datos.esRecurrente !== undefined) payload.es_recurrente = Boolean(datos.esRecurrente);
+    if (datos.diasSemana !== undefined) payload.dias_semana = String(datos.diasSemana ?? "");
+
     const { data, error } = await supabaseAdmin
       .from("actividades")
-      .insert({
-        nombre,
-        slug,
-        descripcion: String(datos.descripcion ?? ""),
-        horarios: String(datos.horarios ?? ""),
-        direccion: String(datos.direccion ?? ""),
-        lat: Number(datos.lat) || -34.653,
-        lng: Number(datos.lng) || -58.517,
-        url: String(datos.url ?? ""),
-        imagen_url: String(datos.imagenUrl ?? ""),
-        categoria_id: String(datos.categoriaId ?? ""),
-        barrio_id: String(datos.barrioId ?? ""),
-        destacado: Boolean(datos.destacado),
-        fecha_inicio: datos.fechaInicio ? String(datos.fechaInicio) : null,
-        fecha_fin: datos.fechaFin ? String(datos.fechaFin) : null,
-        es_recurrente: datos.esRecurrente !== undefined ? Boolean(datos.esRecurrente) : true,
-        dias_semana: String(datos.diasSemana ?? ""),
-        created_by: usuarioId,
-        updated_by: usuarioId,
-        activo: true
-      })
+      .insert(payload)
       .select(SELECCION)
       .single();
 

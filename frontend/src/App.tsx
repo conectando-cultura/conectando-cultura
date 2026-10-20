@@ -33,7 +33,7 @@ function Footer(): React.JSX.Element {
             Comuna 9 · Liniers, Mataderos, Parque Avellaneda
           </p>
           <p className="mt-6 max-w-[340px] font-body text-sm md:text-base text-brand-bg leading-relaxed">
-            Proyecto impulsado por la comunidad junto a estudiantes y docentes de la Escuela Técnica N° 20 D.E. 20 "Paula Albarracín de Sarmiento" para conectar las actividades culturales y barriales de la Comuna 9.
+            Proyecto impulsado por la comunidad junto a estudiantes y docentes de la Escuela Técnica N° 20 D.E. 20 "Carolina Muzzilli" para conectar las actividades culturales y barriales de la Comuna 9.
           </p>
         </div>
 

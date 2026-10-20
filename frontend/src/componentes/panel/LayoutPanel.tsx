@@ -49,30 +49,30 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
             key={item.ruta}
             to={item.ruta}
             onClick={() => setCajonAbierto(false)}
-            className={`flex items-center justify-between px-4 py-3 rounded-2xl font-sans text-sm transition-all ${
+            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-sans text-xs transition-all ${
               activo
                 ? "bg-brand-orange text-brand-ink font-semibold shadow-xs"
                 : "text-brand-gray hover:bg-brand-bg hover:text-brand-ink font-medium"
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <span className={activo ? "text-brand-ink" : "text-brand-muted"}>
                 {ICONOS_MENU[item.icono]}
               </span>
               <span>{item.etiqueta}</span>
             </div>
-            {activo && <ChevronRight size={16} className="text-brand-ink/70" />}
+            {activo && <ChevronRight size={14} className="text-brand-ink/70" />}
           </Link>
         );
       })}
 
-      <div className="my-3 border-t border-brand-gray-light" />
+      <div className="my-2.5 border-t border-brand-gray-light" />
 
       <Link
         to="/explorar"
-        className="flex items-center gap-3 px-4 py-3 rounded-2xl font-sans text-sm text-brand-muted hover:bg-brand-bg hover:text-brand-ink transition-colors"
+        className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-sans text-xs text-brand-muted hover:bg-brand-bg hover:text-brand-ink transition-colors"
       >
-        <ExternalLink size={18} />
+        <ExternalLink size={16} />
         <span>Ver catálogo público</span>
       </Link>
     </nav>
@@ -118,13 +118,13 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
       )}
 
       {/* Menú lateral de escritorio */}
-      <aside className="hidden md:flex w-72 flex-col justify-between shrink-0 bg-brand-white border-r border-brand-gray-light p-6">
-        <div className="space-y-6">
+      <aside className="hidden md:flex w-64 flex-col justify-between shrink-0 bg-brand-white border-r border-brand-gray-light p-5">
+        <div className="space-y-5">
           <div className="px-2">
-            <span className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-1">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-brand-muted mb-0.5">
               Administración
             </span>
-            <span className="font-display text-xl text-brand-ink">
+            <span className="font-display text-lg text-brand-ink">
               Conectando Cultura
             </span>
           </div>
@@ -133,13 +133,13 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
         </div>
 
         {/* Pie del menú con rol y sesión */}
-        <div className="pt-6 border-t border-brand-gray-light px-2 space-y-3">
+        <div className="pt-4 border-t border-brand-gray-light px-2 space-y-2.5">
           <div className="flex items-center justify-between">
             <div>
-              <strong className="block text-sm font-sans font-semibold text-brand-ink">
+              <strong className="block text-xs font-sans font-semibold text-brand-ink">
                 {usuario?.nombre} {usuario?.apellido}
               </strong>
-              <span className="inline-flex items-center gap-1 text-xs text-brand-orange font-semibold">
+              <span className="inline-flex items-center gap-1 text-[11px] text-brand-orange font-semibold">
                 <ShieldCheck size={12} />
                 {etiquetaRol}
               </span>
@@ -149,16 +149,16 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
           <button
             type="button"
             onClick={cerrarSesion}
-            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
             Cerrar sesión
           </button>
         </div>
       </aside>
 
       {/* Contenido principal del panel */}
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
+      <main className="flex-1 p-4 md:p-6 lg:p-7 overflow-y-auto min-w-0">
         {children}
       </main>
     </div>

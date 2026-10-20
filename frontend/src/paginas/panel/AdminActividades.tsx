@@ -419,19 +419,19 @@ export default function AdminActividades(): React.JSX.Element {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-brand-bg/80 border-b border-brand-gray-light">
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Actividad
                     </th>
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Barrio
                     </th>
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Categoría
                     </th>
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Estado
                     </th>
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted text-right">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted text-right">
                       Acciones
                     </th>
                   </tr>
@@ -439,7 +439,7 @@ export default function AdminActividades(): React.JSX.Element {
                 <tbody className="divide-y divide-brand-gray-light">
                   {actividades.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-brand-muted font-body text-sm">
+                      <td colSpan={5} className="py-10 text-center text-brand-muted font-body text-sm">
                         No se encontraron actividades con los filtros seleccionados.
                       </td>
                     </tr>
@@ -451,7 +451,7 @@ export default function AdminActividades(): React.JSX.Element {
                           !a.activo ? "opacity-60 bg-brand-bg/20" : ""
                         }`}
                       >
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <strong className="font-sans font-semibold text-sm text-brand-ink">
                               {a.nombre}
@@ -460,19 +460,19 @@ export default function AdminActividades(): React.JSX.Element {
                               <Badge tipo="destacada" icono={<Sparkles size={11} />} texto="Destacada" />
                             )}
                           </div>
-                          <span className="block text-xs text-brand-muted font-body mt-1">
+                          <span className="block text-xs text-brand-muted font-body mt-0.5">
                             {a.direccion}
                           </span>
                         </td>
-                        <td className="py-4 px-6 font-body text-sm text-brand-gray">
+                        <td className="py-3 px-4 font-body text-xs text-brand-gray">
                           {a.barrio.nombre}
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4">
                           <CategoriaChip categoria={a.categoria} />
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4">
                           <span
-                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                            className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                               a.activo
                                 ? "bg-emerald-50 text-emerald-700"
                                 : "bg-red-50 text-red-600"
@@ -486,7 +486,7 @@ export default function AdminActividades(): React.JSX.Element {
                             {a.activo ? "Activa" : "Inactiva"}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-right">
+                        <td className="py-3 px-4 text-right">
                           <div className="inline-flex items-center gap-2">
                             <Boton
                               variante="texto"

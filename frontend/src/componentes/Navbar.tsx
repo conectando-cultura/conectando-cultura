@@ -48,16 +48,16 @@ export default function Navbar(): React.JSX.Element {
 
   return (
     <header className="sticky top-0 z-40 bg-brand-white border-b border-brand-gray-light">
-      <div className="mx-auto flex h-[88px] md:h-[100px] max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-9">
+      <div className="mx-auto flex h-[64px] md:h-[72px] max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8">
         {/* Wordmark oficial Croquis */}
         <Link
           to="/"
           className="flex items-center gap-1 group no-underline select-none"
         >
-          <span className="font-display text-[26px] md:text-[30px] leading-none tracking-[-2.3px] bg-gradient-to-b from-[#E15100] from-20% via-brand-orange via-50% to-[#FFD542] bg-clip-text text-transparent [-webkit-text-stroke:1.2px_#211F1D] drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.56)]">
+          <span className="font-display text-[22px] md:text-[25px] leading-none tracking-[-1.5px] bg-gradient-to-b from-[#E15100] from-20% via-brand-orange via-50% to-[#FFD542] bg-clip-text text-transparent [-webkit-text-stroke:1px_#211F1D] drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
             Conectando Cultura
           </span>
-          <span className="text-xs font-sans font-bold bg-brand-orange text-brand-ink px-2.5 py-0.5 rounded-full ml-2 shrink-0">
+          <span className="text-[11px] font-sans font-bold bg-brand-orange text-brand-ink px-2 py-0.5 rounded-full ml-1.5 shrink-0">
             Comuna 9
           </span>
         </Link>
@@ -66,62 +66,62 @@ export default function Navbar(): React.JSX.Element {
         <nav className="hidden lg:flex items-center gap-1 xl:gap-2" aria-label="Navegación principal">
           <NavLink
             to="/"
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-base font-sans font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-sans font-semibold transition-colors ${
               esActivo("/")
                 ? "text-brand-orange bg-brand-orange/10"
                 : "text-brand-ink hover:text-brand-orange"
             }`}
           >
-            <Home size={18} strokeWidth={2} aria-hidden="true" />
+            <Home size={17} strokeWidth={2} aria-hidden="true" />
             <span>Inicio</span>
           </NavLink>
 
           <NavLink
             to="/explorar"
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-base font-sans font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-sans font-semibold transition-colors ${
               esActivo("/explorar")
                 ? "text-brand-orange bg-brand-orange/10"
                 : "text-brand-ink hover:text-brand-orange"
             }`}
           >
-            <Compass size={18} strokeWidth={2} aria-hidden="true" />
+            <Compass size={17} strokeWidth={2} aria-hidden="true" />
             <span>Explorar</span>
           </NavLink>
 
           <NavLink
             to="/explorar?vista=mapa"
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-base font-sans font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-sans font-semibold transition-colors ${
               esActivo("/explorar?vista=mapa")
                 ? "text-brand-orange bg-brand-orange/10"
                 : "text-brand-ink hover:text-brand-orange"
             }`}
           >
-            <Map size={18} strokeWidth={2} aria-hidden="true" />
+            <Map size={17} strokeWidth={2} aria-hidden="true" />
             <span>Mapa</span>
           </NavLink>
 
           <NavLink
             to="/preferencias"
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-base font-sans font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-sans font-semibold transition-colors ${
               esActivo("/preferencias")
                 ? "text-brand-orange bg-brand-orange/10"
                 : "text-brand-ink hover:text-brand-orange"
             }`}
           >
-            <Heart size={18} strokeWidth={2} aria-hidden="true" />
+            <Heart size={17} strokeWidth={2} aria-hidden="true" />
             <span>Mi barrio</span>
           </NavLink>
 
           {tieneAccesoPanel && (
             <NavLink
               to="/admin"
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-base font-sans font-semibold transition-colors ${
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-sans font-semibold transition-colors ${
                 esActivo("/admin")
                   ? "text-brand-orange bg-brand-orange/10"
                   : "text-brand-ink hover:text-brand-orange"
               }`}
             >
-              <LayoutDashboard size={18} strokeWidth={2} aria-hidden="true" />
+              <LayoutDashboard size={17} strokeWidth={2} aria-hidden="true" />
               <span>Panel</span>
             </NavLink>
           )}

@@ -149,16 +149,16 @@ export default function AdminUsuarios(): React.JSX.Element {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-brand-bg/80 border-b border-brand-gray-light">
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Vecino / Referente
                     </th>
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Correo
                     </th>
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
                       Rol
                     </th>
-                    <th className="py-4 px-6 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted text-right">
+                    <th className="py-3 px-4 font-sans text-xs font-bold uppercase tracking-wider text-brand-muted text-right">
                       Acciones
                     </th>
                   </tr>
@@ -166,7 +166,7 @@ export default function AdminUsuarios(): React.JSX.Element {
                 <tbody className="divide-y divide-brand-gray-light">
                   {usuariosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-12 text-center text-brand-muted font-body text-sm">
+                      <td colSpan={4} className="py-10 text-center text-brand-muted font-body text-sm">
                         No se encontraron usuarios coincidentes.
                       </td>
                     </tr>
@@ -182,7 +182,7 @@ export default function AdminUsuarios(): React.JSX.Element {
                             esPropio ? "bg-brand-orange/5" : ""
                           }`}
                         >
-                          <td className="py-4 px-6">
+                          <td className="py-3 px-4">
                             <div className="flex items-center gap-2">
                               <span className="font-sans font-semibold text-sm text-brand-ink">
                                 {u.nombre} {u.apellido}
@@ -195,10 +195,10 @@ export default function AdminUsuarios(): React.JSX.Element {
                               )}
                             </div>
                           </td>
-                          <td className="py-4 px-6 font-body text-sm text-brand-gray">
+                          <td className="py-3 px-4 font-body text-xs text-brand-gray">
                             {u.correo}
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-3 px-4">
                             {esPropio ? (
                               <Badge tipo="destacada" texto={ETIQUETA_ROL[rol]} />
                             ) : (

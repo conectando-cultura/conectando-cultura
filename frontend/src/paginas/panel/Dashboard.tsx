@@ -48,25 +48,25 @@ export default function Dashboard(): React.JSX.Element {
 
   return (
     <LayoutPanel>
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Cabecera */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-orange/15 text-brand-orange mb-2">
-              <Sparkles size={13} />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-brand-orange/15 text-brand-orange mb-1.5">
+              <Sparkles size={12} />
               Panel de control
             </div>
-            <h1 className="font-display text-2xl md:text-3xl text-brand-ink">
+            <h1 className="font-display text-xl md:text-2xl text-brand-ink">
               Dashboard
             </h1>
-            <p className="font-body text-sm text-brand-gray mt-1">
+            <p className="font-body text-xs text-brand-gray mt-0.5">
               Resumen general y estado operativo de Conectando Cultura en Comuna 9.
             </p>
           </div>
 
           <Link to="/admin/actividades?accion=nueva">
             <Boton variante="principal">
-              <PlusCircle size={18} />
+              <PlusCircle size={16} />
               Nueva actividad
             </Boton>
           </Link>
@@ -99,17 +99,17 @@ export default function Dashboard(): React.JSX.Element {
                 to="/admin/actividades?activo=true"
                 className="group block transition-transform hover:-translate-y-1"
               >
-                <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                <div className="h-full bg-brand-white rounded-2xl p-4 md:p-5 border border-brand-gray-light shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-brand-muted">
                       Actividades activas
                     </span>
-                    <div className="w-10 h-10 rounded-2xl bg-brand-orange/15 text-brand-orange flex items-center justify-center">
-                      <CalendarDays size={20} />
+                    <div className="w-8 h-8 rounded-xl bg-brand-orange/15 text-brand-orange flex items-center justify-center">
+                      <CalendarDays size={17} />
                     </div>
                   </div>
                   <div>
-                    <span className="block font-display text-4xl text-brand-ink mb-2">
+                    <span className="block font-display text-2xl md:text-3xl text-brand-ink mb-1.5">
                       {estadisticas.actividadesActivas}
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-orange group-hover:underline">
@@ -124,17 +124,17 @@ export default function Dashboard(): React.JSX.Element {
                 to="/admin/actividades?activo=false"
                 className="group block transition-transform hover:-translate-y-1"
               >
-                <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                <div className="h-full bg-brand-white rounded-2xl p-4 md:p-5 border border-brand-gray-light shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-brand-muted">
                       {esAdmin ? "Inactivas u ocultas" : "Para revisar"}
                     </span>
-                    <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                      <CalendarOff size={20} />
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                      <CalendarOff size={17} />
                     </div>
                   </div>
                   <div>
-                    <span className="block font-display text-4xl text-brand-ink mb-2">
+                    <span className="block font-display text-2xl md:text-3xl text-brand-ink mb-1.5">
                       {inactivas}
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 group-hover:underline">
@@ -149,17 +149,17 @@ export default function Dashboard(): React.JSX.Element {
                 to={esAdmin ? "/admin/usuarios" : "#"}
                 className={`group block transition-transform ${esAdmin ? "hover:-translate-y-1" : "cursor-default"}`}
               >
-                <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+                <div className="h-full bg-brand-white rounded-2xl p-4 md:p-5 border border-brand-gray-light shadow-xs flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-brand-muted">
                       Vecinos registrados
                     </span>
-                    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                      <Users size={20} />
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <Users size={17} />
                     </div>
                   </div>
                   <div>
-                    <span className="block font-display text-4xl text-brand-ink mb-2">
+                    <span className="block font-display text-2xl md:text-3xl text-brand-ink mb-1.5">
                       {estadisticas.totalUsuarios}
                     </span>
                     {esAdmin ? (
@@ -174,17 +174,17 @@ export default function Dashboard(): React.JSX.Element {
               </Link>
 
               {/* Tarjeta 4: Vecinos con preferencias personalizadas */}
-              <div className="h-full bg-brand-white rounded-3xl p-6 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-sans text-xs font-bold uppercase tracking-wider text-brand-muted">
+              <div className="h-full bg-brand-white rounded-2xl p-4 md:p-5 border border-brand-gray-light shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-brand-muted">
                     Con preferencias
                   </span>
-                  <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center">
-                    <Heart size={20} />
+                  <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
+                    <Heart size={17} />
                   </div>
                 </div>
                 <div>
-                  <span className="block font-display text-4xl text-brand-ink mb-2">
+                  <span className="block font-display text-2xl md:text-3xl text-brand-ink mb-1.5">
                     {estadisticas.totalPreferencias}
                   </span>
                   <span className="text-xs text-brand-muted">Perfiles activos configurados</span>
