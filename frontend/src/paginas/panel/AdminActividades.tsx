@@ -151,7 +151,9 @@ export default function AdminActividades(): React.JSX.Element {
     } else {
       sp.set(clave, valor);
     }
-    sp.set("pagina", "1"); // Resetear página al filtrar
+    if (clave !== "pagina") {
+      sp.set("pagina", "1"); // Resetear página al filtrar
+    }
     startTransition(() => {
       setSearchParams(sp);
     });

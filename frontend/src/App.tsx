@@ -4,6 +4,7 @@ import { Mail, Globe, Share2, MessageCircle } from "lucide-react";
 import Navbar from "./componentes/Navbar";
 import Inicio from "./paginas/Inicio";
 import Explorar from "./paginas/Explorar";
+import Mapa from "./paginas/Mapa";
 import DetalleActividad from "./paginas/DetalleActividad";
 import Login from "./paginas/Login";
 import Registro from "./paginas/Registro";
@@ -20,39 +21,46 @@ import ComponentesDemo from "./paginas/ComponentesDemo";
 function Footer(): React.JSX.Element {
   return (
     <footer className="bg-brand-ink text-brand-white">
-      <div className="mx-auto grid max-w-[1134px] gap-10 px-5 py-14 md:grid-cols-[1fr_auto_auto] md:gap-0 md:px-0 md:py-[75px]">
-        {/* Col 1: Wordmark, bajada e identidad institucional */}
-        <div className="md:border-r md:border-brand-orange-light/40 md:pr-[80px]">
+      <div className="mx-auto grid max-w-[1240px] gap-8 px-5 py-8 md:grid-cols-[1.3fr_1fr_1fr] md:gap-10 md:px-8 md:py-10">
+        {/* Col 1: Logo oficial, Wordmark e identidad institucional */}
+        <div className="md:border-r md:border-brand-orange-light/20 md:pr-8">
           <Link
             to="/"
-            className="font-display text-[32px] md:text-[36px] leading-none tracking-[-2.5px] text-brand-bg [-webkit-text-stroke:1.3px_#1B160E] drop-shadow-[0_1.3px_1.3px_rgba(0,0,0,0.56)] no-underline inline-block pt-1"
+            className="flex items-center gap-2.5 no-underline group"
           >
-            Conectando Cultura
+            <img
+              src="/logo.png"
+              alt="Logo Conectando Cultura"
+              className="h-10 w-10 rounded-full object-cover border border-brand-orange shadow-sm"
+            />
+            <span className="font-display text-[26px] md:text-[30px] leading-none tracking-[-1.5px] text-brand-bg drop-shadow-[0_1.3px_1.3px_rgba(0,0,0,0.56)]">
+              Conectando Cultura
+            </span>
           </Link>
-          <p className="mt-4 text-lg md:text-xl font-sans tracking-[0.2px] text-brand-white font-semibold">
+          <p className="mt-3 text-sm md:text-base font-sans tracking-[0.2px] text-brand-orange font-semibold">
             Comuna 9 · Liniers, Mataderos, Parque Avellaneda
           </p>
-          <p className="mt-6 max-w-[340px] font-body text-sm md:text-base text-brand-bg leading-relaxed">
-            Proyecto impulsado por la comunidad junto a estudiantes y docentes de la Escuela Técnica N° 20 D.E. 20 "Carolina Muzzilli" para conectar las actividades culturales y barriales de la Comuna 9.
+          <p className="mt-3 max-w-[340px] font-body text-xs md:text-sm text-brand-bg/80 leading-relaxed">
+            Proyecto comunitario impulsado junto a estudiantes y docentes de la Escuela Técnica N° 20 D.E. 20 "Carolina Muzzilli".
           </p>
         </div>
 
         {/* Col 2: Barrios y Mapa */}
-        <div className="md:border-r md:border-brand-orange-light/40 md:px-[70px]">
-          <h3 className="font-display text-[21px] text-brand-white">Barrios y Mapa</h3>
-          <ul className="mt-6 space-y-3">
+        <div className="md:border-r md:border-brand-orange-light/20 md:px-6">
+          <h3 className="font-display text-lg text-brand-white">Navegación</h3>
+          <ul className="mt-3 space-y-2">
             {[
               ["/explorar?barrio=mataderos", "Mataderos"],
               ["/explorar?barrio=liniers", "Liniers"],
               ["/explorar?barrio=parque-avellaneda", "Parque Avellaneda"],
               ["/explorar", "Explorar catálogo"],
-              ["/explorar?vista=mapa", "Mapa cultural"],
+              ["/mapa", "Mapa cultural"],
               ["/componentes", "Componentes"]
             ].map(([to, label]) => (
               <li key={to}>
                 <Link
                   to={to}
-                  className="font-sans font-semibold text-brand-bg hover:text-brand-orange-light transition-colors text-sm md:text-base no-underline block"
+                  className="font-sans font-medium text-brand-bg/90 hover:text-brand-orange transition-colors text-xs md:text-sm no-underline block"
                 >
                   {label}
                 </Link>
@@ -62,56 +70,53 @@ function Footer(): React.JSX.Element {
         </div>
 
         {/* Col 3: Comunidad y Contacto */}
-        <div className="md:pl-[70px]">
-          <h3 className="font-display text-[20px] text-brand-white">Comunidad y Contacto</h3>
-          <p className="mt-6 max-w-[280px] font-body text-sm md:text-base text-brand-bg leading-relaxed">
-            Plataforma comunitaria de acceso abierto para descubrir y difundir talleres, espectáculos y actividades barriales.
+        <div className="md:pl-6">
+          <h3 className="font-display text-lg text-brand-white">Comunidad y Contacto</h3>
+          <p className="mt-3 max-w-[280px] font-body text-xs md:text-sm text-brand-bg/80 leading-relaxed">
+            Plataforma comunitaria de acceso abierto para difundir y disfrutar talleres, ferias y actividades barriales.
           </p>
-          <div className="mt-5 flex items-center gap-2 text-brand-bg">
-            <Mail size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
+          <div className="mt-3 flex items-center gap-2 text-brand-bg">
+            <Mail size={16} className="text-brand-orange shrink-0" aria-hidden="true" />
             <a
               href="mailto:contacto@conectandocultura.ar"
-              className="font-body text-sm md:text-base text-brand-bg hover:text-brand-orange-light transition-colors no-underline"
+              className="font-body text-xs md:text-sm text-brand-bg/90 hover:text-brand-orange transition-colors no-underline"
             >
               contacto@conectandocultura.ar
             </a>
           </div>
-          <p className="mt-6 text-[15px] font-sans font-bold text-brand-white">
-            Redes y comunidad
-          </p>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-4 flex items-center gap-2.5">
             <a
               href="mailto:contacto@conectandocultura.ar"
               aria-label="Escribir a la comunidad"
-              className="p-2 rounded-full bg-brand-white/10 text-brand-bg hover:text-brand-orange hover:bg-brand-white/20 transition-colors"
+              className="p-1.5 rounded-full bg-brand-white/10 text-brand-bg hover:text-brand-orange hover:bg-brand-white/20 transition-colors"
             >
-              <MessageCircle size={18} aria-hidden="true" />
+              <MessageCircle size={16} aria-hidden="true" />
             </a>
             <a
               href="/explorar"
               aria-label="Compartir catálogo barrial"
-              className="p-2 rounded-full bg-brand-white/10 text-brand-bg hover:text-brand-orange hover:bg-brand-white/20 transition-colors"
+              className="p-1.5 rounded-full bg-brand-white/10 text-brand-bg hover:text-brand-orange hover:bg-brand-white/20 transition-colors"
             >
-              <Share2 size={18} aria-hidden="true" />
+              <Share2 size={16} aria-hidden="true" />
             </a>
             <a
               href="https://buenosaires.gob.ar"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Sitio web institucional Comuna 9"
-              className="p-2 rounded-full bg-brand-white/10 text-brand-bg hover:text-brand-orange hover:bg-brand-white/20 transition-colors"
+              className="p-1.5 rounded-full bg-brand-white/10 text-brand-bg hover:text-brand-orange hover:bg-brand-white/20 transition-colors"
             >
-              <Globe size={18} aria-hidden="true" />
+              <Globe size={16} aria-hidden="true" />
             </a>
           </div>
         </div>
       </div>
 
-      {/* Barra inferior */}
-      <div className="bg-brand-gray">
-        <div className="mx-auto flex max-w-[1134px] flex-wrap justify-between items-center gap-2 px-5 py-4 text-xs md:text-sm text-brand-bg md:px-0">
+      {/* Barra inferior compacta */}
+      <div className="bg-brand-gray border-t border-brand-white/10">
+        <div className="mx-auto flex max-w-[1240px] flex-wrap justify-between items-center gap-2 px-5 py-2.5 text-xs text-brand-bg/80 md:px-8">
           <span>
-            &copy; {new Date().getFullYear()} Conectando Cultura · Proyecto comunitario ET N° 20 D.E. 20
+            &copy; {new Date().getFullYear()} Conectando Cultura · ET N° 20 D.E. 20 "Carolina Muzzilli"
           </span>
           <span>Comuna 9 · Liniers, Mataderos y Parque Avellaneda, CABA</span>
         </div>
@@ -151,11 +156,13 @@ function Layout({ children }: { children: React.ReactNode }): React.JSX.Element 
     window.scrollTo(0, 0);
   }, [pathname]);
 
+  const esAdmin = pathname.startsWith("/admin");
+
   return (
     <div className="flex flex-col min-h-screen bg-brand-white">
       <Navbar />
       <main className="flex-1">{children}</main>
-      <Footer />
+      {!esAdmin && <Footer />}
     </div>
   );
 }
@@ -168,9 +175,9 @@ export default function App(): React.JSX.Element {
           {/* Rutas públicas */}
           <Route path="/" element={<Inicio />} />
           <Route path="/explorar" element={<Explorar />} />
+          <Route path="/mapa" element={<Mapa />} />
           <Route path="/actividades/:barrio/:slug" element={<DetalleActividad />} />
-          <Route path="/mapa" element={<Navigate to="/explorar?vista=mapa" replace />} />
-          <Route path="/actividades" element={<Navigate to="/explorar?vista=lista" replace />} />
+          <Route path="/actividades" element={<Navigate to="/explorar" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
           <Route path="/componentes" element={<ComponentesDemo />} />

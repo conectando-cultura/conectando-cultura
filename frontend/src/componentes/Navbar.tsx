@@ -20,7 +20,6 @@ export default function Navbar(): React.JSX.Element {
   const [abierto, setAbierto] = useState(false);
 
   const ruta = location.pathname;
-  const busqueda = location.search;
   const tieneAccesoPanel = puedeUsuario(usuario, "panel:acceder");
 
   useEffect(() => {
@@ -31,11 +30,11 @@ export default function Navbar(): React.JSX.Element {
     if (to === "/") {
       return ruta === "/";
     }
-    if (to === "/explorar?vista=mapa") {
-      return (ruta === "/explorar" && busqueda.includes("vista=mapa")) || ruta === "/mapa";
+    if (to === "/mapa") {
+      return ruta === "/mapa";
     }
     if (to === "/explorar") {
-      return (ruta === "/explorar" && !busqueda.includes("vista=mapa")) || ruta === "/actividades";
+      return ruta === "/explorar" || ruta === "/actividades";
     }
     if (to === "/preferencias") {
       return ruta === "/preferencias";
@@ -47,19 +46,26 @@ export default function Navbar(): React.JSX.Element {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-brand-white border-b border-brand-gray-light">
+    <header className="sticky top-0 z-50 bg-brand-white border-b border-brand-gray-light">
       <div className="mx-auto flex h-[64px] md:h-[72px] max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8">
-        {/* Wordmark oficial Croquis */}
+        {/* Wordmark y Logo oficial Conectando Cultura */}
         <Link
           to="/"
-          className="flex items-center gap-1 group no-underline select-none"
+          className="flex items-center gap-2 group no-underline select-none"
         >
-          <span className="font-display text-[22px] md:text-[25px] leading-none tracking-[-1.5px] bg-gradient-to-b from-[#E15100] from-20% via-brand-orange via-50% to-[#FFD542] bg-clip-text text-transparent [-webkit-text-stroke:1px_#211F1D] drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
-            Conectando Cultura
-          </span>
-          <span className="text-[11px] font-sans font-bold bg-brand-orange text-brand-ink px-2 py-0.5 rounded-full ml-1.5 shrink-0">
-            Comuna 9
-          </span>
+          <img
+            src="/logo.png"
+            alt="Logo Conectando Cultura"
+            className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full object-cover border border-brand-orange/40 shadow-xs"
+          />
+          <div className="flex items-center gap-1">
+            <span className="font-display text-[19px] sm:text-[22px] md:text-[25px] leading-none tracking-[-1.5px] bg-gradient-to-b from-[#E15100] from-20% via-brand-orange via-50% to-[#FFD542] bg-clip-text text-transparent [-webkit-text-stroke:1px_#211F1D] drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
+              Conectando Cultura
+            </span>
+            <span className="text-[10px] sm:text-[11px] font-sans font-bold bg-brand-orange text-brand-ink px-2 py-0.5 rounded-full ml-1 shrink-0 hidden sm:inline-block">
+              Comuna 9
+            </span>
+          </div>
         </Link>
 
         {/* Enlaces de navegación desktop */}
@@ -89,9 +95,9 @@ export default function Navbar(): React.JSX.Element {
           </NavLink>
 
           <NavLink
-            to="/explorar?vista=mapa"
+            to="/mapa"
             className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-sans font-semibold transition-colors ${
-              esActivo("/explorar?vista=mapa")
+              esActivo("/mapa")
                 ? "text-brand-orange bg-brand-orange/10"
                 : "text-brand-ink hover:text-brand-orange"
             }`}
@@ -218,10 +224,10 @@ export default function Navbar(): React.JSX.Element {
           </Link>
 
           <Link
-            to="/explorar?vista=mapa"
+            to="/mapa"
             onClick={() => setAbierto(false)}
             className={`flex items-center gap-2.5 rounded-2xl px-4 py-3 font-sans font-semibold text-base transition-colors ${
-              esActivo("/explorar?vista=mapa")
+              esActivo("/mapa")
                 ? "bg-brand-orange/15 text-brand-orange"
                 : "text-brand-ink hover:bg-brand-bg"
             }`}

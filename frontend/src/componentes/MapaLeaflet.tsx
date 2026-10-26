@@ -11,6 +11,13 @@ import { Link } from "react-router-dom";
 import { Navigation, ArrowRight } from "lucide-react";
 import estilos from "./MapaLeaflet.module.css";
 
+function truncarTexto(texto: string, limite = 100): string {
+  if (texto.length <= limite) return texto;
+  const sub = texto.slice(0, limite);
+  const ultimoEspacio = sub.lastIndexOf(" ");
+  return ultimoEspacio > 50 ? `${sub.slice(0, ultimoEspacio)}...` : `${sub}...`;
+}
+
 // Fix para el ícono de Leaflet en Vite
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -123,10 +130,8 @@ function CreadorMarcador({
             </p>
           )}
           {actividad.descripcion && (
-            <p className="mb-3 text-xs leading-relaxed text-brand-gray">
-              {actividad.descripcion.length > 95
-                ? `${actividad.descripcion.slice(0, 95)}...`
-                : actividad.descripcion}
+            <p className="mb-3 text-xs leading-relaxed text-brand-gray line-clamp-3">
+              {truncarTexto(actividad.descripcion, 100)}
             </p>
           )}
           <div className="flex items-center gap-2 pt-1">

@@ -7,6 +7,8 @@
   border: 1px solid var(--color-borde, #E3E3E1);
   position: relative;
   background-color: var(--color-fondo, #F4F4F4);
+  isolation: isolate;
+  z-index: 0;
 }
 
 /* Rediseño de popup con estilo Croquis */

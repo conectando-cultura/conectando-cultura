@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { useFiltrosExplorar } from "../hooks/useFiltrosExplorar";
 import { useAuth } from "../contexto/AuthContext";
 import {
@@ -10,13 +11,11 @@ import {
 import type { Actividad, Barrio, Categoria } from "../tipos";
 import ActividadCard from "../componentes/ActividadCard";
 import CategoriaChip from "../componentes/CategoriaChip";
-import MapaLeaflet from "../componentes/MapaLeaflet";
 import {
   Esqueleto,
   EstadoError
 } from "../componentes/base";
-import { Search, Map as IconoMapa, List, Columns, X, Check, Compass, RotateCcw } from "lucide-react";
-import estilos from "./Explorar.module.css";
+import { Search, Map as IconoMapa, X, Check, Compass, RotateCcw } from "lucide-react";
 
 export default function Explorar(): React.JSX.Element {
   const {
@@ -25,7 +24,6 @@ export default function Explorar(): React.JSX.Element {
     setBarrio,
     alternarCategoria,
     setCategorias,
-    setVista,
     limpiarFiltros,
     tieneFiltrosActivos
   } = useFiltrosExplorar();
@@ -35,7 +33,6 @@ export default function Explorar(): React.JSX.Element {
   const [categorias, setCategoriasCatalogo] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actividadSeleccionadaId, setActividadSeleccionadaId] = useState<string | null>(null);
 
   const { token, usuario } = useAuth();
   const [preferenciasAplicadas, setPreferenciasAplicadas] = useState(false);
@@ -115,22 +112,17 @@ export default function Explorar(): React.JSX.Element {
     return b ? b.nombre : "Todos los barrios";
   }, [barrios, filtros.barrio]);
 
-  // Selección de actividad sincronizada
-  const manejarSeleccion = (act: Actividad) => {
-    setActividadSeleccionadaId(act.id);
-  };
-
   const todasLasCategorias = filtros.categorias.length === 0;
 
   return (
     <div className="w-full bg-brand-bg py-6 md:py-8 font-body text-brand-ink">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 md:px-8">
         
-        {/* ── Barra Superior de Búsqueda y Filtros de Barrio (Croquis Search Bar) ── */}
+        {/* ── Barra Superior de Búsqueda y Filtros de Barrio ── */}
         <section className="mb-6">
           <div className="flex flex-col gap-3 rounded-3xl border border-brand-gray-light bg-brand-white p-3 shadow-[0_6px_11px_rgba(0,0,0,0.06)] md:flex-row md:items-center md:rounded-full md:p-2.5">
-            {/* Input de Búsqueda por texto */}
-            <div className="flex flex-1 items-center gap-3 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+            {/* Input de Búsqueda por texto (ampliado para aprovechar el espacio) */}
+            <div className="flex flex-[2] items-center gap-3 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
               <Search size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
               <input
                 type="search"
@@ -152,8 +144,8 @@ export default function Explorar(): React.JSX.Element {
               )}
             </div>
 
-            {/* Selector de barrio estilo Croquis */}
-            <div className="flex items-center gap-2 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 md:w-64 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+            {/* Selector de barrio */}
+            <div className="flex flex-[1] min-w-[200px] items-center gap-2 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
               <Compass size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
               <select
                 value={filtros.barrio}
@@ -170,51 +162,15 @@ export default function Explorar(): React.JSX.Element {
               </select>
             </div>
 
-            {/* Toggle de vistas: Lista | Mapa | Ambas */}
-            <div className="flex items-center justify-center rounded-full border border-brand-gray-light bg-brand-bg p-1 shadow-inner">
-              <button
-                type="button"
-                onClick={() => setVista("lista")}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold transition-all ${
-                  filtros.vista === "lista"
-                    ? "bg-brand-orange text-brand-ink shadow-sm"
-                    : "text-brand-gray hover:text-brand-ink"
-                }`}
-                aria-pressed={filtros.vista === "lista"}
-                title="Ver sólo lista"
-              >
-                <List size={14} />
-                <span>Lista</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setVista("mapa")}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold transition-all ${
-                  filtros.vista === "mapa"
-                    ? "bg-brand-orange text-brand-ink shadow-sm"
-                    : "text-brand-gray hover:text-brand-ink"
-                }`}
-                aria-pressed={filtros.vista === "mapa"}
-                title="Ver sólo mapa"
-              >
-                <IconoMapa size={14} />
-                <span>Mapa</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setVista("ambas")}
-                className={`hidden lg:inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold transition-all ${
-                  filtros.vista === "ambas"
-                    ? "bg-brand-orange text-brand-ink shadow-sm"
-                    : "text-brand-gray hover:text-brand-ink"
-                }`}
-                aria-pressed={filtros.vista === "ambas"}
-                title="Ver lista y mapa en paralelo"
-              >
-                <Columns size={14} />
-                <span>Ambas</span>
-              </button>
-            </div>
+            {/* Botón directo a Mapa Cultural independiente */}
+            <Link
+              to="/mapa"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 font-sans text-xs font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-orange-light shrink-0 no-underline"
+              title="Abrir mapa cultural en pantalla completa"
+            >
+              <IconoMapa size={15} />
+              <span>Ver en Mapa</span>
+            </Link>
           </div>
         </section>
 
@@ -246,7 +202,7 @@ export default function Explorar(): React.JSX.Element {
           </div>
         </section>
 
-        {/* ── Encabezado de Resultados y Contador (Croquis SearchResultsPage style) ── */}
+        {/* ── Encabezado de Resultados y Contador ── */}
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-brand-gray-light pb-4">
           <div>
             <p className="font-body text-xs font-medium text-brand-muted">
@@ -287,16 +243,16 @@ export default function Explorar(): React.JSX.Element {
         {error ? (
           <EstadoError descripcion={error} onReintentar={cargarDatos} />
         ) : cargando ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-4">
-              <Esqueleto alto={220} />
-              <Esqueleto alto={220} />
-              <Esqueleto alto={220} />
-            </div>
-            <Esqueleto alto={680} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+            <Esqueleto alto={360} />
+            <Esqueleto alto={360} />
+            <Esqueleto alto={360} />
+            <Esqueleto alto={360} />
+            <Esqueleto alto={360} />
+            <Esqueleto alto={360} />
           </div>
         ) : actividadesFiltradas.length === 0 ? (
-          /* Empty State estilo Croquis SearchResultsPage con rounded-3xl y botón restablecer */
+          /* Empty State */
           <div className="my-8 rounded-3xl border border-brand-gray-light bg-brand-white p-10 md:p-14 text-center shadow-[0_6px_11px_rgba(0,0,0,0.06)]">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-bg text-brand-orange">
               <Compass size={32} />
@@ -322,53 +278,14 @@ export default function Explorar(): React.JSX.Element {
             </div>
           </div>
         ) : (
-          /* Cuadrícula interactiva y responsiva sincronizada con MapaLeaflet */
-          <div
-            className={`grid gap-6 items-start ${
-              filtros.vista === "mapa"
-                ? "grid-cols-1"
-                : filtros.vista === "lista"
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                : "grid-cols-1 lg:grid-cols-[minmax(340px,460px)_1fr]"
-            }`}
-          >
-            {/* Columna de Lista de Tarjetas */}
-            {filtros.vista !== "mapa" && (
-              <div
-                className={`flex flex-col gap-5 ${
-                  filtros.vista === "ambas"
-                    ? `lg:max-h-[780px] lg:overflow-y-auto lg:pr-2 ${estilos.scrollContenedor}`
-                    : ""
-                }`}
-              >
-                {actividadesFiltradas.map((act) => (
-                  <ActividadCard
-                    key={act.id}
-                    actividad={act}
-                    seleccionada={act.id === actividadSeleccionadaId}
-                    onSeleccionar={() => manejarSeleccion(act)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Columna de MapaLeaflet */}
-            {filtros.vista !== "lista" && (
-              <div
-                className={`${
-                  filtros.vista === "ambas"
-                    ? "lg:sticky lg:top-6 h-[500px] lg:h-[780px]"
-                    : "h-[620px] w-full"
-                }`}
-              >
-                <MapaLeaflet
-                  actividades={actividadesFiltradas}
-                  actividadSeleccionadaId={actividadSeleccionadaId}
-                  onSeleccionarActividad={manejarSeleccion}
-                  altura="100%"
-                />
-              </div>
-            )}
+          /* Cuadrícula estructurada y responsiva de actividades a pantalla completa */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 items-stretch">
+            {actividadesFiltradas.map((act) => (
+              <ActividadCard
+                key={act.id}
+                actividad={act}
+              />
+            ))}
           </div>
         )}
 
