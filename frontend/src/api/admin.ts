@@ -16,8 +16,81 @@ export interface RespuestaActividadesAdmin {
   limite: number;
 }
 
+export interface EstadoReplicacionSupabase {
+  ultimaOperacion: string | null;
+  ultimaReplicacionEn: string | null;
+  ultimoError: string | null;
+  totalExitosas: number;
+  totalFallidas: number;
+}
+
+export interface EstadoSistemaBd {
+  mysql: {
+    configurado: boolean;
+    conectado: boolean;
+    host: string;
+    baseDeDatos: string;
+    latenciaMs: number | null;
+    error: string | null;
+  };
+  supabase: {
+    configurado: boolean;
+    estado: "activo" | "pausado_o_error" | "sin_configurar" | "pendiente";
+    urlProyecto: string | null;
+    consultaKeepAlive: "SELECT 1";
+    intervaloDias: 3;
+    ultimoPingEn: string | null;
+    proximoPingEn: string | null;
+    ultimaLatenciaMs: number | null;
+    ultimoError: string | null;
+    ultimaSincronizacionEn: string | null;
+    replicacion: EstadoReplicacionSupabase;
+  };
+}
+
+export interface ResumenSincronizacionSupabase {
+  barrios: number;
+  categorias: number;
+  usuarios: number;
+  actividades: number;
+  preferencias_usuario: number;
+  favoritos_usuario: number;
+  resenas: number;
+  mensajes_contacto: number;
+  totalRegistros: number;
+  sincronizadoEn: string;
+}
+
+export interface ResultadoSyncSupabase {
+  mensaje: string;
+  resumen: ResumenSincronizacionSupabase;
+  estado: EstadoSistemaBd;
+}
+
 export async function obtenerEstadisticasAdmin(token: string): Promise<EstadisticasAdmin> {
   return await api<EstadisticasAdmin>("/admin/estadisticas", {}, token);
+}
+
+export async function obtenerEstadoSistemaBd(token: string): Promise<EstadoSistemaBd> {
+  return await api<EstadoSistemaBd>("/admin/sistema/estado-bd", {}, token);
+}
+
+export async function ejecutarPingSupabaseAdmin(token: string): Promise<EstadoSistemaBd> {
+  return await api<EstadoSistemaBd>(
+    "/admin/sistema/supabase-ping",
+    { method: "POST" },
+    token
+  );
+}
+
+export async function sincronizarBackupSupabaseAdmin(
+  token: string
+): Promise<ResultadoSyncSupabase> {
+  return await api<ResultadoSyncSupabase>(
+    "/admin/sistema/supabase-sync",
+    { method: "POST" },
+    token
+  );
 }
 
 export async function obtenerActividadesAdmin(

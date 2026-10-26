@@ -9,7 +9,9 @@ import { crearRutasAdmin } from "./routes/admin.routes.js";
 import { crearRutasContacto } from "./routes/contacto.routes.js";
 import { crearRutasFavoritos } from "./routes/favoritos.routes.js";
 import { crearRutasResenas } from "./routes/resenas.routes.js";
-import { exigirSupabase, esSupabaseConfigurado } from "./lib/supabase.js";
+import { esSupabaseConfigurado } from "./lib/supabase.js";
+import { exigirMysql, obtenerConfigMysql } from "./lib/mysql.js";
+import { iniciarSchedulerKeepAlive } from "./services/supabase-monitor.service.js";
 
 const PUERTO = Number(process.env.PORT ?? 3001);
 
@@ -24,12 +26,14 @@ app.use(express.json());
 
 // ── Health check ─────────────────────────────────────────────
 // Anónimo y sin tocar la base: sirve para verificar que el proceso
-// vive, y devuelve si la configuración de Supabase es válida.
+// vive, y reporta la configuración de MySQL primario y backup en Supabase.
 app.get("/api/estado", (_req, res) => {
   res.json({
     servicio: "Conectando Cultura API",
     version: "1.0.0",
-    baseDeDatos: esSupabaseConfigurado() ? "supabase" : "sin-configurar"
+    baseDeDatos: "mysql",
+    baseDeDatosPrimaria: "mysql",
+    backupSupabase: esSupabaseConfigurado() ? "configurado" : "sin-configurar"
   });
 });
 
@@ -51,7 +55,7 @@ app.use("/api/resenas", crearRutasResenas(servicioAuth));
 // ── Contacto (POST público para soporte y sugerencias) ────────
 app.use("/api/contacto", crearRutasContacto());
 
-// ── Administración (requiere sesión + rol admin) ───────────────
+// ── Administración (requiere sesión + rol gestor/admin) ───────
 app.use("/api/admin", crearRutasAdmin(servicioAuth));
 
 // ── Manejo de errores ─────────────────────────────────────────
@@ -72,10 +76,9 @@ app.use(
   }
 );
 
-// El servidor no arranca sin credenciales utilizables: es preferible
-// fallar en el boot que descubrirlo en el primer request del cliente.
+// El servidor exige configuración de MySQL como base primaria.
 try {
-  exigirSupabase();
+  exigirMysql();
 } catch (error) {
   console.error("\n✖ No se puede iniciar el backend.\n");
   console.error(error instanceof Error ? error.message : error);
@@ -83,9 +86,18 @@ try {
   process.exit(1);
 }
 
+const cfgMysql = obtenerConfigMysql();
 const server = app.listen(PUERTO, () => {
   console.log(`API de Conectando Cultura escuchando en http://localhost:${PUERTO}`);
-  console.log(`Persistencia: Supabase (PostgreSQL)`);
+  console.log(
+    `Persistencia primaria: MySQL (${cfgMysql.host}:${cfgMysql.port}/${cfgMysql.database})`
+  );
+  console.log(
+    `Backup Supabase + Keep-Alive (SELECT 1 cada 3 días): ${
+      esSupabaseConfigurado() ? "Activo" : "Sin configurar (modo sólo MySQL local)"
+    }`
+  );
+  iniciarSchedulerKeepAlive();
 });
 
 export { app, server };

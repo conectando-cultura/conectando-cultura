@@ -1,22 +1,38 @@
 import { Router } from "express";
+import type { RowDataPacket } from "mysql2/promise";
 import {
   autenticacionRequerida,
   permisoRequerido
 } from "../middlewares/autenticacion.middleware.js";
 import type { AuthService } from "../services/auth.service.js";
-import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
+import {
+  ejecutarConsulta,
+  aIso,
+  describirErrorMysql
+} from "../lib/mysql.js";
+import {
+  obtenerEstadoSistema,
+  ejecutarPingKeepAlive,
+  sincronizarMysqlASupabase
+} from "../services/supabase-monitor.service.js";
 import { ErrorAplicacion, type Rol } from "../types.js";
 
-interface ErrorPostgrest {
-  code?: string;
-  message?: string;
+interface FilaConteoMysql extends RowDataPacket {
+  total: number;
 }
 
-function describirError(error: ErrorPostgrest | null): string {
-  if (!error) return "Error desconocido de Supabase.";
-  if (error.code === "PGRST116") return "Usuario no encontrado.";
-  if (error.code === "23505") return "Ese correo ya está registrado.";
-  return error.message || "Error de base de datos.";
+interface FilaUsuarioAdminMysql extends RowDataPacket {
+  id: string;
+  nombre: string;
+  apellido: string;
+  correo: string;
+  rol: string;
+  creado_en: Date | string;
+}
+
+interface FilaRolUsuarioMysql extends RowDataPacket {
+  id: string;
+  rol: string;
 }
 
 export function crearRutasAdmin(auth: AuthService): Router {
@@ -29,29 +45,26 @@ export function crearRutasAdmin(auth: AuthService): Router {
   // Accesible por gestores y administradores (permiso panel:acceder)
   router.get("/estadisticas", permisoRequerido("panel:acceder"), async (_req, res) => {
     try {
-      exigirSupabase();
-
       const [totalAct, activas, usuarios, preferencias] = await Promise.all([
-        supabaseAdmin.from("actividades").select("id", { count: "exact", head: true }),
-        supabaseAdmin.from("actividades").select("id", { count: "exact", head: true }).eq("activo", true),
-        supabaseAdmin.from("usuarios").select("id", { count: "exact", head: true }),
-        supabaseAdmin.from("preferencias_usuario").select("usuario_id", { count: "exact", head: true })
+        ejecutarConsulta<FilaConteoMysql[]>(`SELECT COUNT(*) AS total FROM actividades`),
+        ejecutarConsulta<FilaConteoMysql[]>(
+          `SELECT COUNT(*) AS total FROM actividades WHERE activo = 1`
+        ),
+        ejecutarConsulta<FilaConteoMysql[]>(`SELECT COUNT(*) AS total FROM usuarios`),
+        ejecutarConsulta<FilaConteoMysql[]>(`SELECT COUNT(*) AS total FROM preferencias_usuario`)
       ]);
 
-      const error = totalAct.error ?? activas.error ?? usuarios.error ?? preferencias.error;
-      if (error) throw new Error(describirError(error));
-
       res.json({
-        totalActividades: totalAct.count ?? 0,
-        actividadesActivas: activas.count ?? 0,
-        totalUsuarios: usuarios.count ?? 0,
-        totalPreferencias: preferencias.count ?? 0,
+        totalActividades: Number(totalAct[0]?.total ?? 0),
+        actividadesActivas: Number(activas[0]?.total ?? 0),
+        totalUsuarios: Number(usuarios[0]?.total ?? 0),
+        totalPreferencias: Number(preferencias[0]?.total ?? 0),
         fecha: new Date().toISOString()
       });
     } catch (err) {
       console.error(err);
       res.status(500).json({
-        mensaje: err instanceof Error ? err.message : "Error al obtener estadísticas."
+        mensaje: describirErrorMysql(err)
       });
     }
   });
@@ -60,21 +73,32 @@ export function crearRutasAdmin(auth: AuthService): Router {
   // Solo accesible por administradores (permiso usuarios:gestionar)
   router.get("/usuarios", permisoRequerido("usuarios:gestionar"), async (_req, res) => {
     try {
-      exigirSupabase();
+      // Nunca seleccionar contrasena_hash
+      const filas = await ejecutarConsulta<FilaUsuarioAdminMysql[]>(
+        `SELECT id, nombre, apellido, correo, rol, creado_en
+         FROM usuarios
+         ORDER BY creado_en DESC
+         LIMIT 100`
+      );
 
-      const { data, error } = await supabaseAdmin
-        .from("usuarios")
-        // nunca seleccionar contrasena_hash
-        .select("id, nombre, apellido, correo, rol, creado_en")
-        .order("creado_en", { ascending: false })
-        .limit(100);
+      const usuarios = filas.map((u) => {
+        const creadoIso = aIso(u.creado_en);
+        return {
+          id: u.id,
+          nombre: u.nombre,
+          apellido: u.apellido,
+          correo: u.correo,
+          rol: u.rol,
+          creado_en: creadoIso,
+          creadoEn: creadoIso
+        };
+      });
 
-      if (error) throw new Error(describirError(error));
-      res.json({ usuarios: data ?? [] });
+      res.json({ usuarios });
     } catch (err) {
       console.error(err);
       res.status(500).json({
-        mensaje: err instanceof Error ? err.message : "Error al obtener usuarios."
+        mensaje: describirErrorMysql(err)
       });
     }
   });
@@ -95,29 +119,24 @@ export function crearRutasAdmin(auth: AuthService): Router {
         return;
       }
 
-      exigirSupabase();
-
       // Regla: si se le quita admin al usuario, verificar que no sea el último
-      const { data: usuarioActual, error: errorBusqueda } = await supabaseAdmin
-        .from("usuarios")
-        .select("id, rol")
-        .eq("id", req.params.id)
-        .maybeSingle();
+      const filasUsuario = await ejecutarConsulta<FilaRolUsuarioMysql[]>(
+        `SELECT id, rol FROM usuarios WHERE id = ? LIMIT 1`,
+        [req.params.id]
+      );
+      const usuarioActual = filasUsuario[0];
 
-      if (errorBusqueda) throw new Error(describirError(errorBusqueda));
       if (!usuarioActual) {
         res.status(404).json({ mensaje: "Usuario no encontrado." });
         return;
       }
 
       if (usuarioActual.rol === "admin" && rol !== "admin") {
-        const { count, error: countError } = await supabaseAdmin
-          .from("usuarios")
-          .select("id", { count: "exact", head: true })
-          .eq("rol", "admin");
+        const conteoAdmins = await ejecutarConsulta<FilaConteoMysql[]>(
+          `SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'admin'`
+        );
 
-        if (countError) throw new Error(describirError(countError));
-        if ((count ?? 0) <= 1) {
+        if (Number(conteoAdmins[0]?.total ?? 0) <= 1) {
           res.status(400).json({
             mensaje: "No podés quitar el último administrador del sistema."
           });
@@ -131,7 +150,7 @@ export function crearRutasAdmin(auth: AuthService): Router {
       console.error(err);
       const status = err instanceof ErrorAplicacion ? err.status : 500;
       res.status(status).json({
-        mensaje: err instanceof Error ? err.message : "Error al actualizar rol."
+        mensaje: err instanceof Error ? err.message : describirErrorMysql(err)
       });
     }
   });
@@ -149,6 +168,71 @@ export function crearRutasAdmin(auth: AuthService): Router {
       });
     }
   });
+
+  // GET /api/admin/sistema/estado-bd
+  // Exclusivo para SuperAdmin (rol === "admin" mediante usuarios:gestionar)
+  router.get("/sistema/estado-bd", permisoRequerido("usuarios:gestionar"), async (_req, res) => {
+    try {
+      const estado = await obtenerEstadoSistema();
+      res.json(estado);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        mensaje:
+          err instanceof Error
+            ? err.message
+            : "Error al obtener el estado de las bases de datos."
+      });
+    }
+  });
+
+  // POST /api/admin/sistema/supabase-ping
+  // Ejecuta un ping SELECT 1 manual hacia Supabase y devuelve el estado actualizado
+  router.post(
+    "/sistema/supabase-ping",
+    permisoRequerido("usuarios:gestionar"),
+    async (_req, res) => {
+      try {
+        await ejecutarPingKeepAlive("manual");
+        const estado = await obtenerEstadoSistema();
+        res.json(estado);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({
+          mensaje:
+            err instanceof Error
+              ? err.message
+              : "Error al ejecutar el ping keep-alive en Supabase."
+        });
+      }
+    }
+  );
+
+  // POST /api/admin/sistema/supabase-sync
+  // Sincroniza bajo demanda las tablas de MySQL primario hacia el backup de Supabase
+  router.post(
+    "/sistema/supabase-sync",
+    permisoRequerido("usuarios:gestionar"),
+    async (_req, res) => {
+      try {
+        const resumen = await sincronizarMysqlASupabase();
+        const estado = await obtenerEstadoSistema();
+        res.json({
+          mensaje: `Sincronización completada: ${resumen.totalRegistros} registros actualizados en Supabase.`,
+          resumen,
+          estado
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({
+          mensaje:
+            err instanceof Error
+              ? err.message
+              : "Error al sincronizar el backup en Supabase."
+        });
+      }
+    }
+  );
 
   return router;
 }
