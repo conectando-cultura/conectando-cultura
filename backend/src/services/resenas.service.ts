@@ -1,5 +1,35 @@
-import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
+import { randomUUID } from "node:crypto";
+import type { RowDataPacket } from "mysql2/promise";
+import {
+  ejecutarConsulta,
+  ejecutarComando,
+  aIso,
+  describirErrorMysql
+} from "../lib/mysql.js";
+import { supabaseAdmin } from "../lib/supabase.js";
+import { replicarEnSupabase } from "../lib/supabase-mirror.js";
 import type { DbResenaPublica } from "../types-db.js";
+
+interface FilaResenaJoinMysql extends RowDataPacket {
+  id: string;
+  usuario_id: string;
+  calificacion: number;
+  comentario: string;
+  creado_en: Date | string;
+  usuario_nombre: string | null;
+  usuario_apellido: string | null;
+}
+
+interface FilaUsuarioNombreMysql extends RowDataPacket {
+  nombre: string;
+  apellido: string;
+}
+
+function formatearNombreVecino(nombre?: string | null, apellido?: string | null): string {
+  if (!nombre) return "Vecino de Mataderos";
+  const inicial = apellido?.charAt(0) ?? "";
+  return `${nombre} ${inicial}.`.trim();
+}
 
 export class ResenasService {
   async obtenerResenas(actividadId: string): Promise<{
@@ -7,44 +37,43 @@ export class ResenasService {
     promedio: number;
     total: number;
   }> {
-    exigirSupabase();
+    try {
+      const filas = await ejecutarConsulta<FilaResenaJoinMysql[]>(
+        `SELECT
+           r.id,
+           r.usuario_id,
+           r.calificacion,
+           r.comentario,
+           r.creado_en,
+           u.nombre   AS usuario_nombre,
+           u.apellido AS usuario_apellido
+         FROM resenas r
+         LEFT JOIN usuarios u ON u.id = r.usuario_id
+         WHERE r.actividad_id = ?
+         ORDER BY r.creado_en DESC`,
+        [actividadId]
+      );
 
-    const { data: resenasDb, error } = await supabaseAdmin
-      .from("resenas")
-      .select("id, usuario_id, calificacion, comentario, creado_en")
-      .eq("actividad_id", actividadId)
-      .order("creado_en", { ascending: false });
+      if (filas.length === 0) {
+        return { resenas: [], promedio: 0, total: 0 };
+      }
 
-    if (error) throw new Error(error.message);
-    if (!resenasDb || resenasDb.length === 0) {
-      return { resenas: [], promedio: 0, total: 0 };
+      const resenas: DbResenaPublica[] = filas.map((r) => ({
+        id: r.id,
+        usuarioId: r.usuario_id,
+        usuarioNombre: formatearNombreVecino(r.usuario_nombre, r.usuario_apellido),
+        calificacion: Number(r.calificacion),
+        comentario: r.comentario,
+        creadoEn: aIso(r.creado_en)
+      }));
+
+      const suma = resenas.reduce((acc, r) => acc + r.calificacion, 0);
+      const promedio = Number((suma / resenas.length).toFixed(1));
+
+      return { resenas, promedio, total: resenas.length };
+    } catch (err) {
+      throw new Error(describirErrorMysql(err));
     }
-
-    // Obtener nombres de autores
-    const userIds = Array.from(new Set(resenasDb.map((r) => r.usuario_id)));
-    const { data: usuarios } = await supabaseAdmin
-      .from("usuarios")
-      .select("id, nombre, apellido")
-      .in("id", userIds);
-
-    const nombresMap = new Map<string, string>();
-    (usuarios ?? []).forEach((u) => {
-      nombresMap.set(u.id, `${u.nombre} ${u.apellido?.charAt(0) ?? ""}.`.trim());
-    });
-
-    const resenas: DbResenaPublica[] = resenasDb.map((r) => ({
-      id: r.id,
-      usuarioId: r.usuario_id,
-      usuarioNombre: nombresMap.get(r.usuario_id) || "Vecino de Mataderos",
-      calificacion: Number(r.calificacion),
-      comentario: r.comentario,
-      creadoEn: r.creado_en
-    }));
-
-    const suma = resenas.reduce((acc, r) => acc + r.calificacion, 0);
-    const promedio = Number((suma / resenas.length).toFixed(1));
-
-    return { resenas, promedio, total: resenas.length };
   }
 
   async crearResena(
@@ -53,8 +82,6 @@ export class ResenasService {
     calificacion: number,
     comentario: string
   ): Promise<DbResenaPublica> {
-    exigirSupabase();
-
     const calif = Math.round(Number(calificacion));
     if (calif < 1 || calif > 5) {
       throw new Error("La calificación debe ser un puntaje del 1 al 5.");
@@ -65,37 +92,46 @@ export class ResenasService {
       throw new Error("El comentario debe tener entre 3 y 1000 caracteres.");
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("resenas")
-      .insert({
-        usuario_id: usuarioId,
-        actividad_id: actividadId,
-        calificacion: calif,
-        comentario: comentarioLimpio
-      })
-      .select("id, usuario_id, calificacion, comentario, creado_en")
-      .single();
+    const id = randomUUID();
+    const ahora = new Date();
 
-    if (error) throw new Error(error.message);
+    try {
+      await ejecutarComando(
+        `INSERT INTO resenas (id, usuario_id, actividad_id, calificacion, comentario, creado_en)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, usuarioId, actividadId, calif, comentarioLimpio, ahora]
+      );
+    } catch (err) {
+      throw new Error(describirErrorMysql(err));
+    }
 
-    // Obtener nombre del usuario
-    const { data: usuario } = await supabaseAdmin
-      .from("usuarios")
-      .select("nombre, apellido")
-      .eq("id", usuarioId)
-      .maybeSingle();
+    replicarEnSupabase("resenas.crear", () =>
+      supabaseAdmin.from("resenas").upsert(
+        {
+          id,
+          usuario_id: usuarioId,
+          actividad_id: actividadId,
+          calificacion: calif,
+          comentario: comentarioLimpio,
+          creado_en: ahora.toISOString()
+        },
+        { onConflict: "id" }
+      )
+    );
 
-    const usuarioNombre = usuario
-      ? `${usuario.nombre} ${usuario.apellido?.charAt(0) ?? ""}.`.trim()
-      : "Vecino de Mataderos";
+    const usuarios = await ejecutarConsulta<FilaUsuarioNombreMysql[]>(
+      `SELECT nombre, apellido FROM usuarios WHERE id = ? LIMIT 1`,
+      [usuarioId]
+    );
+    const usuario = usuarios[0];
 
     return {
-      id: data.id,
-      usuarioId: data.usuario_id,
-      usuarioNombre,
-      calificacion: data.calificacion,
-      comentario: data.comentario,
-      creadoEn: data.creado_en
+      id,
+      usuarioId,
+      usuarioNombre: formatearNombreVecino(usuario?.nombre, usuario?.apellido),
+      calificacion: calif,
+      comentario: comentarioLimpio,
+      creadoEn: ahora.toISOString()
     };
   }
 }

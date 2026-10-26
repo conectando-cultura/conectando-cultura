@@ -1,10 +1,33 @@
-import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
+import { randomUUID } from "node:crypto";
+import type { RowDataPacket } from "mysql2/promise";
+import {
+  ejecutarConsulta,
+  ejecutarComando,
+  aIso,
+  describirErrorMysql
+} from "../lib/mysql.js";
+import { supabaseAdmin } from "../lib/supabase.js";
+import { replicarEnSupabase } from "../lib/supabase-mirror.js";
 import type { DbMensajeContacto } from "../types-db.js";
 
-function describirError(error: { code?: string; message?: string } | null): string {
-  if (!error) return "Error desconocido de Supabase.";
-  if (error.code === "23514") return "Los datos del formulario de contacto no cumplen los límites requeridos.";
-  return error.message || "Error al procesar el mensaje de contacto.";
+interface FilaMensajeContactoMysql extends RowDataPacket {
+  id: string;
+  nombre: string;
+  correo: string;
+  mensaje: string;
+  leido: number | boolean;
+  creado_en: Date | string;
+}
+
+function mapearMensaje(fila: FilaMensajeContactoMysql): DbMensajeContacto {
+  return {
+    id: fila.id,
+    nombre: fila.nombre,
+    correo: fila.correo,
+    mensaje: fila.mensaje,
+    leido: Boolean(fila.leido),
+    creado_en: aIso(fila.creado_en)
+  };
 }
 
 export class ContactoService {
@@ -13,8 +36,6 @@ export class ContactoService {
     correo: string,
     mensaje: string
   ): Promise<DbMensajeContacto> {
-    exigirSupabase();
-
     const nombreLimpio = nombre.trim();
     const correoLimpio = correo.trim().toLowerCase();
     const mensajeLimpio = mensaje.trim();
@@ -29,56 +50,97 @@ export class ContactoService {
       throw new Error("El mensaje debe tener entre 1 y 4000 caracteres.");
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("mensajes_contacto")
-      .insert({
-        nombre: nombreLimpio,
-        correo: correoLimpio,
-        mensaje: mensajeLimpio,
-        leido: false
-      })
-      .select("id, nombre, correo, mensaje, leido, creado_en")
-      .single();
+    const id = randomUUID();
+    const ahora = new Date();
 
-    if (error) throw new Error(describirError(error));
-    return data as DbMensajeContacto;
+    try {
+      await ejecutarComando(
+        `INSERT INTO mensajes_contacto (id, nombre, correo, mensaje, leido, creado_en)
+         VALUES (?, ?, ?, ?, 0, ?)`,
+        [id, nombreLimpio, correoLimpio, mensajeLimpio, ahora]
+      );
+    } catch (err) {
+      throw new Error(describirErrorMysql(err));
+    }
+
+    replicarEnSupabase("mensajes_contacto.crear", () =>
+      supabaseAdmin.from("mensajes_contacto").upsert(
+        {
+          id,
+          nombre: nombreLimpio,
+          correo: correoLimpio,
+          mensaje: mensajeLimpio,
+          leido: false,
+          creado_en: ahora.toISOString()
+        },
+        { onConflict: "id" }
+      )
+    );
+
+    return {
+      id,
+      nombre: nombreLimpio,
+      correo: correoLimpio,
+      mensaje: mensajeLimpio,
+      leido: false,
+      creado_en: ahora.toISOString()
+    };
   }
 
   async listarMensajes(): Promise<DbMensajeContacto[]> {
-    exigirSupabase();
-
-    const { data, error } = await supabaseAdmin
-      .from("mensajes_contacto")
-      .select("id, nombre, correo, mensaje, leido, creado_en")
-      .order("creado_en", { ascending: false });
-
-    if (error) throw new Error(describirError(error));
-    return (data as DbMensajeContacto[]) ?? [];
+    try {
+      const filas = await ejecutarConsulta<FilaMensajeContactoMysql[]>(
+        `SELECT id, nombre, correo, mensaje, leido, creado_en
+         FROM mensajes_contacto
+         ORDER BY creado_en DESC`
+      );
+      return filas.map(mapearMensaje);
+    } catch (err) {
+      throw new Error(describirErrorMysql(err));
+    }
   }
 
   async marcarLeido(id: string, leido: boolean = true): Promise<DbMensajeContacto> {
-    exigirSupabase();
+    try {
+      const resultado = await ejecutarComando(
+        `UPDATE mensajes_contacto SET leido = ? WHERE id = ?`,
+        [leido ? 1 : 0, id]
+      );
+      if (resultado.affectedRows === 0) {
+        throw new Error("Mensaje no encontrado.");
+      }
 
-    const { data, error } = await supabaseAdmin
-      .from("mensajes_contacto")
-      .update({ leido })
-      .eq("id", id)
-      .select("id, nombre, correo, mensaje, leido, creado_en")
-      .maybeSingle();
+      replicarEnSupabase("mensajes_contacto.marcarLeido", () =>
+        supabaseAdmin.from("mensajes_contacto").update({ leido }).eq("id", id)
+      );
 
-    if (error) throw new Error(describirError(error));
-    if (!data) throw new Error("Mensaje no encontrado.");
-    return data as DbMensajeContacto;
+      const filas = await ejecutarConsulta<FilaMensajeContactoMysql[]>(
+        `SELECT id, nombre, correo, mensaje, leido, creado_en
+         FROM mensajes_contacto
+         WHERE id = ?
+         LIMIT 1`,
+        [id]
+      );
+      const fila = filas[0];
+      if (!fila) throw new Error("Mensaje no encontrado.");
+      return mapearMensaje(fila);
+    } catch (err) {
+      if (err instanceof Error && err.message === "Mensaje no encontrado.") {
+        throw err;
+      }
+      throw new Error(describirErrorMysql(err));
+    }
   }
 
   async eliminarMensaje(id: string): Promise<void> {
-    exigirSupabase();
+    try {
+      await ejecutarComando(`DELETE FROM mensajes_contacto WHERE id = ?`, [id]);
 
-    const { error } = await supabaseAdmin
-      .from("mensajes_contacto")
-      .delete()
-      .eq("id", id);
-
-    if (error) throw new Error(describirError(error));
+      replicarEnSupabase("mensajes_contacto.eliminar", () =>
+        supabaseAdmin.from("mensajes_contacto").delete().eq("id", id)
+      );
+    } catch (err) {
+      throw new Error(describirErrorMysql(err));
+    }
   }
 }
