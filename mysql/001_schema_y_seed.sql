@@ -210,16 +210,16 @@ ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- ── 12. Seed Inicial ────────────────────────────────────────
 
--- 12.1 Barrios de la Comuna 9 y aledaños
+-- 12.1 Barrios de la Comuna 9 (Liniers, Mataderos y Parque Avellaneda)
 INSERT INTO barrios (id, nombre, slug) VALUES
   ('11111111-1111-4111-8111-000000000001', 'Mataderos',         'mataderos'),
   ('11111111-1111-4111-8111-000000000002', 'Liniers',           'liniers'),
-  ('11111111-1111-4111-8111-000000000003', 'Vélez Sarsfield',   'velez-sarsfield'),
-  ('11111111-1111-4111-8111-000000000004', 'Parque Avellaneda', 'parque-avellaneda'),
-  ('11111111-1111-4111-8111-000000000005', 'Villa Lugano',      'villa-lugano'),
-  ('11111111-1111-4111-8111-000000000006', 'Villa Riachuelo',   'villa-riachuelo')
+  ('11111111-1111-4111-8111-000000000004', 'Parque Avellaneda', 'parque-avellaneda')
 ON DUPLICATE KEY UPDATE
   nombre = VALUES(nombre);
+
+DELETE FROM barrios
+WHERE slug NOT IN ('mataderos', 'liniers', 'parque-avellaneda');
 
 -- 12.2 Categorías (claves de icono alineadas con 003_roles_y_permisos.sql)
 INSERT INTO categorias (id, nombre, slug, color, icono) VALUES

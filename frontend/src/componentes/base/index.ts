@@ -6,3 +6,9 @@ export { default as BarraConfirmacion, type BarraConfirmacionProps } from "./Bar
 export { default as Esqueleto, type EsqueletoProps } from "./Esqueleto";
 export { default as EstadoVacio, type EstadoVacioProps } from "./EstadoVacio";
 export { default as EstadoError, type EstadoErrorProps } from "./EstadoError";
+export {
+  default as Selector,
+  type SelectorProps,
+  type OpcionSelector,
+  type VarianteSelector
+} from "./Selector";

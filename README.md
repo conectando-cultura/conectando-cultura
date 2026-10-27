@@ -1,6 +1,6 @@
 # Conectando Cultura
 
-Plataforma cultural comunitaria para los barrios de Mataderos y alrededores (Comuna 9), Ciudad de Buenos Aires.
+Plataforma cultural comunitaria para la Comuna 9 (Liniers, Mataderos y Parque Avellaneda), Ciudad de Buenos Aires.
 
 Mapa interactivo y catálogo de actividades socioculturales — ferias, cines, teatros, museos, bibliotecas, bares notables, parques y más — con registro de vecinos, preferencias personalizadas, reseñas comunitarias, favoritos, roles diferenciados (`usuario`, `gestor`, `admin`) y panel de gestión/administración con monitoreo de infraestructura de datos.
 
@@ -46,7 +46,7 @@ cd ../frontend && npm install
 
 ### 2. Inicializar la base de datos primaria MySQL
 
-Asegurate de tener **MySQL 8.0+** corriendo localmente y ejecutá el script unificado de esquema y seed inicial (crea la base `conectando_cultura`, las 11 tablas y carga los 6 barrios, 9 categorías y actividades iniciales de Mataderos):
+Asegurate de tener **MySQL 8.0+** corriendo localmente y ejecutá el script unificado de esquema y seed inicial (crea la base `conectando_cultura`, las 11 tablas y carga los 3 barrios de la Comuna 9 — Liniers, Mataderos y Parque Avellaneda —, 9 categorías y actividades iniciales de Mataderos):
 
 ```bash
 mysql -u root -p < mysql/001_schema_y_seed.sql

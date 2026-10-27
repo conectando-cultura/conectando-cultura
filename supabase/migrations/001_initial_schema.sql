@@ -197,14 +197,16 @@ CREATE POLICY "acceso propio a sesiones"
 
 -- ── 10. Seed ────────────────────────────────────────────────
 
--- 10.1 Barrios de la Comuna 9 y aledaños
-INSERT INTO barrios (nombre, slug) VALUES
-  ('Mataderos',         'mataderos'),
-  ('Liniers',           'liniers'),
-  ('Vélez Sarsfield',   'velez-sarsfield'),
-  ('Parque Avellaneda', 'parque-avellaneda'),
-  ('Villa Lugano',      'villa-lugano'),
-  ('Villa Riachuelo',   'villa-riachuelo');
+-- 10.1 Barrios de la Comuna 9 (Liniers, Mataderos y Parque Avellaneda)
+INSERT INTO barrios (id, nombre, slug) VALUES
+  ('11111111-1111-4111-8111-000000000001', 'Mataderos',         'mataderos'),
+  ('11111111-1111-4111-8111-000000000002', 'Liniers',           'liniers'),
+  ('11111111-1111-4111-8111-000000000004', 'Parque Avellaneda', 'parque-avellaneda')
+ON CONFLICT (slug) DO UPDATE SET
+  nombre = EXCLUDED.nombre;
+
+DELETE FROM barrios
+WHERE slug NOT IN ('mataderos', 'liniers', 'parque-avellaneda');
 
 -- 10.2 Categorías (color alineado al Design System 60-30-10)
 INSERT INTO categorias (nombre, slug, color, icono) VALUES

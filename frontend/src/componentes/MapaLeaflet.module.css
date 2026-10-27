@@ -1,6 +1,11 @@
 /* MapaLeaflet.module.css - Contenedor y estilizado Croquis para Leaflet */
 .contenedorMapa {
   width: 100%;
+  height: 100%;
+  min-height: 280px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 6px 11px rgba(0, 0, 0, 0.1);
@@ -9,6 +14,13 @@
   background-color: var(--color-fondo, #F4F4F4);
   isolation: isolate;
   z-index: 0;
+}
+
+.contenedorMapa :global(.leaflet-container) {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  flex: 1;
 }
 
 /* Rediseño de popup con estilo Croquis */
@@ -32,13 +44,102 @@
 :global(.leaflet-top.leaflet-right .leaflet-control-layers) {
   border-radius: 9999px !important;
   border: 1px solid var(--color-borde, #E3E3E1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-  padding: 6px 12px !important;
+  background-color: var(--color-superficie, #FEFEFE) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12) !important;
+  padding: 0 !important;
   font-family: var(--fuente-titulo, "Poppins", sans-serif) !important;
   font-size: 13px !important;
+  color: var(--color-texto, #1B160E) !important;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-:global(.leaflet-control-layers-expanded) {
+:global(.leaflet-top.leaflet-right .leaflet-control-layers:hover) {
+  border-color: var(--color-acento, #FF8F50) !important;
+}
+
+:global(.leaflet-control-layers-toggle) {
+  width: 40px !important;
+  height: 40px !important;
+  background-size: 20px 20px !important;
+}
+
+/* Estado expandido: tarjeta redondeada Croquis (mayor especificidad que el estado base) */
+:global(.leaflet-top.leaflet-right .leaflet-control-layers.leaflet-control-layers-expanded),
+:global(.leaflet-control-layers.leaflet-control-layers-expanded) {
   border-radius: 20px !important;
-  padding: 12px 16px !important;
+  padding: 10px !important;
+  min-width: 176px !important;
+  overflow: visible !important;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.16), 0 4px 10px -2px rgba(0, 0, 0, 0.08) !important;
+}
+
+:global(.leaflet-control-layers-list) {
+  margin: 0 !important;
+}
+
+/* Contenedor de opciones base (Callejero, Satélite, OpenStreetMap) */
+:global(.leaflet-control-layers-base) {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+:global(.leaflet-control-layers-base label) {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  font-family: var(--fuente-titulo, "Poppins", sans-serif) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  color: var(--color-texto-secundario, #302D27) !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+  user-select: none;
+}
+
+:global(.leaflet-control-layers-base label:hover) {
+  background-color: var(--color-fondo, #F4F4F4) !important;
+  color: var(--color-texto, #1B160E) !important;
+}
+
+/* Estructura interna generada por Leaflet: <label><span><input /><span> Texto</span></span></label> */
+:global(.leaflet-control-layers-base label > span) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+:global(.leaflet-control-layers-base label > span > span) {
+  display: inline-block !important;
+  line-height: 1.25 !important;
+}
+
+:global(.leaflet-control-layers-selector) {
+  margin: 0 !important;
+  top: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  accent-color: var(--color-acento, #FF8F50) !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+
+/* Resalte de la opción activa en el menú de capas */
+:global(.leaflet-control-layers-base label:has(input:checked)) {
+  background-color: rgba(255, 143, 80, 0.16) !important;
+  color: var(--color-texto, #1B160E) !important;
+  font-weight: 600 !important;
+}
+
+/* Fallback cuando accent-color no está soportado */
+@supports not (accent-color: #FF8F50) {
+  :global(.leaflet-control-layers-selector:checked) {
+    outline: 2px solid var(--color-acento, #FF8F50) !important;
+    outline-offset: 1px !important;
+  }
 }

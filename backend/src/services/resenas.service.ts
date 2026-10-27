@@ -26,7 +26,7 @@ interface FilaUsuarioNombreMysql extends RowDataPacket {
 }
 
 function formatearNombreVecino(nombre?: string | null, apellido?: string | null): string {
-  if (!nombre) return "Vecino de Mataderos";
+  if (!nombre) return "Vecino de la Comuna 9";
   const inicial = apellido?.charAt(0) ?? "";
   return `${nombre} ${inicial}.`.trim();
 }

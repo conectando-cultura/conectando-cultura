@@ -159,13 +159,42 @@ function CreadorMarcador({
   );
 }
 
-function AjusteZoom({ bounds }: { bounds: LatLngBoundsExpression | null }) {
+function ObservadorTamano() {
   const map = useMap();
   useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    const contenedor = map.getContainer();
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 50);
+
+    if (typeof ResizeObserver === "undefined") {
+      return () => window.clearTimeout(timer);
     }
-  }, [bounds, map]);
+
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    observer.observe(contenedor);
+
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [map]);
+  return null;
+}
+
+function AjusteZoom({ puntos }: { puntos: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (puntos.length === 0) return;
+    if (puntos.length === 1) {
+      map.setView(puntos[0], 15);
+      return;
+    }
+    const bounds: LatLngBoundsExpression = puntos;
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+  }, [puntos, map]);
   return null;
 }
 
@@ -190,15 +219,15 @@ export default function MapaLeaflet({
   // Centro geográfico de Mataderos
   const centroDefinitivo: [number, number] = centro ?? [-34.656, -58.504];
 
-  const bounds: LatLngBoundsExpression | null =
-    actividades.length > 0
-      ? actividades.map((a) => [a.lat, a.lng] as [number, number])
-      : null;
+  const puntosValidos: [number, number][] = actividades
+    .filter((a) => Number.isFinite(a.lat) && Number.isFinite(a.lng))
+    .map((a) => [a.lat, a.lng]);
 
   const seleccionada = actividades.find((a) => a.id === actividadSeleccionadaId);
-  const destinoCentrado: [number, number] | null = seleccionada
-    ? [seleccionada.lat, seleccionada.lng]
-    : null;
+  const destinoCentrado: [number, number] | null =
+    seleccionada && Number.isFinite(seleccionada.lat) && Number.isFinite(seleccionada.lng)
+      ? [seleccionada.lat, seleccionada.lng]
+      : null;
 
   const alturaEstilo = typeof altura === "number" ? `${altura}px` : altura;
 
@@ -213,6 +242,7 @@ export default function MapaLeaflet({
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
       >
+        <ObservadorTamano />
         <LayersControl position="topright">
           {/* Capa principal */}
           <LayersControl.BaseLayer checked name="Callejero">
@@ -244,19 +274,21 @@ export default function MapaLeaflet({
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        {actividades.map((a) => (
-          <CreadorMarcador
-            key={a.id}
-            actividad={a}
-            seleccionado={a.id === actividadSeleccionadaId}
-            onSeleccionar={onSeleccionarActividad}
-          />
-        ))}
+        {actividades
+          .filter((a) => Number.isFinite(a.lat) && Number.isFinite(a.lng))
+          .map((a) => (
+            <CreadorMarcador
+              key={a.id}
+              actividad={a}
+              seleccionado={a.id === actividadSeleccionadaId}
+              onSeleccionar={onSeleccionarActividad}
+            />
+          ))}
 
         {destinoCentrado ? (
           <Centrador destino={destinoCentrado} />
         ) : (
-          bounds && <AjusteZoom bounds={bounds} />
+          puntosValidos.length > 0 && <AjusteZoom puntos={puntosValidos} />
         )}
       </MapContainer>
     </div>

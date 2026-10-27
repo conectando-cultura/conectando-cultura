@@ -480,6 +480,21 @@ export async function sincronizarMysqlASupabase(): Promise<ResumenSincronizacion
   ]);
 
   if (barrios.length > 0) {
+    const slugsVigentes = barrios.map((b) => b.slug);
+    const { data: barriosRemotos } = await supabaseAdmin
+      .from("barrios")
+      .select("id, slug");
+
+    if (barriosRemotos && barriosRemotos.length > 0) {
+      const idsObsoletos = barriosRemotos
+        .filter((b) => !slugsVigentes.includes(b.slug))
+        .map((b) => b.id);
+
+      if (idsObsoletos.length > 0) {
+        await supabaseAdmin.from("barrios").delete().in("id", idsObsoletos);
+      }
+    }
+
     const { error } = await supabaseAdmin.from("barrios").upsert(
       barrios.map((b) => ({
         id: b.id,
@@ -487,7 +502,7 @@ export async function sincronizarMysqlASupabase(): Promise<ResumenSincronizacion
         slug: b.slug,
         created_at: aIso(b.created_at)
       })),
-      { onConflict: "id" }
+      { onConflict: "slug" }
     );
     if (error) throw new Error(`Error al sincronizar barrios en Supabase: ${error.message}`);
   }

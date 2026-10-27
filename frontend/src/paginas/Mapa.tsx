@@ -8,7 +8,7 @@ import {
 import type { Actividad, Barrio, Categoria } from "../tipos";
 import CategoriaChip from "../componentes/CategoriaChip";
 import MapaLeaflet from "../componentes/MapaLeaflet";
-import { Esqueleto, EstadoError, Badge } from "../componentes/base";
+import { Esqueleto, EstadoError, Badge, Selector } from "../componentes/base";
 import {
   Search,
   MapPin,
@@ -166,21 +166,18 @@ export default function Mapa(): React.JSX.Element {
             </div>
 
             {/* Selector de Barrio */}
-            <div className="flex items-center gap-2 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 md:w-64 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
-              <MapPin size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
-              <select
-                value={barrio}
-                onChange={(e) => setBarrio(e.target.value)}
-                className="w-full cursor-pointer bg-transparent font-sans text-sm font-medium text-brand-ink outline-none"
-                aria-label="Filtrar por barrio"
-              >
-                <option value="">Todos los barrios</option>
-                {barrios.map((b) => (
-                  <option key={b.id} value={b.slug}>
-                    {b.nombre}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center rounded-full border border-brand-gray-light bg-brand-bg px-4 py-0.5 md:w-64 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+              <Selector
+                variante="barra"
+                icono={<MapPin size={18} />}
+                valor={barrio}
+                onChange={setBarrio}
+                ariaLabel="Filtrar por barrio"
+                opciones={[
+                  { valor: "", etiqueta: "Todos los barrios" },
+                  ...barrios.map((b) => ({ valor: b.slug, etiqueta: b.nombre }))
+                ]}
+              />
             </div>
 
             {/* Botón de acceso directo al Catálogo */}
@@ -251,11 +248,11 @@ export default function Mapa(): React.JSX.Element {
         {error ? (
           <EstadoError descripcion={error} onReintentar={cargarDatos} />
         ) : cargando ? (
-          <div className="w-full flex-1 min-h-[500px]">
-            <Esqueleto alto={600} />
+          <div className="w-full flex-1 h-[520px] md:h-[640px] min-h-[500px]">
+            <Esqueleto alto="100%" />
           </div>
         ) : (
-          <div className="relative w-full flex-1 min-h-[520px] md:min-h-[640px] rounded-3xl overflow-hidden shadow-[0_6px_11px_rgba(0,0,0,0.08)] border border-brand-gray-light">
+          <div className="relative w-full flex-1 flex flex-col h-[520px] md:h-[640px] lg:h-[calc(100dvh-260px)] min-h-[520px] md:min-h-[600px] rounded-3xl overflow-hidden shadow-[0_6px_11px_rgba(0,0,0,0.08)] border border-brand-gray-light">
             <MapaLeaflet
               actividades={actividadesFiltradas}
               actividadSeleccionadaId={actividadSeleccionadaId}

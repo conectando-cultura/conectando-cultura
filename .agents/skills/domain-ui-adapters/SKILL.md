@@ -29,7 +29,7 @@ Load this skill when:
 | Cultural category pills (`CategoriaChip`) | Rounded pill geometry (`rounded-full`, `Poppins` semibold) | Runtime `--chip-bg` / `--chip-fg` contrast from `colorCategoria.ts` + `IconoCategoria` |
 | Activity catalog & filters (`Explorar`) | `SearchResultsPage.tsx` (`/prenota`) search bar, orange filter bands, counter | `useFiltrosExplorar` URL state + `Mapa \| Lista \| Ambas` toggle + `MapaLeaflet` |
 | Activity detail (`DetalleActividad`) | `PackageDetailPage.tsx` (`DesignHero`, `1fr_327px` `DetailIntro`, `FeatureList`) | Route `/actividades/:barrio/:slug`, `Actividad` fields (`horarios`, `direccion`, `lat`, `lng`, `url`, `categoria`, `barrio`), mini `MapaLeaflet`, related neighborhood activities |
-| Barrios & categories on Home (`Inicio`) | `DestinationsGrid.tsx` (`DestinationCard`) & `holidayTypes` grid | 6 Comuna 9 `Barrio` cards (`-> /explorar?barrio=slug`) & 9 `Categoria` cards (`-> /explorar?categorias=slug`) |
+| Barrios & categories on Home (`Inicio`) | `DestinationsGrid.tsx` (`DestinationCard`) & `holidayTypes` grid | 3 Comuna 9 `Barrio` cards (`Liniers`, `Mataderos`, `Parque Avellaneda` -> `/explorar?barrio=slug`) & 9 `Categoria` cards (`-> /explorar?categorias=slug`) |
 | Admin CRUD & geocoding (`paginas/panel/*`) | Croquis card/table surfaces (`rounded-3xl`, `brand-orange` headers, pill actions) | `LayoutPanel` & `ProtegidaPermiso` RBAC guards (`/admin`, `/admin/actividades`, `/admin/usuarios`), Nominatim geocoding modal, `BarraConfirmacion`, and `api/actividades.ts` contracts |
 
 ## Execution Steps

@@ -13,6 +13,7 @@ import Badge from "../../componentes/base/Badge";
 import BarraConfirmacion from "../../componentes/base/BarraConfirmacion";
 import Esqueleto from "../../componentes/base/Esqueleto";
 import EstadoError from "../../componentes/base/EstadoError";
+import Selector from "../../componentes/base/Selector";
 import { Search, LogOut, CheckCircle2, Sparkles, UserCheck } from "lucide-react";
 
 export default function AdminUsuarios(): React.JSX.Element {
@@ -202,18 +203,22 @@ export default function AdminUsuarios(): React.JSX.Element {
                             {esPropio ? (
                               <Badge tipo="destacada" texto={ETIQUETA_ROL[rol]} />
                             ) : (
-                              <select
-                                value={rol}
-                                onChange={(e) => {
-                                  const nuevo = e.target.value as Rol;
-                                  setCambioPendiente({ usuario: u, nuevoRol: nuevo });
+                              <Selector
+                                variante="compacto"
+                                valor={rol}
+                                onChange={(val) => {
+                                  const nuevo = val as Rol;
+                                  if (nuevo !== rol) {
+                                    setCambioPendiente({ usuario: u, nuevoRol: nuevo });
+                                  }
                                 }}
-                                className="px-3 py-1.5 rounded-full border border-brand-gray-light bg-brand-white text-xs font-semibold text-brand-ink cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all"
-                              >
-                                <option value="usuario">Usuario</option>
-                                <option value="gestor">Gestor</option>
-                                <option value="admin">SuperAdmin</option>
-                              </select>
+                                ariaLabel={`Cambiar rol de ${u.nombre} ${u.apellido}`}
+                                opciones={[
+                                  { valor: "usuario", etiqueta: "Usuario" },
+                                  { valor: "gestor", etiqueta: "Gestor" },
+                                  { valor: "admin", etiqueta: "SuperAdmin" }
+                                ]}
+                              />
                             )}
                           </td>
                           <td className="py-4 px-6 text-right">

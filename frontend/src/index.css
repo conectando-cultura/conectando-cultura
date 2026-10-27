@@ -50,6 +50,11 @@
   input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: none !important;
   }
+
+  ::selection {
+    background-color: rgba(255, 143, 80, 0.28);
+    color: var(--color-texto, #1B160E);
+  }
 }
 
 /* ===== Layout principal ===== */

@@ -34,7 +34,7 @@ Guardan `barrio_id` (vacío = todos los barrios) y `categoria_ids` (arreglo; vac
 |---|---|
 | `usuarios` | nombre, apellido, correo, `rol` |
 | `sesiones` | token, usuario, vencimiento (sirve para "sesiones activas") |
-| `barrios` | nombre, slug, descripción (6 sembrados) |
+| `barrios` | nombre, slug, descripción (3 sembrados: Liniers, Mataderos y Parque Avellaneda) |
 | `categorias` | nombre, slug, `color` (hex), `icono` |
 | `actividades` | nombre, slug (único por barrio), descripción, horarios, dirección, latitud, longitud, url, imagen_url, categoría, barrio, visibilidad (`publica`, `privada`, `oculta`), destacado, activo, created_by, updated_by |
 | `preferencias` | usuario, barrio_id, categoria_ids |

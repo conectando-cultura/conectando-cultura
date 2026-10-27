@@ -3,28 +3,29 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 /**
- * Cliente de Supabase — única fuente de persistencia del proyecto.
+ * Cliente de Supabase — Base de datos secundaria de respaldo (backup) y
+ * objetivo del monitor Keep-Alive cada 3 días para el plan gratuito.
  *
- * No hay fallback local: si la base no está disponible, la API falla y
- * el error sube al cliente. Es intencional; un sistema que "funciona" con
- * datos de mentira esconde el problema hasta que se descubre en producción.
- *
- * La autenticación es propia (scrypt + token Bearer), NO Supabase Auth:
- * por eso los ids de usuario son TEXT y `usuarios` la administra el backend.
+ * La base de datos principal es MySQL local (`backend/src/lib/mysql.ts`).
+ * Cuando Supabase está configurado, las mutaciones se replican en segundo
+ * plano y el administrador puede disparar sincronizaciones completas o
+ * pings manuales `SELECT 1` desde el Panel de Administración.
  */
 const DIR_RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-/** Valores de fallback para que `createClient` no tire al importar el módulo. */
+/** Valores de fallback para que `createClient` no falle al importar el módulo cuando sólo se usa MySQL. */
 const URL_PLACEHOLDER = "https://placeholder.supabase.co";
 const KEY_PLACEHOLDER = "placeholder-key";
+let envCargado = false;
 /**
  * Carga las variables de entorno desde backend/.env o .env de la raíz.
  * Se ejecuta antes de leer process.env porque el backend se lanza con
  * `tsx`/`node` sin flag `--env-file`, así que process.env llega vacío.
  * Las variables ya presentes en el entorno real tienen prioridad.
  */
-function cargarEnv() {
-    // El .env puede estar en backend/ o en la raíz del repo (según dónde
-    // se clonó el proyecto); se prueban ambos más el cwd actual.
+export function cargarEnv() {
+    if (envCargado)
+        return;
+    envCargado = true;
     const candidatos = [
         resolve(DIR_RAIZ, ".env"),
         resolve(DIR_RAIZ, "..", ".env"),
@@ -42,27 +43,21 @@ function cargarEnv() {
                 continue;
             const clave = limpia.slice(0, separador).trim();
             let valor = limpia.slice(separador + 1).trim();
-            // Quitar comillas envolventes si las hay
             if ((valor.startsWith('"') && valor.endsWith('"')) ||
                 (valor.startsWith("'") && valor.endsWith("'"))) {
                 valor = valor.slice(1, -1);
             }
-            // El entorno real gana sobre el archivo
-            if (clave && !process.env[clave]) {
+            if (clave && process.env[clave] === undefined) {
                 process.env[clave] = valor;
             }
         }
-        break; // primer archivo encontrado alcanza
+        break;
     }
 }
 cargarEnv();
-const supabaseUrl = process.env.SUPABASE_URL || URL_PLACEHOLDER;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || KEY_PLACEHOLDER;
 /**
- * Determina si las credenciales son reales y utilizables.
- * Rechaza los placeholders de .env.example y las claves publicables/anon
- * (`sb_publishable__`, `sb_secret_` es la nueva service role): el backend
- * necesita acceso privilegiado porque ignora RLS por diseño.
+ * Determina si las credenciales de Supabase son reales y utilizables.
+ * Rechaza los placeholders de .env.example y las claves publicables/anon.
  */
 export function esSupabaseConfigurado() {
     const url = process.env.SUPABASE_URL ?? "";
@@ -73,14 +68,13 @@ export function esSupabaseConfigurado() {
         return false;
     if (key.includes("placeholder") || key.includes("your-service-role-key"))
         return false;
-    // La clave publicable/anon no sirve para el backend: no salta RLS.
     if (key.startsWith("sb_publishable_"))
         return false;
     return true;
 }
 /**
- * Lanza un error descriptive si falta configuración, en lugar de dejar que
- * la app arranque y falle en la primera consulta con un error incomprensible.
+ * Lanza un error descriptivo si se exige Supabase para una operación de backup
+ * y las credenciales no están configuradas.
  */
 export function exigirSupabase() {
     if (esSupabaseConfigurado())
@@ -93,15 +87,20 @@ export function exigirSupabase() {
     }
     if (key.startsWith("sb_publishable_")) {
         pistas.push("SUPABASE_SERVICE_ROLE_KEY es una clave publicable (sb_publishable__). " +
-            "El backend necesita la service role key (sb_secret_... en el panel nuevo, " +
-            "o la JWT clásica en Settings → API).");
+            "El backend necesita la service role key (sb_secret_... o la JWT service_role).");
     }
-    throw new Error(`Supabase no está configurado correctamente (URL: ${url}). ` +
-        (pistas.length ? pistas.join(" | ") : "Revisá backend/.env."));
+    throw new Error(`Supabase (backup) no está configurado correctamente (URL: ${url}). ` +
+        (pistas.length ? pistas.join(" | ") : "Revisá SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en .env."));
 }
+const supabaseUrl = esSupabaseConfigurado()
+    ? process.env.SUPABASE_URL
+    : URL_PLACEHOLDER;
+const supabaseKey = esSupabaseConfigurado()
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
+    : KEY_PLACEHOLDER;
 /**
  * Cliente con service role: operaciones privilegiadas del servidor
- * (bypass de RLS). Nunca debe exponerse al frontend.
+ * para replicación de respaldo y keep-alive de Supabase.
  */
 export const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
     auth: {

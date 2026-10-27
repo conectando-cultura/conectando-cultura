@@ -1,6 +1,6 @@
 # Phase 2 — Home Page (`Inicio`), Barrios Mosaic & Cultural Activity Cards
 
-Adapts the Croquis landing page (`Index.tsx`), package cards (`PackageCard.tsx`), and destination mosaic (`DestinationsGrid.tsx`) to `Conectando-Cultura`'s neighborhood cultural domain: Comuna 9 Hero + straddling pill search bar, 9 cultural categories grid, featured `ActividadCard` grid, 6-neighborhood Comuna 9 mosaic, community value pillars, and neighborhood onboarding CTA.
+Adapts the Croquis landing page (`Index.tsx`), package cards (`PackageCard.tsx`), and destination mosaic (`DestinationsGrid.tsx`) to `Conectando-Cultura`'s neighborhood cultural domain: Comuna 9 Hero + straddling pill search bar, 9 cultural categories grid, featured `ActividadCard` grid, 3-neighborhood Comuna 9 mosaic (`Liniers`, `Mataderos`, `Parque Avellaneda`), community value pillars, and neighborhood onboarding CTA.
 
 ## Quick path
 
@@ -40,14 +40,14 @@ Adapts the Croquis landing page (`Index.tsx`), package cards (`PackageCard.tsx`)
 | `Inicio.tsx` — Hero & Pill SearchBar | `Index.tsx` Hero + `SearchBar.tsx` (`rounded-full` straddling bar `-mt-9 z-20`) | Inputs for text query (`q`), `Barrio` selector (`barrios` from API), and `Categoria` selector (`categorias` from API) submitting to `/explorar?q=...&barrio=...&categorias=...` |
 | `Inicio.tsx` — 9 Cultural Categories | `Index.tsx` `holidayTypes` grid (`rounded-3xl` white cards with circular icon badge) | Render the 9 cultural `Categoria` items (`musica`, `teatro`, `danza`, `talleres`, `artes-visuales`, `ferias`, `literatura`, `cine`, `comunidad`) with `IconoCategoria` and dynamic accent ring linking to `/explorar?categorias=${cat.id}` |
 | `Inicio.tsx` — Featured Activities | `Index.tsx` `"I nostri pacchetti"` 3-column grid | Render up to 6 `ActividadCard` items fetched via `obtenerActividades` + `obtenerBarrios` + `obtenerCategorias`, with `Esqueleto` loading and `EstadoError` retry |
-| `Inicio.tsx` — Comuna 9 Barrios Mosaic | `DestinationsGrid.tsx` (`DestinationCard` with gradient overlay & `Kavoon` title) | Render the 6 neighborhoods (`Mataderos`, `Liniers`, `Vélez Sarsfield`, `Parque Avellaneda`, `Villa Lugano`, `Villa Riachuelo`) with curated local cultural imagery, description/activity count, and link to `/explorar?barrio=${b.slug}` |
+| `Inicio.tsx` — Comuna 9 Barrios Mosaic | `DestinationsGrid.tsx` (`DestinationCard` with gradient overlay & `Kavoon` title) | Render the 3 Comuna 9 neighborhoods (`Liniers`, `Mataderos`, `Parque Avellaneda`) with curated local cultural imagery, description/activity count, and link to `/explorar?barrio=${b.slug}` |
 | `Inicio.tsx` — Community Pillars & CTA | `Index.tsx` `whyUs` 3-column block + `Newsletter.tsx` dark banner | 3 community pillars (`Cultura de proximidad`, `Acceso libre y barrial`, `Red de espacios culturales`) + CTA banner (`bg-brand-ink rounded-3xl`) linking guests to `/registro` and logged-in users to `/preferencias` |
 
 ## Acceptance Checklist
 
 - [ ] `CategoriaChip.tsx` maintains runtime WCAG >= 4.8:1 contrast via `colorCategoria.ts` and uses `IconoCategoria` with zero emojis.
 - [ ] `ActividadCard.tsx` adopts the `PackageCard` visual shell while supporting `seleccionada`, `compacta`, and `alHover` props required by `Explorar.tsx`.
-- [ ] `Inicio.tsx` renders Hero + straddling pill search bar, 9 cultural categories, featured activities, 6 Comuna 9 barrios mosaic, community pillars, and onboarding CTA banner.
+- [ ] `Inicio.tsx` renders Hero + straddling pill search bar, 9 cultural categories, featured activities, 3 Comuna 9 barrios mosaic (`Liniers`, `Mataderos`, `Parque Avellaneda`), community pillars, and onboarding CTA banner.
 - [ ] `npm run typecheck`, `npm run sin-emojis`, and `npm run build` pass with zero errors.
 
 ## Verification Commands

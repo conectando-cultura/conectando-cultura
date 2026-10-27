@@ -56,7 +56,7 @@ export default function Navbar(): React.JSX.Element {
           <img
             src="/logo.png"
             alt="Logo Conectando Cultura"
-            className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full object-cover border border-brand-orange/40 shadow-xs"
+            className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10"
           />
           <div className="flex items-center gap-1">
             <span className="font-display text-[19px] sm:text-[22px] md:text-[25px] leading-none tracking-[-1.5px] bg-gradient-to-b from-[#E15100] from-20% via-brand-orange via-50% to-[#FFD542] bg-clip-text text-transparent [-webkit-text-stroke:1px_#211F1D] drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">

@@ -1,6 +1,6 @@
 # Conectando Cultura · Paquete de documentación para desarrollo
 
-Plataforma cultural comunitaria para Mataderos y barrios cercanos (Buenos Aires). Este paquete reúne **todas las decisiones de UX y de diseño visual** y el **plan de desarrollo del frontend en React**, para que un agente (o una persona) programe la interfaz sin ambigüedades.
+Plataforma cultural comunitaria para la Comuna 9 (Liniers, Mataderos y Parque Avellaneda, Buenos Aires). Este paquete reúne **todas las decisiones de UX y de diseño visual** y el **plan de desarrollo del frontend en React**, para que un agente (o una persona) programe la interfaz sin ambigüedades.
 
 ## Orden de lectura
 

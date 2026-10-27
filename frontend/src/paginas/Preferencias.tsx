@@ -9,7 +9,7 @@ import {
 } from "../api/actividades";
 import type { Barrio, Categoria } from "../tipos";
 import CategoriaChip from "../componentes/CategoriaChip";
-import { Boton, Esqueleto, EstadoError } from "../componentes/base";
+import { Boton, Esqueleto, EstadoError, Selector } from "../componentes/base";
 import { Check, Sparkles, MapPin, Compass, ArrowRight, Layers } from "lucide-react";
 
 export default function Preferencias(): React.JSX.Element {
@@ -191,19 +191,18 @@ export default function Preferencias(): React.JSX.Element {
                 <p className="font-body text-xs text-brand-gray mb-3">
                   Si elegís uno en particular, te mostraremos primero las actividades que quedan a pocas cuadras.
                 </p>
-                <select
+                <Selector
                   id="pref-barrio"
-                  value={barrioId}
-                  onChange={(e) => setBarrioId(e.target.value)}
-                  className="w-full min-h-[44px] px-4 rounded-xl border border-brand-gray-light bg-brand-white text-brand-ink font-body text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all"
-                >
-                  <option value="">Todos los barrios de la comuna</option>
-                  {barrios.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.nombre}
-                    </option>
-                  ))}
-                </select>
+                  variante="campo"
+                  icono={<MapPin size={16} />}
+                  valor={barrioId}
+                  onChange={setBarrioId}
+                  ariaLabel="Barrio de preferencia"
+                  opciones={[
+                    { valor: "", etiqueta: "Todos los barrios de la comuna" },
+                    ...barrios.map((b) => ({ valor: b.id, etiqueta: b.nombre }))
+                  ]}
+                />
               </div>
 
               {/* Sección Categorías */}

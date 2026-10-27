@@ -1,7 +1,7 @@
 # 01 · Producto y alcance
 
 ## Qué es
-Plataforma cultural comunitaria para Mataderos y barrios cercanos de Buenos Aires. Ofrece un mapa y un catálogo de actividades (ferias, cines, teatros, museos, bibliotecas, bares notables, parques y otras categorías), cuentas de vecinos con preferencias y un panel de administración.
+Plataforma cultural comunitaria para la Comuna 9 (Liniers, Mataderos y Parque Avellaneda) de la Ciudad de Buenos Aires. Ofrece un mapa y un catálogo de actividades (ferias, cines, teatros, museos, bibliotecas, bares notables, parques y otras categorías), cuentas de vecinos con preferencias y un panel de administración.
 
 ## Usuarios y roles
 

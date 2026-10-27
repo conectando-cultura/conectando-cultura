@@ -17,6 +17,7 @@ import Badge from "../../componentes/base/Badge";
 import BarraConfirmacion from "../../componentes/base/BarraConfirmacion";
 import Esqueleto from "../../componentes/base/Esqueleto";
 import EstadoError from "../../componentes/base/EstadoError";
+import Selector from "../../componentes/base/Selector";
 import CategoriaChip from "../../componentes/CategoriaChip";
 import {
   Search,
@@ -385,19 +386,20 @@ export default function AdminActividades(): React.JSX.Element {
             </div>
 
             {/* Selector de Orden */}
-            <div className="flex items-center gap-1.5 bg-brand-white border border-brand-gray-light rounded-full px-3 py-1.5 shadow-2xs">
-              <SlidersHorizontal size={14} className="text-brand-muted" />
-              <select
-                value={orden}
-                onChange={(e) => actualizarFiltro("orden", e.target.value)}
-                className="bg-transparent text-xs font-sans font-semibold text-brand-ink focus:outline-none cursor-pointer"
-              >
-                <option value="recientes">Más recientes</option>
-                <option value="antiguas">Más antiguas</option>
-                <option value="nombre_asc">Nombre (A-Z)</option>
-                <option value="nombre_desc">Nombre (Z-A)</option>
-              </select>
-            </div>
+            <Selector
+              variante="compacto"
+              icono={<SlidersHorizontal size={14} />}
+              valor={orden}
+              onChange={(val) => actualizarFiltro("orden", val)}
+              ariaLabel="Ordenar listado de actividades"
+              alinearMenu="derecha"
+              opciones={[
+                { valor: "recientes", etiqueta: "Más recientes" },
+                { valor: "antiguas", etiqueta: "Más antiguas" },
+                { valor: "nombre_asc", etiqueta: "Nombre (A-Z)" },
+                { valor: "nombre_desc", etiqueta: "Nombre (Z-A)" }
+              ]}
+            />
           </div>
         </div>
 
@@ -610,53 +612,29 @@ export default function AdminActividades(): React.JSX.Element {
                     />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          htmlFor="act-cat"
-                          className="block font-sans text-xs font-bold uppercase tracking-wider text-brand-gray mb-1.5"
-                        >
-                          Categoría *
-                        </label>
-                        <select
-                          id="act-cat"
-                          value={form.categoriaId}
-                          onChange={(e) => setForm({ ...form, categoriaId: e.target.value })}
-                          className={`w-full min-h-[44px] px-3.5 rounded-xl border bg-brand-white text-sm font-body text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all ${
-                            erroresForm.categoriaId ? "border-red-500" : "border-brand-gray-light"
-                          }`}
-                        >
-                          <option value="">Seleccionar categoría</option>
-                          {categorias.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <Selector
+                        id="act-cat"
+                        etiqueta="Categoría"
+                        requerido
+                        variante="campo"
+                        valor={form.categoriaId}
+                        onChange={(val) => setForm({ ...form, categoriaId: val })}
+                        placeholder="Seleccionar categoría"
+                        error={erroresForm.categoriaId}
+                        opciones={categorias.map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
+                      />
 
-                      <div>
-                        <label
-                          htmlFor="act-barrio"
-                          className="block font-sans text-xs font-bold uppercase tracking-wider text-brand-gray mb-1.5"
-                        >
-                          Barrio *
-                        </label>
-                        <select
-                          id="act-barrio"
-                          value={form.barrioId}
-                          onChange={(e) => setForm({ ...form, barrioId: e.target.value })}
-                          className={`w-full min-h-[44px] px-3.5 rounded-xl border bg-brand-white text-sm font-body text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-orange transition-all ${
-                            erroresForm.barrioId ? "border-red-500" : "border-brand-gray-light"
-                          }`}
-                        >
-                          <option value="">Seleccionar barrio</option>
-                          {barrios.map((b) => (
-                            <option key={b.id} value={b.id}>
-                              {b.nombre}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <Selector
+                        id="act-barrio"
+                        etiqueta="Barrio"
+                        requerido
+                        variante="campo"
+                        valor={form.barrioId}
+                        onChange={(val) => setForm({ ...form, barrioId: val })}
+                        placeholder="Seleccionar barrio"
+                        error={erroresForm.barrioId}
+                        opciones={barrios.map((b) => ({ valor: b.id, etiqueta: b.nombre }))}
+                      />
                     </div>
                   </div>
                 </div>
@@ -786,15 +764,19 @@ export default function AdminActividades(): React.JSX.Element {
 
                     <div className="inline-flex items-center gap-2">
                       <span className="font-sans text-xs font-semibold text-brand-gray">Visibilidad:</span>
-                      <select
-                        value={form.visibilidad}
-                        onChange={(e) => setForm({ ...form, visibilidad: e.target.value as FormActividad["visibilidad"] })}
-                        className="px-3 py-1.5 rounded-full border border-brand-gray-light bg-brand-white text-xs font-semibold text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-orange"
-                      >
-                        <option value="publica">Pública</option>
-                        <option value="privada">Privada</option>
-                        <option value="oculta">Oculta</option>
-                      </select>
+                      <Selector
+                        variante="compacto"
+                        valor={form.visibilidad}
+                        onChange={(val) =>
+                          setForm({ ...form, visibilidad: val as FormActividad["visibilidad"] })
+                        }
+                        ariaLabel="Visibilidad de la actividad"
+                        opciones={[
+                          { valor: "publica", etiqueta: "Pública" },
+                          { valor: "privada", etiqueta: "Privada" },
+                          { valor: "oculta", etiqueta: "Oculta" }
+                        ]}
+                      />
                     </div>
                   </div>
                 </div>

@@ -13,7 +13,8 @@ import ActividadCard from "../componentes/ActividadCard";
 import CategoriaChip from "../componentes/CategoriaChip";
 import {
   Esqueleto,
-  EstadoError
+  EstadoError,
+  Selector
 } from "../componentes/base";
 import { Search, Map as IconoMapa, X, Check, Compass, RotateCcw } from "lucide-react";
 
@@ -145,21 +146,18 @@ export default function Explorar(): React.JSX.Element {
             </div>
 
             {/* Selector de barrio */}
-            <div className="flex flex-[1] min-w-[200px] items-center gap-2 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
-              <Compass size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
-              <select
-                value={filtros.barrio}
-                onChange={(e) => setBarrio(e.target.value)}
-                className="w-full cursor-pointer bg-transparent font-sans text-sm font-medium text-brand-ink outline-none"
-                aria-label="Filtrar por barrio"
-              >
-                <option value="">Todos los barrios</option>
-                {barrios.map((b) => (
-                  <option key={b.id} value={b.slug}>
-                    {b.nombre}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-[1] min-w-[210px] items-center rounded-full border border-brand-gray-light bg-brand-bg px-4 py-0.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+              <Selector
+                variante="barra"
+                icono={<Compass size={18} />}
+                valor={filtros.barrio}
+                onChange={setBarrio}
+                ariaLabel="Filtrar por barrio"
+                opciones={[
+                  { valor: "", etiqueta: "Todos los barrios" },
+                  ...barrios.map((b) => ({ valor: b.slug, etiqueta: b.nombre }))
+                ]}
+              />
             </div>
 
             {/* Botón directo a Mapa Cultural independiente */}

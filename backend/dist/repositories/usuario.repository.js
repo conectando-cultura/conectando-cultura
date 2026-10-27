@@ -1,26 +1,16 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { supabaseAdmin, exigirSupabase } from "../lib/supabase.js";
+import { ejecutarConsulta, ejecutarComando, aIso, describirErrorMysql } from "../lib/mysql.js";
+import { supabaseAdmin } from "../lib/supabase.js";
+import { replicarEnSupabase } from "../lib/supabase-mirror.js";
 /**
- * Repositorio de usuarios sobre Supabase.
+ * Repositorio de usuarios sobre MySQL local con espejo de respaldo en Supabase.
  *
  * El hash de contraseña (scrypt, formato "sal:hash") se calcula en Node y
- * se guarda en la columna `contrasena_hash`. La columna nunca se selecciona
- * en las lecturas: `mapearUsuario` la espera, no la exige.
+ * se guarda en la columna `contrasena_hash`.
  */
-function describirError(error) {
-    if (!error)
-        return "Error desconocido de Supabase.";
-    if (error.code === "23505")
-        return "Ya existe una cuenta con ese correo electrónico.";
-    if (error.code === "PGRST116")
-        return "Usuario no encontrado.";
-    return error.message || "Error de base de datos.";
-}
-/** Genera un id de usuario. El formato `u<epoch>` es el que espera la tabla. */
 function nuevoId() {
     return `u${Date.now()}`;
 }
-const CAMPOS = "id, nombre, apellido, correo, rol, creado_en";
 function esRolValido(rol) {
     return rol === "admin" || rol === "gestor" || rol === "usuario";
 }
@@ -30,142 +20,155 @@ function mapearUsuario(fila) {
         nombre: fila.nombre,
         apellido: fila.apellido,
         correo: fila.correo,
-        // El hash sólo viene en las lecturas que lo piden explícitamente.
         contrasenaHash: fila.contrasena_hash ?? "",
         rol: esRolValido(fila.rol) ? fila.rol : "usuario",
-        creadoEn: fila.creado_en
+        creadoEn: aIso(fila.creado_en)
     };
 }
 export class UsuarioRepository {
     async buscarPorCorreo(correo) {
-        exigirSupabase();
-        const { data, error } = await supabaseAdmin
-            .from("usuarios")
-            .select(`${CAMPOS}, contrasena_hash`)
-            .eq("correo", correo.trim().toLowerCase())
-            .maybeSingle();
-        if (error)
-            throw new Error(describirError(error));
-        return data ? mapearUsuario(data) : null;
+        try {
+            const filas = await ejecutarConsulta(`SELECT id, nombre, apellido, correo, rol, creado_en, contrasena_hash
+         FROM usuarios
+         WHERE correo = ?
+         LIMIT 1`, [correo.trim().toLowerCase()]);
+            const fila = filas[0];
+            return fila ? mapearUsuario(fila) : null;
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err));
+        }
     }
     async buscarPorId(id) {
-        exigirSupabase();
-        const { data, error } = await supabaseAdmin
-            .from("usuarios")
-            .select(CAMPOS)
-            .eq("id", id)
-            .maybeSingle();
-        if (error)
-            throw new Error(describirError(error));
-        return data ? mapearUsuario(data) : null;
+        try {
+            const filas = await ejecutarConsulta(`SELECT id, nombre, apellido, correo, rol, creado_en
+         FROM usuarios
+         WHERE id = ?
+         LIMIT 1`, [id]);
+            const fila = filas[0];
+            return fila ? mapearUsuario(fila) : null;
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err));
+        }
     }
-    /** El id se genera en Node para no depender del default de la tabla. */
     async crear(datos) {
-        exigirSupabase();
-        const { data, error } = await supabaseAdmin
-            .from("usuarios")
-            .insert({
-            id: nuevoId(),
+        const id = nuevoId();
+        const correoLimpio = datos.correo.trim().toLowerCase();
+        const rol = datos.rol ?? "usuario";
+        const ahora = new Date();
+        try {
+            await ejecutarComando(`INSERT INTO usuarios (id, nombre, apellido, correo, contrasena_hash, rol, creado_en)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`, [id, datos.nombre, datos.apellido, correoLimpio, datos.contrasenaHash, rol, ahora]);
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err, "Ya existe una cuenta con ese correo electrónico."));
+        }
+        replicarEnSupabase("usuarios.crear", () => supabaseAdmin.from("usuarios").upsert({
+            id,
             nombre: datos.nombre,
             apellido: datos.apellido,
-            correo: datos.correo.trim().toLowerCase(),
+            correo: correoLimpio,
             contrasena_hash: datos.contrasenaHash,
-            rol: datos.rol ?? "usuario"
-        })
-            .select(CAMPOS)
-            .single();
-        if (error)
-            throw new Error(describirError(error));
-        return mapearUsuario(data);
+            rol,
+            creado_en: ahora.toISOString()
+        }, { onConflict: "id" }));
+        return {
+            id,
+            nombre: datos.nombre,
+            apellido: datos.apellido,
+            correo: correoLimpio,
+            contrasenaHash: "",
+            rol,
+            creadoEn: ahora.toISOString()
+        };
     }
     async listarTodos() {
-        exigirSupabase();
-        const { data, error } = await supabaseAdmin
-            .from("usuarios")
-            .select(CAMPOS)
-            .order("creado_en", { ascending: true });
-        if (error)
-            throw new Error(describirError(error));
-        return (data ?? []).map(mapearUsuario);
+        try {
+            const filas = await ejecutarConsulta(`SELECT id, nombre, apellido, correo, rol, creado_en
+         FROM usuarios
+         ORDER BY creado_en ASC`);
+            return filas.map(mapearUsuario);
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err));
+        }
     }
     async actualizarRol(id, rol) {
-        exigirSupabase();
-        const { data, error } = await supabaseAdmin
-            .from("usuarios")
-            .update({ rol })
-            .eq("id", id)
-            .select(CAMPOS)
-            .maybeSingle();
-        if (error)
-            throw new Error(describirError(error));
-        return data ? mapearUsuario(data) : null;
+        try {
+            const resultado = await ejecutarComando(`UPDATE usuarios SET rol = ? WHERE id = ?`, [rol, id]);
+            if (resultado.affectedRows === 0)
+                return null;
+            replicarEnSupabase("usuarios.actualizarRol", () => supabaseAdmin.from("usuarios").update({ rol }).eq("id", id));
+            return await this.buscarPorId(id);
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err));
+        }
     }
 }
 /**
- * Repositorio de sesiones sobre Supabase.
- *
- * Antes vivía en un Map en memoria, lo que significaba que reiniciar el
- * backend expulsaba a todos los usuarios. En la tabla, las sesiones
- * sobreviven al reinicio; las vencidas se limpian al consultar.
+ * Repositorio de sesiones sobre MySQL local con espejo en Supabase.
  */
 const DIAS_DE_VIGENCIA = 7;
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
 export class SesionRepository {
     async crear(usuarioId) {
-        exigirSupabase();
         const token = randomUUID().replaceAll("-", "") + randomUUID().replaceAll("-", "");
         const expiraEn = Date.now() + DIAS_DE_VIGENCIA * MS_POR_DIA;
-        const { error } = await supabaseAdmin.from("sesiones").insert({
+        const fechaExpira = new Date(expiraEn);
+        try {
+            await ejecutarComando(`INSERT INTO sesiones (token, usuario_id, expira_en) VALUES (?, ?, ?)`, [token, usuarioId, fechaExpira]);
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err, "Error al crear la sesión."));
+        }
+        replicarEnSupabase("sesiones.crear", () => supabaseAdmin.from("sesiones").upsert({
             token,
             usuario_id: usuarioId,
-            expira_en: new Date(expiraEn).toISOString()
-        });
-        if (error)
-            throw new Error(error.message || "Error al crear la sesión.");
+            expira_en: fechaExpira.toISOString()
+        }, { onConflict: "token" }));
         return { token, usuarioId, expiraEn };
     }
-    /** Devuelve la sesión si sigue vigente; si venció, la borra y devuelve null. */
     async buscarActiva(token) {
-        exigirSupabase();
-        const { data, error } = await supabaseAdmin
-            .from("sesiones")
-            .select("token, usuario_id, expira_en")
-            .eq("token", token)
-            .maybeSingle();
-        if (error)
-            throw new Error(error.message || "Error al verificar la sesión.");
-        if (!data)
-            return null;
-        const fila = data;
-        if (new Date(fila.expira_en).getTime() < Date.now()) {
-            await this.eliminar(token);
-            return null;
+        try {
+            const filas = await ejecutarConsulta(`SELECT token, usuario_id, expira_en FROM sesiones WHERE token = ? LIMIT 1`, [token]);
+            const fila = filas[0];
+            if (!fila)
+                return null;
+            if (new Date(fila.expira_en).getTime() < Date.now()) {
+                await this.eliminar(token);
+                return null;
+            }
+            return { usuarioId: fila.usuario_id };
         }
-        return { usuarioId: fila.usuario_id };
+        catch (err) {
+            throw new Error(describirErrorMysql(err, "Error al verificar la sesión."));
+        }
     }
     async eliminar(token) {
-        exigirSupabase();
-        const { error } = await supabaseAdmin.from("sesiones").delete().eq("token", token);
-        if (error)
-            throw new Error(error.message || "Error al cerrar la sesión.");
+        try {
+            await ejecutarComando(`DELETE FROM sesiones WHERE token = ?`, [token]);
+            replicarEnSupabase("sesiones.eliminar", () => supabaseAdmin.from("sesiones").delete().eq("token", token));
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err, "Error al cerrar la sesión."));
+        }
     }
-    /** Cierra todas las sesiones de un usuario (para el panel admin). */
     async eliminarPorUsuario(usuarioId) {
-        exigirSupabase();
-        const { error } = await supabaseAdmin.from("sesiones").delete().eq("usuario_id", usuarioId);
-        if (error)
-            throw new Error(error.message || "Error al cerrar las sesiones del usuario.");
+        try {
+            await ejecutarComando(`DELETE FROM sesiones WHERE usuario_id = ?`, [usuarioId]);
+            replicarEnSupabase("sesiones.eliminarPorUsuario", () => supabaseAdmin.from("sesiones").delete().eq("usuario_id", usuarioId));
+        }
+        catch (err) {
+            throw new Error(describirErrorMysql(err, "Error al cerrar las sesiones del usuario."));
+        }
     }
-    /** Purga housekeeping: borra las sesiones vencidas. */
     async limpiarVencidas() {
-        exigirSupabase();
-        await supabaseAdmin
-            .from("sesiones")
-            .delete()
-            .lt("expira_en", new Date().toISOString());
+        await ejecutarComando(`DELETE FROM sesiones WHERE expira_en < NOW(3)`);
+        replicarEnSupabase("sesiones.limpiarVencidas", () => supabaseAdmin.from("sesiones").delete().lt("expira_en", new Date().toISOString()));
     }
 }
-/** Token de 32 bytes en hex, por si se necesita fuera de SesionRepository. */
 export function generarToken() {
     return randomBytes(32).toString("hex");
 }

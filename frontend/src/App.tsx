@@ -23,15 +23,15 @@ function Footer(): React.JSX.Element {
     <footer className="bg-brand-ink text-brand-white">
       <div className="mx-auto grid max-w-[1240px] gap-8 px-5 py-8 md:grid-cols-[1.3fr_1fr_1fr] md:gap-10 md:px-8 md:py-10">
         {/* Col 1: Logo oficial, Wordmark e identidad institucional */}
-        <div className="md:border-r md:border-brand-orange-light/20 md:pr-8">
+        <div className="md:pr-8">
           <Link
             to="/"
             className="flex items-center gap-2.5 no-underline group"
           >
             <img
-              src="/logo.png"
+              src="/logo-blanco.png"
               alt="Logo Conectando Cultura"
-              className="h-10 w-10 rounded-full object-cover border border-brand-orange shadow-sm"
+              className="h-10 w-10"
             />
             <span className="font-display text-[26px] md:text-[30px] leading-none tracking-[-1.5px] text-brand-bg drop-shadow-[0_1.3px_1.3px_rgba(0,0,0,0.56)]">
               Conectando Cultura
@@ -46,7 +46,7 @@ function Footer(): React.JSX.Element {
         </div>
 
         {/* Col 2: Barrios y Mapa */}
-        <div className="md:border-r md:border-brand-orange-light/20 md:px-6">
+        <div className="md:px-6">
           <h3 className="font-display text-lg text-brand-white">Navegación</h3>
           <ul className="mt-3 space-y-2">
             {[

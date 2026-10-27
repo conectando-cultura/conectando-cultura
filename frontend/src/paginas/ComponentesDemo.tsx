@@ -7,11 +7,12 @@ import {
   BarraConfirmacion,
   Esqueleto,
   EstadoVacio,
-  EstadoError
+  EstadoError,
+  Selector
 } from "../componentes/base";
 import CategoriaChip from "../componentes/CategoriaChip";
 import PinCategoria from "../componentes/PinCategoria";
-import { Plus, Trash2, Search, Sparkles } from "lucide-react";
+import { Plus, Trash2, Search, Sparkles, MapPin, SlidersHorizontal } from "lucide-react";
 import type { Categoria } from "../tipos";
 
 const CATEGORIAS_MUESTRA: Categoria[] = [
@@ -26,6 +27,8 @@ const CATEGORIAS_MUESTRA: Categoria[] = [
 export default function ComponentesDemo(): React.JSX.Element {
   const [seleccionadas, setSeleccionadas] = useState<string[]>(["1"]);
   const [mostrarBarra, setMostrarBarra] = useState(true);
+  const [barrioDemo, setBarrioDemo] = useState<string>("mataderos");
+  const [ordenDemo, setOrdenDemo] = useState<string>("recientes");
 
   const alternar = (cat: { id?: string }) => {
     if (!cat.id) return;
@@ -94,6 +97,35 @@ export default function ComponentesDemo(): React.JSX.Element {
               multilinea
               placeholder="Escribí sobre la actividad cultural..."
             />
+            <Selector
+              etiqueta="Barrio de la Comuna 9"
+              variante="campo"
+              icono={<MapPin size={16} />}
+              valor={barrioDemo}
+              onChange={setBarrioDemo}
+              opciones={[
+                { valor: "", etiqueta: "Todos los barrios" },
+                { valor: "mataderos", etiqueta: "Mataderos" },
+                { valor: "liniers", etiqueta: "Liniers" },
+                { valor: "parque-avellaneda", etiqueta: "Parque Avellaneda" }
+              ]}
+            />
+            <div>
+              <span className="block font-sans text-xs font-bold uppercase tracking-wider text-brand-gray mb-1.5">
+                Selector compacto (Orden / Rol)
+              </span>
+              <Selector
+                variante="compacto"
+                icono={<SlidersHorizontal size={14} />}
+                valor={ordenDemo}
+                onChange={setOrdenDemo}
+                opciones={[
+                  { valor: "recientes", etiqueta: "Más recientes" },
+                  { valor: "antiguas", etiqueta: "Más antiguas" },
+                  { valor: "nombre_asc", etiqueta: "Nombre (A-Z)" }
+                ]}
+              />
+            </div>
           </div>
         </section>
 

@@ -1,7 +1,7 @@
 # AGENTS.md — Conectando Cultura
 
 > **Proyecto**: Integrador III — Escuela Técnica N°20 DE 20 "Carolina Muzilli" (Polo Educativo de Mataderos).
-> Plataforma sociocultural para vecinos de Mataderos y barrios linderos, CABA.
+> Plataforma sociocultural para vecinos de la Comuna 9 (Liniers, Mataderos y Parque Avellaneda), CABA.
 > **Estado**: Sprints 1-4 completados + Rediseño Croquis + Persistencia primaria en MySQL 8.0+ con Backup y Keep-Alive en Supabase.
 
 ---

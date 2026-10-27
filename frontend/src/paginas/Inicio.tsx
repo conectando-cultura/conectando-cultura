@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { obtenerActividades, obtenerBarrios, obtenerCategorias } from "../api/actividades";
 import type { Actividad, Barrio, Categoria } from "../tipos";
 import ActividadCard from "../componentes/ActividadCard";
-import { Esqueleto, EstadoError } from "../componentes/base";
+import { Esqueleto, EstadoError, Selector } from "../componentes/base";
 import { IconoCategoria } from "../componentes/iconos";
 import { coloresCategoria } from "../utiles/colorCategoria";
 import { useAuth } from "../contexto/AuthContext";
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import estilos from "./Inicio.module.css";
 
-// 6 Barrios de Comuna 9 y aledaños con imágenes y descripciones culturales
+// 3 Barrios de la Comuna 9 (Liniers, Mataderos y Parque Avellaneda) con imágenes y descripciones culturales
 interface BarrioMosaicData {
   nombre: string;
   slug: string;
@@ -28,40 +28,22 @@ interface BarrioMosaicData {
 
 const BARRIOS_COMUNA_9: BarrioMosaicData[] = [
   {
-    nombre: "Mataderos",
-    slug: "mataderos",
-    descripcion: "Cuna de la tradición gauchesca, la histórica feria dominguera, peñas y centros gauchescos.",
-    imagen: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=800&q=80"
-  },
-  {
     nombre: "Liniers",
     slug: "liniers",
     descripcion: "Punto neurálgico de encuentro, ferias populares, gastronomía diversa y vida comunitaria.",
     imagen: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80"
   },
   {
-    nombre: "Vélez Sarsfield",
-    slug: "velez-sarsfield",
-    descripcion: "Calles arboladas, clubes sociales, memoria barrial e identidad comunitaria porteña.",
-    imagen: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80"
+    nombre: "Mataderos",
+    slug: "mataderos",
+    descripcion: "Cuna de la tradición gauchesca, la histórica feria dominguera, peñas y centros gauchescos.",
+    imagen: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=800&q=80"
   },
   {
     nombre: "Parque Avellaneda",
     slug: "parque-avellaneda",
     descripcion: "El emblemático parque, el Centro de Artes Escénicas La Casona y gestión vecinal asociada.",
     imagen: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    nombre: "Villa Lugano",
-    slug: "villa-lugano",
-    descripcion: "Espacios culturales autogestivos, centros juveniles, murales y memoria colectiva del sur.",
-    imagen: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    nombre: "Villa Riachuelo",
-    slug: "villa-riachuelo",
-    descripcion: "Tranquilidad barrial, áreas recreativas, orillas del Riachuelo y fuerte arraigo de vecinos.",
-    imagen: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
   }
 ];
 
@@ -195,38 +177,35 @@ export default function Inicio(): React.JSX.Element {
 
             {/* Selector de Barrio */}
             <div className={estilos.campoWrapper}>
-              <MapPin size={18} className={estilos.iconoCampo} aria-hidden="true" />
-              <select
-                value={barrioSeleccionado}
-                onChange={(e) => setBarrioSeleccionado(e.target.value)}
-                className={estilos.selectCampo}
-                aria-label="Filtrar por barrio"
-              >
-                <option value="">Todos los barrios</option>
-                {barrios.map((b) => (
-                  <option key={b.id} value={b.slug}>
-                    {b.nombre}
-                  </option>
-                ))}
-              </select>
+              <Selector
+                variante="barra"
+                icono={<MapPin size={18} />}
+                valor={barrioSeleccionado}
+                onChange={setBarrioSeleccionado}
+                ariaLabel="Filtrar por barrio"
+                opciones={[
+                  { valor: "", etiqueta: "Todos los barrios" },
+                  ...barrios.map((b) => ({ valor: b.slug, etiqueta: b.nombre }))
+                ]}
+              />
             </div>
 
             {/* Selector de Categoría */}
             <div className={estilos.campoWrapper}>
-              <Tag size={18} className={estilos.iconoCampo} aria-hidden="true" />
-              <select
-                value={categoriaSeleccionada}
-                onChange={(e) => setCategoriaSeleccionada(e.target.value)}
-                className={estilos.selectCampo}
-                aria-label="Filtrar por categoría cultural"
-              >
-                <option value="">Todas las categorías</option>
-                {categorias.map((cat) => (
-                  <option key={cat.id} value={cat.slug || cat.id}>
-                    {cat.nombre}
-                  </option>
-                ))}
-              </select>
+              <Selector
+                variante="barra"
+                icono={<Tag size={18} />}
+                valor={categoriaSeleccionada}
+                onChange={setCategoriaSeleccionada}
+                ariaLabel="Filtrar por categoría cultural"
+                opciones={[
+                  { valor: "", etiqueta: "Todas las categorías" },
+                  ...categorias.map((cat) => ({
+                    valor: cat.slug || cat.id,
+                    etiqueta: cat.nombre
+                  }))
+                ]}
+              />
             </div>
 
             {/* Botón de búsqueda */}
@@ -327,7 +306,7 @@ export default function Inicio(): React.JSX.Element {
         )}
       </section>
 
-      {/* ── 4. Mosaico de 6 Barrios Comuna 9 (Croquis DestinationsGrid style) ── */}
+      {/* ── 4. Mosaico de 3 Barrios Comuna 9 (Croquis DestinationsGrid style) ── */}
       <section className={estilos.seccion}>
         <div className={estilos.cabeceraSeccion}>
           <h2 className={estilos.tituloSeccion}>

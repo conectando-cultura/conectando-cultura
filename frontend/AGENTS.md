@@ -24,7 +24,7 @@ Contextual governance for agents modifying `Conectando-Cultura/frontend/`. Every
 |-------|-----------|---------------|-----------------|
 | **Phase 0** | `../specs/fase-0-fundamentos.spec.md` | Tailwind CSS v4 setup, Google Fonts (`Kavoon`, `Poppins`, `Montserrat`), `tokens.css` alignment, `Resena` type in `tipos.ts`, legacy page cleanup | `croquis-design-system`, `typescript-magician` |
 | **Phase 1** | `../specs/fase-1-layout-base.spec.md` | `Navbar.tsx`, `App.tsx` (`Layout`, `Footer`, 404), `componentes/base/*` primitives, `ComponentesDemo.tsx` | `croquis-design-system`, `domain-ui-adapters`, `typescript-magician` |
-| **Phase 2** | `../specs/fase-2-inicio-barrios.spec.md` | `ActividadCard.tsx`, `CategoriaChip.tsx`, `Inicio.tsx` (Hero + pill search, 9 Categories, Featured Activities, 6 Barrios mosaic, Why Us, CTA) | `croquis-design-system`, `domain-ui-adapters`, `typescript-magician` |
+| **Phase 2** | `../specs/fase-2-inicio-barrios.spec.md` | `ActividadCard.tsx`, `CategoriaChip.tsx`, `Inicio.tsx` (Hero + pill search, 9 Categories, Featured Activities, 3 Barrios mosaic, Why Us, CTA) | `croquis-design-system`, `domain-ui-adapters`, `typescript-magician` |
 | **Phase 3** | `../specs/fase-3-explorar-detalle.spec.md` | `Explorar.tsx` split catalog, `MapaLeaflet.tsx`, `PinCategoria.tsx`, `DetalleActividad.tsx` (`DesignHero`, `DetailIntro`, `Antes de ir`, mini map) | `croquis-design-system`, `domain-ui-adapters`, `typescript-magician` |
 | **Phase 4** | `../specs/fase-4-auth-admin.spec.md` | `Login.tsx`, `Registro.tsx`, `Bienvenido.tsx`, `Preferencias.tsx`, `LayoutPanel.tsx`, `Dashboard.tsx`, `AdminActividades.tsx`, `AdminUsuarios.tsx` | `croquis-design-system`, `domain-ui-adapters`, `typescript-magician` |
 

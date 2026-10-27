@@ -1070,7 +1070,7 @@ flowchart TD
 
     %% Selección de Localidad
 
-    Localidad \--\> ListaLocalidades\["Lista de Localidades\\n(Mataderos y alrededores)"\]
+    Localidad \--\> ListaLocalidades\["Lista de Localidades\\n(Comuna 9: Liniers, Mataderos y Parque Avellaneda)"\]
 
     %% Conexiones de filtrado
 
@@ -1761,7 +1761,7 @@ Tras la planificación detallada de los sprints y la identificación de las nece
 ### ***1\. Análisis del sistema***
 
 * Funcionalidades principales: Mapa interactivo geolocalizado con Leaflet.js, sistema de autenticación de usuarios, panel administrativo para gestión de contenidos (CRUD), filtros por categoría y sistema de notificaciones automáticas por correo electrónico.  
-* Tipo de usuarios: Vecinos de Mataderos y barrios aledaños (18-65 años), organizadores de actividades culturales y administradores del sistema.  
+* Tipo de usuarios: Vecinos de la Comuna 9 — Liniers, Mataderos y Parque Avellaneda — (18-65 años), organizadores de actividades culturales y administradores del sistema.  
 * Nivel de complejidad: Moderado-Alto, debido a la necesidad de una API propia que gestione la base de datos y la interactividad en tiempo real del mapa.  
 * Restricciones: Disponibilidad de 1 a 3 horas semanales por integrante y necesidad de utilizar servicios de despliegue gratuitos.
 
@@ -1784,7 +1784,7 @@ El equipo ha decidido unánimemente implementar una arquitectura basada en React
 La elección de esta arquitectura y stack tecnológico se fundamenta en:
 
 * Modularización: React permite dividir la interfaz en componentes reutilizables (Mapa, Login, Fichas de eventos). Esto es vital para nuestro equipo, ya que permite que un integrante desarrolle el mapa mientras otro trabaja en el panel admin sin pisar el código del otro.  
-* API REST: Node.js permite construir una API robusta que centraliza la lógica. El Panel Admin utilizará esta API para realizar operaciones CRUD sobre los datos de Mataderos y barrios aledaños, asegurando que la información esté siempre actualizada.  
+* API REST: Node.js permite construir una API robusta que centraliza la lógica. El Panel Admin utilizará esta API para realizar operaciones CRUD sobre los datos de la Comuna 9 (Liniers, Mataderos y Parque Avellaneda), asegurando que la información esté siempre actualizada.  
 * Capacidades del equipo: Al separar frontend y backend, podemos asignar roles según las fortalezas de cada uno (ej. Juan en Backend, Dante y Kevin en Frontend), optimizando las pocas horas semanales disponibles.  
 * Mantenimiento futuro: Esta estructura permite escalar el proyecto a otros barrios de la Ciudad de Buenos Aires simplemente ampliando la base de datos y los endpoints de la API, sin necesidad de reescribir la interfaz.
 
