@@ -16,7 +16,7 @@ import {
   EstadoError,
   Selector
 } from "../componentes/base";
-import { Search, Map as IconoMapa, X, Check, Compass, RotateCcw } from "lucide-react";
+import { Search, Map as IconoMapa, MapPin, X, Check, Compass, RotateCcw } from "lucide-react";
 
 export default function Explorar(): React.JSX.Element {
   const {
@@ -115,15 +115,24 @@ export default function Explorar(): React.JSX.Element {
 
   const todasLasCategorias = filtros.categorias.length === 0;
 
+  const rutaMapaSincronizada = useMemo(() => {
+    const params = new URLSearchParams();
+    if (filtros.q.trim()) params.set("q", filtros.q.trim());
+    if (filtros.barrio) params.set("barrio", filtros.barrio);
+    if (filtros.categorias.length > 0) params.set("categorias", filtros.categorias.join(","));
+    const qs = params.toString();
+    return qs ? `/mapa?${qs}` : "/mapa";
+  }, [filtros.q, filtros.barrio, filtros.categorias]);
+
   return (
     <div className="w-full bg-brand-bg py-6 md:py-8 font-body text-brand-ink">
       <div className="mx-auto max-w-[1400px] px-4 md:px-8">
         
         {/* ── Barra Superior de Búsqueda y Filtros de Barrio ── */}
-        <section className="mb-6">
+        <section className="mb-5">
           <div className="flex flex-col gap-3 rounded-3xl border border-brand-gray-light bg-brand-white p-3 shadow-[0_6px_11px_rgba(0,0,0,0.06)] md:flex-row md:items-center md:rounded-full md:p-2.5">
-            {/* Input de Búsqueda por texto (ampliado para aprovechar el espacio) */}
-            <div className="flex flex-[2] items-center gap-3 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+            {/* Input de Búsqueda por texto */}
+            <div className="flex flex-1 min-w-0 items-center gap-3 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
               <Search size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
               <input
                 type="search"
@@ -146,10 +155,10 @@ export default function Explorar(): React.JSX.Element {
             </div>
 
             {/* Selector de barrio */}
-            <div className="flex flex-[1] min-w-[210px] items-center rounded-full border border-brand-gray-light bg-brand-bg px-4 py-0.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+            <div className="flex w-full md:w-64 shrink-0 items-center rounded-full border border-brand-gray-light bg-brand-bg px-4 py-0.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
               <Selector
                 variante="barra"
-                icono={<Compass size={18} />}
+                icono={<MapPin size={18} />}
                 valor={filtros.barrio}
                 onChange={setBarrio}
                 ariaLabel="Filtrar por barrio"
@@ -162,8 +171,8 @@ export default function Explorar(): React.JSX.Element {
 
             {/* Botón directo a Mapa Cultural independiente */}
             <Link
-              to="/mapa"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 font-sans text-xs font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-orange-light shrink-0 no-underline"
+              to={rutaMapaSincronizada}
+              className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 font-sans text-xs font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-orange-light shrink-0 no-underline"
               title="Abrir mapa cultural en pantalla completa"
             >
               <IconoMapa size={15} />
@@ -173,7 +182,7 @@ export default function Explorar(): React.JSX.Element {
         </section>
 
         {/* ── Tira de Filtros de Categoría (CategoriaChip strip) ── */}
-        <section className="mb-6">
+        <section className="mb-5">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
             <button
               type="button"

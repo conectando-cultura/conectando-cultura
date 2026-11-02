@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { obtenerActividad, obtenerActividades } from "../api/actividades";
 import type { Actividad } from "../tipos";
 import { useAuth } from "../contexto/AuthContext";
@@ -17,12 +17,15 @@ import {
   MapPin,
   Pencil,
   Check,
-  ChevronRight
+  ChevronRight,
+  ArrowLeft,
+  Home
 } from "lucide-react";
 import estilos from "./DetalleActividad.module.css";
 
 export default function DetalleActividad(): React.JSX.Element {
   const { barrio, slug } = useParams<{ barrio: string; slug: string }>();
+  const navigate = useNavigate();
   const { usuario } = useAuth();
 
   const [actividad, setActividad] = useState<Actividad | null>(null);
@@ -107,9 +110,83 @@ export default function DetalleActividad(): React.JSX.Element {
 
   return (
     <article className="w-full bg-brand-bg font-body text-brand-ink">
-      
+      {/* ── Barra superior contextual: Volver + Miga de pan estructurada ── */}
+      <div className="bg-brand-white border-b border-brand-gray-light">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-8">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate("/explorar");
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-gray-light bg-brand-bg px-3.5 py-1.5 font-sans text-xs font-semibold text-brand-ink transition-colors hover:border-brand-orange hover:text-brand-orange cursor-pointer shrink-0"
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              <span>Volver</span>
+            </button>
+
+            <span className="hidden sm:inline-block h-4 w-px bg-brand-gray-light" aria-hidden="true" />
+
+            <nav aria-label="Miga de pan" className="min-w-0">
+              <ol className="flex flex-wrap items-center gap-1.5 text-xs font-sans text-brand-muted">
+                <li>
+                  <Link
+                    to="/"
+                    className="inline-flex items-center gap-1 text-brand-gray hover:text-brand-orange transition-colors no-underline"
+                  >
+                    <Home size={13} aria-hidden="true" />
+                    <span>Inicio</span>
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="text-brand-muted/60">
+                  <ChevronRight size={13} />
+                </li>
+                <li>
+                  <Link
+                    to="/explorar"
+                    className="text-brand-gray hover:text-brand-orange transition-colors no-underline"
+                  >
+                    Explorar
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="text-brand-muted/60">
+                  <ChevronRight size={13} />
+                </li>
+                <li>
+                  <Link
+                    to={`/explorar?barrio=${actividad.barrio.slug}`}
+                    className="text-brand-gray hover:text-brand-orange transition-colors no-underline"
+                  >
+                    {actividad.barrio.nombre}
+                  </Link>
+                </li>
+                <li aria-hidden="true" className="text-brand-muted/60">
+                  <ChevronRight size={13} />
+                </li>
+                <li
+                  aria-current="page"
+                  className="font-semibold text-brand-ink truncate max-w-[180px] sm:max-w-[260px] md:max-w-[360px]"
+                  title={actividad.nombre}
+                >
+                  {actividad.nombre}
+                </li>
+              </ol>
+            </nav>
+          </div>
+
+          <span className="hidden md:inline-flex items-center gap-1.5 font-sans text-xs font-semibold text-brand-muted">
+            <MapPin size={13} className="text-brand-orange" aria-hidden="true" />
+            <span>Comuna 9 · {actividad.barrio.nombre}</span>
+          </span>
+        </div>
+      </div>
+
       {/* ── DesignHero: Portada inmersiva con gradiente y título Kavoon ── */}
-      <section className="relative flex h-[380px] md:h-[500px] items-center justify-center overflow-hidden bg-brand-ink">
+      <section className="relative flex h-[360px] md:h-[460px] items-center justify-center overflow-hidden bg-brand-ink">
         {actividad.imagenUrl ? (
           <img
             src={actividad.imagenUrl}
@@ -135,27 +212,10 @@ export default function DetalleActividad(): React.JSX.Element {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-black/75" />
 
         {/* Contenido centrado del Hero */}
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pt-8 text-center">
-          {/* Miga de pan sutil integrada */}
-          <nav
-            aria-label="Miga de pan"
-            className="mb-4 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full bg-black/40 px-4 py-1.5 text-xs font-sans text-brand-white backdrop-blur-sm"
-          >
-            <Link to="/" className="text-white/80 hover:text-white transition-colors hover:no-underline">
-              Inicio
-            </Link>
-            <ChevronRight size={13} className="text-white/60" aria-hidden="true" />
-            <Link to="/explorar" className="text-white/80 hover:text-white transition-colors hover:no-underline">
-              Explorar
-            </Link>
-            <ChevronRight size={13} className="text-white/60" aria-hidden="true" />
-            <Link
-              to={`/explorar?barrio=${actividad.barrio.slug}`}
-              className="text-white/80 hover:text-white transition-colors hover:no-underline"
-            >
-              {actividad.barrio.nombre}
-            </Link>
-          </nav>
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-5 text-center">
+          <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-4 py-1 text-xs font-sans font-semibold uppercase tracking-wider text-brand-orange-light backdrop-blur-xs">
+            {actividad.barrio.nombre} · {actividad.categoria.nombre}
+          </span>
 
           {/* Título en tipografía display Kavoon */}
           <h1 className="mx-auto max-w-4xl font-display text-3xl md:text-5xl lg:text-6xl leading-tight text-white drop-shadow-md">

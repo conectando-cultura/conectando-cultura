@@ -26,7 +26,7 @@ const CATEGORIAS_MUESTRA: Categoria[] = [
 
 export default function ComponentesDemo(): React.JSX.Element {
   const [seleccionadas, setSeleccionadas] = useState<string[]>(["1"]);
-  const [mostrarBarra, setMostrarBarra] = useState(true);
+  const [mostrarBarra, setMostrarBarra] = useState(false);
   const [barrioDemo, setBarrioDemo] = useState<string>("mataderos");
   const [ordenDemo, setOrdenDemo] = useState<string>("recientes");
 
@@ -183,21 +183,21 @@ export default function ComponentesDemo(): React.JSX.Element {
           </div>
         </section>
 
-        {/* Barra de confirmación */}
+        {/* Modal de confirmación */}
         <section className="bg-brand-white rounded-3xl p-6 md:p-8 border border-brand-gray-light shadow-[0_6px_11px_rgba(0,0,0,0.1)]">
-          <h2 className="font-display text-2xl text-brand-ink mb-6">Barra de Confirmación</h2>
-          {mostrarBarra ? (
+          <h2 className="font-display text-2xl text-brand-ink mb-6">Modal de Confirmación</h2>
+          <Boton variante="peligro" onClick={() => setMostrarBarra(true)}>
+            Probar modal de desactivación
+          </Boton>
+          {mostrarBarra && (
             <BarraConfirmacion
+              titulo="Desactivar actividad"
               mensaje="¿Desactivar esta actividad? Dejará de ser visible para los vecinos."
               textoConfirmar="Desactivar"
               esPeligro
               onConfirmar={() => setMostrarBarra(false)}
               onCancelar={() => setMostrarBarra(false)}
             />
-          ) : (
-            <Boton variante="secundario" onClick={() => setMostrarBarra(true)}>
-              Volver a mostrar barra
-            </Boton>
           )}
         </section>
 

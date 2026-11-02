@@ -47,6 +47,73 @@ function mapearUsuario(fila: FilaUsuarioMysql): Usuario {
   };
 }
 
+/**
+ * Garantiza que el registro padre en `usuarios` exista en Supabase (con el mismo
+ * `id` de MySQL) antes de replicar tablas hijas como `sesiones`.
+ * Si en Supabase aún no se corrió la migración 003 y el constraint `usuarios_rol_valido`
+ * rechaza el rol `'gestor'`, reintenta con `'usuario'` como fallback de respaldo.
+ */
+export async function asegurarUsuarioEnSupabase(
+  usuarioId: string
+): Promise<{ error: { message?: string } | null }> {
+  const filas = await ejecutarConsulta<FilaUsuarioMysql[]>(
+    `SELECT id, nombre, apellido, correo, contrasena_hash, rol, creado_en
+     FROM usuarios
+     WHERE id = ?
+     LIMIT 1`,
+    [usuarioId]
+  );
+
+  const fila = filas[0];
+  if (!fila) {
+    return { error: { message: `Usuario ${usuarioId} no encontrado en MySQL.` } };
+  }
+
+  const correoLimpio = fila.correo.trim().toLowerCase();
+  const rol: Rol = esRolValido(fila.rol) ? fila.rol : "usuario";
+
+  // Si existe otro registro remoto con el mismo correo pero distinto ID, eliminarlo primero
+  const { data: existenteCorreo } = await supabaseAdmin
+    .from("usuarios")
+    .select("id")
+    .eq("correo", correoLimpio)
+    .neq("id", fila.id);
+
+  if (existenteCorreo && existenteCorreo.length > 0) {
+    await supabaseAdmin
+      .from("usuarios")
+      .delete()
+      .in(
+        "id",
+        existenteCorreo.map((u) => u.id)
+      );
+  }
+
+  const payload = {
+    id: fila.id,
+    nombre: fila.nombre,
+    apellido: fila.apellido,
+    correo: correoLimpio,
+    contrasena_hash: fila.contrasena_hash ?? "",
+    rol,
+    creado_en: aIso(fila.creado_en)
+  };
+
+  const res = await supabaseAdmin.from("usuarios").upsert(payload, { onConflict: "id" });
+
+  if (
+    res.error &&
+    rol === "gestor" &&
+    (res.error.message ?? "").includes("usuarios_rol_valido")
+  ) {
+    return await supabaseAdmin
+      .from("usuarios")
+      .upsert({ ...payload, rol: "usuario" }, { onConflict: "id" });
+  }
+
+  return res;
+}
+
 export class UsuarioRepository {
   async buscarPorCorreo(correo: string): Promise<Usuario | null> {
     try {
@@ -98,20 +165,7 @@ export class UsuarioRepository {
       );
     }
 
-    replicarEnSupabase("usuarios.crear", () =>
-      supabaseAdmin.from("usuarios").upsert(
-        {
-          id,
-          nombre: datos.nombre,
-          apellido: datos.apellido,
-          correo: correoLimpio,
-          contrasena_hash: datos.contrasenaHash,
-          rol,
-          creado_en: ahora.toISOString()
-        },
-        { onConflict: "id" }
-      )
-    );
+    replicarEnSupabase("usuarios.crear", () => asegurarUsuarioEnSupabase(id));
 
     return {
       id,
@@ -145,9 +199,7 @@ export class UsuarioRepository {
       );
       if (resultado.affectedRows === 0) return null;
 
-      replicarEnSupabase("usuarios.actualizarRol", () =>
-        supabaseAdmin.from("usuarios").update({ rol }).eq("id", id)
-      );
+      replicarEnSupabase("usuarios.actualizarRol", () => asegurarUsuarioEnSupabase(id));
 
       return await this.buscarPorId(id);
     } catch (err) {
@@ -184,16 +236,20 @@ export class SesionRepository {
       throw new Error(describirErrorMysql(err, "Error al crear la sesión."));
     }
 
-    replicarEnSupabase("sesiones.crear", () =>
-      supabaseAdmin.from("sesiones").upsert(
+    replicarEnSupabase("sesiones.crear", async () => {
+      const resUsuario = await asegurarUsuarioEnSupabase(usuarioId);
+      if (resUsuario.error) {
+        return resUsuario;
+      }
+      return await supabaseAdmin.from("sesiones").upsert(
         {
           token,
           usuario_id: usuarioId,
           expira_en: fechaExpira.toISOString()
         },
         { onConflict: "token" }
-      )
-    );
+      );
+    });
 
     return { token, usuarioId, expiraEn };
   }

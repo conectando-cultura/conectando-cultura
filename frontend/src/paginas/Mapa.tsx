@@ -135,15 +135,24 @@ export default function Mapa(): React.JSX.Element {
     return actividades.find((a) => a.id === actividadSeleccionadaId) || null;
   }, [actividades, actividadSeleccionadaId]);
 
+  const rutaExplorarSincronizada = useMemo(() => {
+    const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
+    if (barrio) params.set("barrio", barrio);
+    if (categoriasSeleccionadas.length > 0) params.set("categorias", categoriasSeleccionadas.join(","));
+    const qs = params.toString();
+    return qs ? `/explorar?${qs}` : "/explorar";
+  }, [q, barrio, categoriasSeleccionadas]);
+
   return (
-    <div className="w-full bg-brand-bg py-5 md:py-7 font-body text-brand-ink min-h-[calc(100vh-140px)] flex flex-col">
+    <div className="w-full bg-brand-bg py-6 md:py-8 font-body text-brand-ink min-h-[calc(100vh-140px)] flex flex-col">
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-8 flex-1 flex flex-col">
 
         {/* ── Encabezado y Barra de Búsqueda Superior ── */}
-        <section className="mb-4">
+        <section className="mb-5">
           <div className="flex flex-col gap-3 rounded-3xl border border-brand-gray-light bg-brand-white p-3 shadow-[0_6px_11px_rgba(0,0,0,0.06)] md:flex-row md:items-center md:rounded-full md:p-2.5">
             {/* Input de Búsqueda */}
-            <div className="flex flex-1 items-center gap-3 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+            <div className="flex flex-1 min-w-0 items-center gap-3 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
               <Search size={18} className="text-brand-orange shrink-0" aria-hidden="true" />
               <input
                 type="search"
@@ -166,7 +175,7 @@ export default function Mapa(): React.JSX.Element {
             </div>
 
             {/* Selector de Barrio */}
-            <div className="flex items-center rounded-full border border-brand-gray-light bg-brand-bg px-4 py-0.5 md:w-64 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
+            <div className="flex w-full md:w-64 shrink-0 items-center rounded-full border border-brand-gray-light bg-brand-bg px-4 py-0.5 transition-colors focus-within:border-brand-orange focus-within:bg-brand-white">
               <Selector
                 variante="barra"
                 icono={<MapPin size={18} />}
@@ -182,18 +191,18 @@ export default function Mapa(): React.JSX.Element {
 
             {/* Botón de acceso directo al Catálogo */}
             <Link
-              to="/explorar"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-gray-light bg-brand-bg px-4 py-2 font-sans text-xs font-semibold text-brand-gray hover:border-brand-orange hover:text-brand-ink hover:bg-brand-white transition-all shrink-0"
+              to={rutaExplorarSincronizada}
+              className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 font-sans text-xs font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-orange-light shrink-0 no-underline"
               title="Ir a la vista de lista completa"
             >
-              <LayoutGrid size={15} className="text-brand-orange" />
-              <span>Ver en catálogo</span>
+              <LayoutGrid size={15} />
+              <span>Ver en Catálogo</span>
             </Link>
           </div>
         </section>
 
         {/* ── Tira de Filtros de Categoría ── */}
-        <section className="mb-4">
+        <section className="mb-5">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
             <button
               type="button"

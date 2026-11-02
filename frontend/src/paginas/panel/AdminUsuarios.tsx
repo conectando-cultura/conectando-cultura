@@ -242,9 +242,10 @@ export default function AdminUsuarios(): React.JSX.Element {
           </div>
         )}
 
-        {/* Barra de Confirmación: Cambio de Rol */}
+        {/* Modal de Confirmación: Cambio de Rol */}
         {cambioPendiente && (
           <BarraConfirmacion
+            titulo="Confirmar cambio de rol"
             mensaje={
               cambioPendiente.nuevoRol === "gestor"
                 ? `${cambioPendiente.usuario.nombre} podrá crear, editar y desactivar actividades. ¿Darle rol de gestor?`
@@ -258,9 +259,10 @@ export default function AdminUsuarios(): React.JSX.Element {
           />
         )}
 
-        {/* Barra de Confirmación: Cierre de Sesiones */}
+        {/* Modal de Confirmación: Cierre de Sesiones */}
         {cierrePendiente && (
           <BarraConfirmacion
+            titulo="Revocar sesiones activas"
             mensaje={`Se revocarán todas las sesiones activas de ${cierrePendiente.nombre}. ¿Cerrar sesiones?`}
             onConfirmar={confirmarCierreSesiones}
             onCancelar={() => setCierrePendiente(null)}

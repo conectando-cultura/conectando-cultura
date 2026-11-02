@@ -122,6 +122,13 @@ interface FilaUsuarioSync extends RowDataPacket {
   creado_en: Date | string;
 }
 
+interface FilaSesionSync extends RowDataPacket {
+  token: string;
+  usuario_id: string;
+  expira_en: Date | string;
+  creado_en: Date | string;
+}
+
 interface FilaActividadSync extends RowDataPacket {
   id: string;
   nombre: string;
@@ -442,6 +449,7 @@ export async function sincronizarMysqlASupabase(): Promise<ResumenSincronizacion
     barrios,
     categorias,
     usuarios,
+    sesiones,
     actividades,
     preferencias,
     favoritos,
@@ -456,6 +464,9 @@ export async function sincronizarMysqlASupabase(): Promise<ResumenSincronizacion
     ),
     ejecutarConsulta<FilaUsuarioSync[]>(
       `SELECT id, nombre, apellido, correo, contrasena_hash, rol, creado_en FROM usuarios`
+    ),
+    ejecutarConsulta<FilaSesionSync[]>(
+      `SELECT token, usuario_id, expira_en, creado_en FROM sesiones WHERE expira_en > NOW(3)`
     ),
     ejecutarConsulta<FilaActividadSync[]>(
       `SELECT
@@ -479,22 +490,129 @@ export async function sincronizarMysqlASupabase(): Promise<ResumenSincronizacion
     )
   ]);
 
-  if (barrios.length > 0) {
-    const slugsVigentes = barrios.map((b) => b.slug);
-    const { data: barriosRemotos } = await supabaseAdmin
-      .from("barrios")
-      .select("id, slug");
+  // ── Reconciliación previa en Supabase por claves naturales (slug / nombre / correo) ──
+  // En migraciones iniciales (001_initial_schema.sql), categorias y actividades usaron
+  // gen_random_uuid() sin IDs determinísticos, mientras que MySQL tiene UUIDs fijos.
+  // Si existe una fila en Supabase con el mismo slug o nombre pero distinto UUID,
+  // un upsert por `id` dispara `duplicate key value violates unique constraint`.
+  const [
+    barriosRemotosRes,
+    categoriasRemotasRes,
+    usuariosRemotosRes,
+    actividadesRemotasRes
+  ] = await Promise.all([
+    supabaseAdmin.from("barrios").select("id, nombre, slug"),
+    supabaseAdmin.from("categorias").select("id, nombre, slug"),
+    supabaseAdmin.from("usuarios").select("id, correo"),
+    supabaseAdmin.from("actividades").select("id, slug, barrio_id, categoria_id")
+  ]);
 
-    if (barriosRemotos && barriosRemotos.length > 0) {
-      const idsObsoletos = barriosRemotos
-        .filter((b) => !slugsVigentes.includes(b.slug))
-        .map((b) => b.id);
+  const barriosRemotos = barriosRemotosRes.data ?? [];
+  const categoriasRemotas = categoriasRemotasRes.data ?? [];
+  const usuariosRemotos = usuariosRemotosRes.data ?? [];
+  const actividadesRemotas = actividadesRemotasRes.data ?? [];
 
-      if (idsObsoletos.length > 0) {
-        await supabaseAdmin.from("barrios").delete().in("id", idsObsoletos);
-      }
+  // 1. Detectar barrios y categorías remotos cuyos IDs difieren de MySQL o son obsoletos
+  const slugsBarriosMysql = new Set(barrios.map((b) => b.slug));
+  const nombresBarriosMysql = new Set(barrios.map((b) => b.nombre));
+  const idsBarriosMysql = new Set(barrios.map((b) => b.id));
+
+  const idsBarriosConflicto = barriosRemotos
+    .filter(
+      (b) =>
+        !slugsBarriosMysql.has(b.slug) ||
+        (!idsBarriosMysql.has(b.id) &&
+          (slugsBarriosMysql.has(b.slug) || nombresBarriosMysql.has(b.nombre)))
+    )
+    .map((b) => b.id);
+
+  const slugsCategoriasMysql = new Set(categorias.map((c) => c.slug));
+  const nombresCategoriasMysql = new Set(categorias.map((c) => c.nombre));
+  const idsCategoriasMysql = new Set(categorias.map((c) => c.id));
+
+  const idsCategoriasConflicto = categoriasRemotas
+    .filter(
+      (c) =>
+        !slugsCategoriasMysql.has(c.slug) ||
+        (!idsCategoriasMysql.has(c.id) &&
+          (slugsCategoriasMysql.has(c.slug) || nombresCategoriasMysql.has(c.nombre)))
+    )
+    .map((c) => c.id);
+
+  // 2. Detectar usuarios remotos con mismo correo pero distinto id
+  const correosUsuariosMysql = new Set(usuarios.map((u) => u.correo.toLowerCase()));
+  const idsUsuariosMysql = new Set(usuarios.map((u) => u.id));
+  const idsUsuariosConflicto = usuariosRemotos
+    .filter((u) => !idsUsuariosMysql.has(u.id) && correosUsuariosMysql.has(u.correo.toLowerCase()))
+    .map((u) => u.id);
+
+  // 3. Detectar actividades remotas que referencian barrios/categorías en conflicto
+  //    o que colisionan en UNIQUE (slug, barrio_id) con distinto id
+  const clavesActividadesMysql = new Set(actividades.map((a) => `${a.slug}::${a.barrio_id}`));
+  const idsActividadesMysql = new Set(actividades.map((a) => a.id));
+  const setBarriosConflicto = new Set(idsBarriosConflicto);
+  const setCategoriasConflicto = new Set(idsCategoriasConflicto);
+
+  const idsActividadesConflicto = actividadesRemotas
+    .filter(
+      (a) =>
+        setBarriosConflicto.has(a.barrio_id) ||
+        setCategoriasConflicto.has(a.categoria_id) ||
+        (!idsActividadesMysql.has(a.id) &&
+          clavesActividadesMysql.has(`${a.slug}::${a.barrio_id}`))
+    )
+    .map((a) => a.id);
+
+  // Eliminar en orden inverso de FK cualquier registro remoto con UUID desalineado
+  if (idsActividadesConflicto.length > 0) {
+    const { error: errActDel } = await supabaseAdmin
+      .from("actividades")
+      .delete()
+      .in("id", idsActividadesConflicto);
+    if (errActDel) {
+      throw new Error(
+        `Error al limpiar actividades desalineadas en Supabase: ${errActDel.message}`
+      );
     }
+  }
 
+  if (idsUsuariosConflicto.length > 0) {
+    const { error: errUsuDel } = await supabaseAdmin
+      .from("usuarios")
+      .delete()
+      .in("id", idsUsuariosConflicto);
+    if (errUsuDel) {
+      throw new Error(
+        `Error al limpiar usuarios desalineados en Supabase: ${errUsuDel.message}`
+      );
+    }
+  }
+
+  if (idsCategoriasConflicto.length > 0) {
+    const { error: errCatDel } = await supabaseAdmin
+      .from("categorias")
+      .delete()
+      .in("id", idsCategoriasConflicto);
+    if (errCatDel) {
+      throw new Error(
+        `Error al limpiar categorías desalineadas en Supabase: ${errCatDel.message}`
+      );
+    }
+  }
+
+  if (idsBarriosConflicto.length > 0) {
+    const { error: errBarDel } = await supabaseAdmin
+      .from("barrios")
+      .delete()
+      .in("id", idsBarriosConflicto);
+    if (errBarDel) {
+      throw new Error(
+        `Error al limpiar barrios desalineados en Supabase: ${errBarDel.message}`
+      );
+    }
+  }
+
+  if (barrios.length > 0) {
     const { error } = await supabaseAdmin.from("barrios").upsert(
       barrios.map((b) => ({
         id: b.id,
@@ -502,7 +620,7 @@ export async function sincronizarMysqlASupabase(): Promise<ResumenSincronizacion
         slug: b.slug,
         created_at: aIso(b.created_at)
       })),
-      { onConflict: "slug" }
+      { onConflict: "id" }
     );
     if (error) throw new Error(`Error al sincronizar barrios en Supabase: ${error.message}`);
   }
@@ -523,19 +641,46 @@ export async function sincronizarMysqlASupabase(): Promise<ResumenSincronizacion
   }
 
   if (usuarios.length > 0) {
-    const { error } = await supabaseAdmin.from("usuarios").upsert(
-      usuarios.map((u) => ({
-        id: u.id,
-        nombre: u.nombre,
-        apellido: u.apellido,
-        correo: u.correo,
-        contrasena_hash: u.contrasena_hash,
-        rol: u.rol,
-        creado_en: aIso(u.creado_en)
-      })),
-      { onConflict: "id" }
-    );
+    const payloadUsuarios = usuarios.map((u) => ({
+      id: u.id,
+      nombre: u.nombre,
+      apellido: u.apellido,
+      correo: u.correo,
+      contrasena_hash: u.contrasena_hash,
+      rol: u.rol,
+      creado_en: aIso(u.creado_en)
+    }));
+
+    let { error } = await supabaseAdmin
+      .from("usuarios")
+      .upsert(payloadUsuarios, { onConflict: "id" });
+
+    // Si en Supabase aún no se ejecutó la migración 003 y falla el CHECK de rol 'gestor'
+    if (error && (error.message ?? "").includes("usuarios_rol_valido")) {
+      const retry = await supabaseAdmin.from("usuarios").upsert(
+        payloadUsuarios.map((u) => ({
+          ...u,
+          rol: u.rol === "gestor" ? "usuario" : u.rol
+        })),
+        { onConflict: "id" }
+      );
+      error = retry.error;
+    }
+
     if (error) throw new Error(`Error al sincronizar usuarios en Supabase: ${error.message}`);
+  }
+
+  if (sesiones.length > 0) {
+    const { error } = await supabaseAdmin.from("sesiones").upsert(
+      sesiones.map((s) => ({
+        token: s.token,
+        usuario_id: s.usuario_id,
+        expira_en: aIso(s.expira_en),
+        creado_en: aIso(s.creado_en)
+      })),
+      { onConflict: "token" }
+    );
+    if (error) throw new Error(`Error al sincronizar sesiones en Supabase: ${error.message}`);
   }
 
   if (actividades.length > 0) {

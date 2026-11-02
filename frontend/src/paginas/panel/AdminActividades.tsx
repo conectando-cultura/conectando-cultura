@@ -809,13 +809,14 @@ export default function AdminActividades(): React.JSX.Element {
           </div>
         )}
 
-        {/* Barra de Confirmación: Desactivar Actividad */}
+        {/* Modal de Confirmación: Desactivar Actividad */}
         {actividadDesactivar && (
           <BarraConfirmacion
-            mensaje={`"${actividadDesactivar.nombre}" dejará de verse para los vecinos. Podés reactivarla cuando quieras.`}
+            titulo="Desactivar actividad"
+            mensaje={`"${actividadDesactivar.nombre}" dejará de verse en el catálogo y en el mapa para los vecinos. Podés reactivarla cuando quieras.`}
             onConfirmar={confirmarDesactivar}
             onCancelar={() => setActividadDesactivar(null)}
-            textoConfirmar="Desactivar"
+            textoConfirmar="Desactivar actividad"
             esPeligro
           />
         )}

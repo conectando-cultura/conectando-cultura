@@ -79,9 +79,9 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
   );
 
   return (
-    <div className="min-h-[calc(100vh-65px)] bg-brand-bg flex flex-col md:flex-row relative">
+    <div className="min-h-[calc(100dvh-65px)] md:min-h-[calc(100dvh-73px)] bg-brand-bg flex flex-col md:flex-row relative">
       {/* Botón cajón en móviles */}
-      <div className="md:hidden sticky top-[60px] z-40 bg-brand-white border-b border-brand-gray-light px-4 py-3 flex items-center justify-between shadow-xs">
+      <div className="md:hidden sticky top-[65px] z-40 bg-brand-white border-b border-brand-gray-light px-4 py-3 flex items-center justify-between shadow-xs">
         <button
           type="button"
           onClick={() => setCajonAbierto(!cajonAbierto)}
@@ -99,7 +99,7 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
 
       {/* Drawer móvil cuando está abierto */}
       {cajonAbierto && (
-        <div className="md:hidden bg-brand-white border-b border-brand-gray-light px-4 py-4 space-y-4 shadow-md">
+        <div className="md:hidden sticky top-[118px] z-30 bg-brand-white border-b border-brand-gray-light px-4 py-4 space-y-4 shadow-md">
           {renderNavLinks()}
           <div className="pt-3 border-t border-brand-gray-light flex items-center justify-between">
             <span className="text-xs text-brand-gray font-medium">
@@ -118,7 +118,7 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
       )}
 
       {/* Menú lateral de escritorio */}
-      <aside className="hidden md:flex w-64 flex-col justify-between shrink-0 bg-brand-white border-r border-brand-gray-light p-5">
+      <aside className="hidden md:flex md:sticky md:top-[73px] md:h-[calc(100dvh-73px)] md:self-start w-64 flex-col justify-between shrink-0 bg-brand-white border-r border-brand-gray-light p-5 overflow-y-auto overscroll-contain">
         <div className="space-y-5">
           <div className="px-2">
             <span className="block text-[11px] font-bold uppercase tracking-wider text-brand-muted mb-0.5">
@@ -133,7 +133,7 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
         </div>
 
         {/* Pie del menú con rol y sesión */}
-        <div className="pt-4 border-t border-brand-gray-light px-2 space-y-2.5">
+        <div className="pt-4 mt-4 border-t border-brand-gray-light px-2 space-y-2.5">
           <div className="flex items-center justify-between">
             <div>
               <strong className="block text-xs font-sans font-semibold text-brand-ink">
@@ -158,7 +158,7 @@ export default function LayoutPanel({ children }: Props): React.JSX.Element {
       </aside>
 
       {/* Contenido principal del panel */}
-      <main className="flex-1 p-4 md:p-6 lg:p-7 overflow-y-auto min-w-0">
+      <main className="flex-1 p-4 md:p-6 lg:p-7 min-w-0">
         {children}
       </main>
     </div>
