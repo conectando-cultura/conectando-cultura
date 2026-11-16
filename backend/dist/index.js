@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import express from "express";
 import cors from "cors";
 import { AuthService } from "./services/auth.service.js";
@@ -12,7 +15,7 @@ import { crearRutasResenas } from "./routes/resenas.routes.js";
 import { esSupabaseConfigurado } from "./lib/supabase.js";
 import { exigirMysql, obtenerConfigMysql } from "./lib/mysql.js";
 import { iniciarSchedulerKeepAlive } from "./services/supabase-monitor.service.js";
-const PUERTO = Number(process.env.PORT ?? 3001);
+const PUERTO = Number(process.env.PORT ?? 8120);
 const repositorioUsuarios = new UsuarioRepository();
 const repositorioSesiones = new SesionRepository();
 const servicioAuth = new AuthService(repositorioUsuarios, repositorioSesiones);
@@ -45,6 +48,21 @@ app.use("/api/resenas", crearRutasResenas(servicioAuth));
 app.use("/api/contacto", crearRutasContacto());
 // ── Administración (requiere sesión + rol gestor/admin) ───────
 app.use("/api/admin", crearRutasAdmin(servicioAuth));
+// ── Frontend SPA estático (producción) ────────────────────────
+const FRONTEND_DIST = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "frontend", "dist");
+const FRONTEND_INDEX = resolve(FRONTEND_DIST, "index.html");
+if (existsSync(FRONTEND_INDEX)) {
+    app.use(express.static(FRONTEND_DIST));
+    app.use("/conectando-cultura", express.static(FRONTEND_DIST));
+    app.use("/TICS/2026/6to 2da/conectando-cultura-main", express.static(FRONTEND_DIST));
+    app.get("*", (req, res, next) => {
+        if (req.path.startsWith("/api/") || req.path === "/api") {
+            next();
+            return;
+        }
+        res.sendFile(FRONTEND_INDEX);
+    });
+}
 // ── Manejo de errores ─────────────────────────────────────────
 app.use((_req, res) => {
     res.status(404).json({ mensaje: "Ruta no encontrada." });
@@ -65,8 +83,8 @@ catch (error) {
     process.exit(1);
 }
 const cfgMysql = obtenerConfigMysql();
-const server = app.listen(PUERTO, () => {
-    console.log(`API de Conectando Cultura escuchando en http://localhost:${PUERTO}`);
+const server = app.listen(PUERTO, "0.0.0.0", () => {
+    console.log(`API de Conectando Cultura escuchando en http://0.0.0.0:${PUERTO}`);
     console.log(`Persistencia primaria: MySQL (${cfgMysql.host}:${cfgMysql.port}/${cfgMysql.database})`);
     console.log(`Backup Supabase + Keep-Alive (SELECT 1 cada 3 días): ${esSupabaseConfigurado() ? "Activo" : "Sin configurar (modo sólo MySQL local)"}`);
     iniciarSchedulerKeepAlive();

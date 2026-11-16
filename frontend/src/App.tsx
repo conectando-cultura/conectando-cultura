@@ -174,6 +174,7 @@ export default function App(): React.JSX.Element {
         <Routes>
           {/* Rutas públicas */}
           <Route path="/" element={<Inicio />} />
+          <Route path="/index.html" element={<Navigate to="/" replace />} />
           <Route path="/explorar" element={<Explorar />} />
           <Route path="/mapa" element={<Mapa />} />
           <Route path="/actividades/:barrio/:slug" element={<DetalleActividad />} />

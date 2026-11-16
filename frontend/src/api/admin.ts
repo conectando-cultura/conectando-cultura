@@ -122,6 +122,20 @@ export async function desactivarActividad(id: string, token: string): Promise<vo
   await api(`/actividades/${id}`, { method: "DELETE" }, token);
 }
 
+export async function eliminarActividadDefinitiva(id: string, token: string): Promise<void> {
+  await api(`/actividades/${id}/definitivo`, { method: "DELETE" }, token);
+}
+
+export async function eliminarTodasActividadesInactivas(
+  token: string
+): Promise<{ eliminadas: number; mensaje: string }> {
+  return await api<{ eliminadas: number; mensaje: string }>(
+    "/actividades/admin/inactivas",
+    { method: "DELETE" },
+    token
+  );
+}
+
 export async function reactivarActividad(id: string, token: string): Promise<void> {
   await api(`/actividades/${id}/reactivar`, { method: "PATCH" }, token);
 }

@@ -141,6 +141,54 @@ export function crearRutasActividades(auth: AuthService): Router {
     }
   );
 
+  // DELETE /api/actividades/admin/inactivas (eliminar definitivamente todas las actividades desactivadas)
+  router.delete(
+    "/admin/inactivas",
+    autenticacionRequerida(auth),
+    permisoRequerido("actividades:escribir"),
+    async (_req, res) => {
+      try {
+        const eliminadas = await servicio.eliminarTodasDesactivadas();
+        res.json({
+          eliminadas,
+          mensaje:
+            eliminadas === 1
+              ? "Se eliminó definitivamente 1 actividad desactivada."
+              : `Se eliminaron definitivamente ${eliminadas} actividades desactivadas.`
+        });
+      } catch (err) {
+        const status = err instanceof ErrorAplicacion ? err.status : 500;
+        res.status(status).json({
+          mensaje:
+            err instanceof Error
+              ? err.message
+              : "Error al eliminar las actividades desactivadas."
+        });
+      }
+    }
+  );
+
+  // DELETE /api/actividades/:id/definitivo (eliminar definitivamente una actividad desactivada)
+  router.delete(
+    "/:id/definitivo",
+    autenticacionRequerida(auth),
+    permisoRequerido("actividades:escribir"),
+    async (req, res) => {
+      try {
+        await servicio.eliminarDefinitivamente(req.params.id);
+        res.status(204).send();
+      } catch (err) {
+        const status = err instanceof ErrorAplicacion ? err.status : 500;
+        res.status(status).json({
+          mensaje:
+            err instanceof Error
+              ? err.message
+              : "Error al eliminar definitivamente la actividad."
+        });
+      }
+    }
+  );
+
   // DELETE /api/actividades/:id (eliminar lógico / desactivar)
   router.delete(
     "/:id",

@@ -11,6 +11,7 @@ import {
 import { supabaseAdmin } from "../lib/supabase.js";
 import { replicarEnSupabase } from "../lib/supabase-mirror.js";
 import type { ActividadPublica, DbBarrio, DbCategoria } from "../types-db.js";
+import { ErrorAplicacion } from "../types.js";
 import { NotificacionesService } from "./notificaciones.service.js";
 
 const servicioNotificaciones = new NotificacionesService();
@@ -448,6 +449,50 @@ export class ActividadesService {
       replicarEnSupabase("actividades.eliminar", () =>
         supabaseAdmin.from("actividades").update({ activo: false }).eq("id", id)
       );
+    } catch (err) {
+      throw new Error(describirErrorMysql(err));
+    }
+  }
+
+  /** Borrado físico definitivo de una actividad que ya está desactivada (`activo = 0`). */
+  async eliminarDefinitivamente(id: string): Promise<void> {
+    try {
+      const filas = await ejecutarConsulta<(RowDataPacket & { id: string; activo: number | boolean })[]>(
+        `SELECT id, activo FROM actividades WHERE id = ? LIMIT 1`,
+        [id]
+      );
+      const actual = filas[0];
+      if (!actual) {
+        throw new ErrorAplicacion("Actividad no encontrada.", 404);
+      }
+      if (Boolean(actual.activo)) {
+        throw new ErrorAplicacion(
+          "Solo se pueden eliminar definitivamente las actividades desactivadas.",
+          400
+        );
+      }
+
+      await ejecutarComando(`DELETE FROM actividades WHERE id = ? AND activo = 0`, [id]);
+      replicarEnSupabase("actividades.eliminarDefinitivamente", () =>
+        supabaseAdmin.from("actividades").delete().eq("id", id)
+      );
+    } catch (err) {
+      if (err instanceof ErrorAplicacion) throw err;
+      throw new Error(describirErrorMysql(err));
+    }
+  }
+
+  /** Borrado físico definitivo de todas las actividades desactivadas (`activo = 0`). */
+  async eliminarTodasDesactivadas(): Promise<number> {
+    try {
+      const resultado = await ejecutarComando(`DELETE FROM actividades WHERE activo = 0`);
+      const eliminadas = Number(resultado.affectedRows ?? 0);
+      if (eliminadas > 0) {
+        replicarEnSupabase("actividades.eliminarTodasDesactivadas", () =>
+          supabaseAdmin.from("actividades").delete().eq("activo", false)
+        );
+      }
+      return eliminadas;
     } catch (err) {
       throw new Error(describirErrorMysql(err));
     }

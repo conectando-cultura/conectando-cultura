@@ -17,6 +17,9 @@ import {
   Compass
 } from "lucide-react";
 import estilos from "./Inicio.module.css";
+import imgLiniers from "../assets/Liniers.jpg";
+import imgMataderos from "../assets/Mataderos.jpg";
+import imgParqueAvellaneda from "../assets/Parque_Avellaneda.jpg";
 
 // 3 Barrios de la Comuna 9 (Liniers, Mataderos y Parque Avellaneda) con imágenes y descripciones culturales
 interface BarrioMosaicData {
@@ -31,19 +34,19 @@ const BARRIOS_COMUNA_9: BarrioMosaicData[] = [
     nombre: "Liniers",
     slug: "liniers",
     descripcion: "Punto neurálgico de encuentro, ferias populares, gastronomía diversa y vida comunitaria.",
-    imagen: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80"
+    imagen: imgLiniers
   },
   {
     nombre: "Mataderos",
     slug: "mataderos",
     descripcion: "Cuna de la tradición gauchesca, la histórica feria dominguera, peñas y centros gauchescos.",
-    imagen: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=800&q=80"
+    imagen: imgMataderos
   },
   {
     nombre: "Parque Avellaneda",
     slug: "parque-avellaneda",
     descripcion: "El emblemático parque, el Centro de Artes Escénicas La Casona y gestión vecinal asociada.",
-    imagen: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80"
+    imagen: imgParqueAvellaneda
   }
 ];
 

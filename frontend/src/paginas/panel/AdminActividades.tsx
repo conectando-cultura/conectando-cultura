@@ -4,6 +4,8 @@ import LayoutPanel from "../../componentes/panel/LayoutPanel";
 import {
   obtenerActividadesAdmin,
   desactivarActividad,
+  eliminarActividadDefinitiva,
+  eliminarTodasActividadesInactivas,
   reactivarActividad,
   crearActividad,
   actualizarActividad
@@ -25,13 +27,13 @@ import {
   Pencil,
   Power,
   RotateCcw,
+  Trash2,
   ExternalLink,
   X,
   Sparkles,
   ChevronLeft,
   ChevronRight,
-  SlidersHorizontal,
-  Navigation
+  SlidersHorizontal
 } from "lucide-react";
 
 type ActividadAdmin = Actividad & { activo: boolean };
@@ -93,11 +95,11 @@ export default function AdminActividades(): React.JSX.Element {
   const [form, setForm] = useState<FormActividad>(FORM_INICIAL);
   const [erroresForm, setErroresForm] = useState<Record<string, string>>({});
   const [guardando, setGuardando] = useState(false);
-  const [geocodificando, setGeocodificando] = useState(false);
-  const [geoMensaje, setGeoMensaje] = useState<string | null>(null);
 
-  // Acciones de estado (desactivar / reactivar)
+  // Acciones de estado (desactivar / reactivar / eliminar definitivas)
   const [actividadDesactivar, setActividadDesactivar] = useState<ActividadAdmin | null>(null);
+  const [actividadEliminar, setActividadEliminar] = useState<ActividadAdmin | null>(null);
+  const [confirmarEliminarTodas, setConfirmarEliminarTodas] = useState(false);
 
   const [, startTransition] = useTransition();
 
@@ -165,7 +167,6 @@ export default function AdminActividades(): React.JSX.Element {
     setModoEdicion(null);
     setForm(FORM_INICIAL);
     setErroresForm({});
-    setGeoMensaje(null);
     setModalAbierto(true);
   }
 
@@ -187,45 +188,12 @@ export default function AdminActividades(): React.JSX.Element {
       visibilidad: a.visibilidad || "publica"
     });
     setErroresForm({});
-    setGeoMensaje(null);
     setModalAbierto(true);
   }
 
   function cerrarModal() {
     setModalAbierto(false);
     setModoEdicion(null);
-  }
-
-  // Geocodificación con Nominatim (un pedido por clic)
-  async function buscarCoordenadas() {
-    if (!form.direccion.trim()) {
-      setGeoMensaje("Ingresá primero una dirección para geocodificar.");
-      return;
-    }
-    setGeocodificando(true);
-    setGeoMensaje(null);
-    try {
-      const barrioSel = barrios.find((b) => b.id === form.barrioId);
-      const query = `${form.direccion}, ${barrioSel?.nombre || "Mataderos"}, CABA, Argentina`;
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
-      );
-      const data = await res.json();
-      if (data && data[0]) {
-        setForm((prev) => ({
-          ...prev,
-          lat: data[0].lat,
-          lng: data[0].lon
-        }));
-        setGeoMensaje(`Coordenadas ubicadas: ${data[0].lat}, ${data[0].lon}`);
-      } else {
-        setGeoMensaje("No encontramos esa dirección. Podés ingresar las coordenadas a mano.");
-      }
-    } catch {
-      setGeoMensaje("Error al conectar con el servicio de geocodificación.");
-    } finally {
-      setGeocodificando(false);
-    }
   }
 
   // Validación y envío de formulario
@@ -304,6 +272,30 @@ export default function AdminActividades(): React.JSX.Element {
     }
   }
 
+  async function confirmarEliminarDefinitiva() {
+    if (!token || !actividadEliminar) return;
+    try {
+      await eliminarActividadDefinitiva(actividadEliminar.id, token);
+      setActividadEliminar(null);
+      cargarDatos();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al eliminar definitivamente la actividad.");
+      setActividadEliminar(null);
+    }
+  }
+
+  async function confirmarEliminarTodasInactivas() {
+    if (!token) return;
+    try {
+      await eliminarTodasActividadesInactivas(token);
+      setConfirmarEliminarTodas(false);
+      cargarDatos();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al eliminar las actividades desactivadas.");
+      setConfirmarEliminarTodas(false);
+    }
+  }
+
   const paginasTotales = Math.ceil(total / limite);
 
   return (
@@ -324,10 +316,20 @@ export default function AdminActividades(): React.JSX.Element {
             </p>
           </div>
 
-          <Boton variante="principal" onClick={abrirCrear}>
-            <PlusCircle size={18} />
-            Nueva actividad
-          </Boton>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Boton
+              variante="peligro"
+              onClick={() => setConfirmarEliminarTodas(true)}
+              title="Eliminar permanentemente todas las actividades desactivadas"
+            >
+              <Trash2 size={16} />
+              Eliminar todas las desactivadas
+            </Boton>
+            <Boton variante="principal" onClick={abrirCrear}>
+              <PlusCircle size={18} />
+              Nueva actividad
+            </Boton>
+          </div>
         </div>
 
         {/* Barra de Filtros, Búsqueda y Orden */}
@@ -511,14 +513,24 @@ export default function AdminActividades(): React.JSX.Element {
                                 Desactivar
                               </Boton>
                             ) : (
-                              <Boton
-                                variante="secundario"
-                                onClick={() => handleReactivar(a)}
-                                title="Volver a publicar"
-                              >
-                                <RotateCcw size={15} />
-                                Reactivar
-                              </Boton>
+                              <>
+                                <Boton
+                                  variante="secundario"
+                                  onClick={() => handleReactivar(a)}
+                                  title="Volver a publicar"
+                                >
+                                  <RotateCcw size={15} />
+                                  Reactivar
+                                </Boton>
+                                <Boton
+                                  variante="peligro"
+                                  onClick={() => setActividadEliminar(a)}
+                                  title="Eliminar definitivamente esta actividad desactivada"
+                                >
+                                  <Trash2 size={15} />
+                                  Eliminar
+                                </Boton>
+                              </>
                             )}
                           </div>
                         </td>
@@ -639,40 +651,22 @@ export default function AdminActividades(): React.JSX.Element {
                   </div>
                 </div>
 
-                {/* 2. Ubicación con Nominatim Geocoding */}
+                {/* 2. Ubicación */}
                 <div>
                   <h3 className="font-display text-base text-brand-orange mb-3 pb-1 border-b border-brand-gray-light">
                     2. Ubicación y Georreferenciación
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <div className="flex gap-2 items-end">
-                        <div className="flex-1">
-                          <Campo
-                            id="act-dir"
-                            etiqueta="Dirección o punto de encuentro"
-                            required
-                            value={form.direccion}
-                            error={erroresForm.direccion}
-                            onChange={(e) => setForm({ ...form, direccion: e.target.value })}
-                            placeholder="Ej: Av. Directorio 5051"
-                          />
-                        </div>
-                        <Boton
-                          variante="secundario"
-                          onClick={buscarCoordenadas}
-                          disabled={geocodificando}
-                          title="Buscar coordenadas en OpenStreetMap"
-                        >
-                          <Navigation size={16} />
-                          {geocodificando ? "Buscando..." : "Ubicar"}
-                        </Boton>
-                      </div>
-                      {geoMensaje && (
-                        <p className="mt-2 text-xs font-body text-brand-muted">
-                          {geoMensaje}
-                        </p>
-                      )}
+                      <Campo
+                        id="act-dir"
+                        etiqueta="Dirección o punto de encuentro"
+                        required
+                        value={form.direccion}
+                        error={erroresForm.direccion}
+                        onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                        placeholder="Ej: Av. Directorio 5051"
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -817,6 +811,30 @@ export default function AdminActividades(): React.JSX.Element {
             onConfirmar={confirmarDesactivar}
             onCancelar={() => setActividadDesactivar(null)}
             textoConfirmar="Desactivar actividad"
+            esPeligro
+          />
+        )}
+
+        {/* Modal de Confirmación: Eliminar definitivamente una actividad desactivada */}
+        {actividadEliminar && (
+          <BarraConfirmacion
+            titulo="Eliminar actividad desactivada"
+            mensaje={`¿Estás seguro de eliminar definitivamente "${actividadEliminar.nombre}"? Esta acción borrará la actividad de la base de datos y no se puede deshacer.`}
+            onConfirmar={confirmarEliminarDefinitiva}
+            onCancelar={() => setActividadEliminar(null)}
+            textoConfirmar="Eliminar definitivamente"
+            esPeligro
+          />
+        )}
+
+        {/* Modal de Confirmación: Eliminar todas las actividades desactivadas */}
+        {confirmarEliminarTodas && (
+          <BarraConfirmacion
+            titulo="Eliminar todas las actividades desactivadas"
+            mensaje="¿Estás seguro de eliminar permanentemente todas las actividades que se encuentran desactivadas? Las actividades activas no se verán afectadas. Esta acción no se puede deshacer."
+            onConfirmar={confirmarEliminarTodasInactivas}
+            onCancelar={() => setConfirmarEliminarTodas(false)}
+            textoConfirmar="Eliminar todas las desactivadas"
             esPeligro
           />
         )}

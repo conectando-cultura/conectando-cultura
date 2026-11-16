@@ -410,6 +410,15 @@
   font-size: 24px;
   line-height: 1.2;
   margin: 0 0 4px 0;
+  color: #ffffff;
+  -webkit-text-stroke: 1.5px #1b160e;
+  paint-order: stroke fill;
+  text-shadow:
+    -1px -1px 0 #1b160e,
+     1px -1px 0 #1b160e,
+    -1px  1px 0 #1b160e,
+     1px  1px 0 #1b160e,
+     0 2px 6px rgba(0, 0, 0, 0.85);
 }
 
 .descripcionBarrio {
