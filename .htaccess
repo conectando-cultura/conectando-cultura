@@ -1,0 +1,14 @@
+<IfModule rewrite_module>
+  RewriteEngine On
+
+  # 1. Proxificar llamadas a ./api/* hacia el backend Node local (127.0.0.1:8120)
+  RewriteRule ^api/(.*)$ http://127.0.0.1:8120/api/$1 [P,L,QSA]
+
+  # 2. Servir archivos y carpetas reales directamente desde Apache
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 3. Fallback SPA: cualquier ruta interna de React Router (/explorar, /mapa, /admin) devuelve index.html
+  RewriteRule ^ index.html [L]
+</IfModule>

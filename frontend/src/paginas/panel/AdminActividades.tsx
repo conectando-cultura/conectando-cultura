@@ -574,7 +574,7 @@ export default function AdminActividades(): React.JSX.Element {
         {modalAbierto && (
           <div
             className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
-            onClick={(e) => {
+            onMouseDown={(e) => {
               if (e.target === e.currentTarget) cerrarModal();
             }}
           >
